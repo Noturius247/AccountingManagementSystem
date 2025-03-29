@@ -1,266 +1,128 @@
 # Accounting Management System
 
-A web-based accounting management system for handling school payments and transactions.
+## Project Overview
+A comprehensive accounting management system designed to streamline financial operations and improve efficiency in business processes.
 
-## Features
+## Technology Stack
+- **Java**: 17
+- **Spring Framework**: 6.1.3
+- **Spring Boot**: 3.2.3
+- **Jakarta EE**: 10
+- **Tomcat**: 10.1
+- **Hibernate**: 6.4.4.Final
+- **Maven**: 3.9.9
+- **Lombok**: 1.18.30
+- **Jackson**: 2.16.1
+- **JUnit**: 5.10.1
 
-### 1. Payment Queue System
-- Online KIOSK for payment selection
-- Priority number generation and management
-- Real-time queue status updates
-- Estimated wait time display
-- Payment type categorization
+## Key Features
+1. **Payment Queue System**
+   - Priority-based queue management
+   - Real-time queue status updates
+   - Digital queue display
+   - Queue analytics and reporting
 
-### 2. Search & Help System
-- Advanced payment item search
-- Category-based filtering
-- FAQ navigation and search
-- Transaction guides
-- Help documentation
+2. **Search & Help System**
+   - Advanced search functionality
+   - FAQ management
+   - Help topic categorization
+   - User guidance system
 
-### 3. User Management System
-- User profile management
-- Admin profile management
-- Role-based access control
-- Account settings
-- Security management
+3. **User Management System**
+   - Role-based access control
+   - User authentication and authorization
+   - Profile management
+   - Activity logging
 
-### 4. Transaction Management
-- Payment processing
-- Receipt validation
-- Transaction history
-- Point of sales management
-- External payment verification
+4. **Transaction Management**
+   - Payment processing
+   - Transaction history
+   - Receipt generation
+   - Financial reporting
 
-### 5. Notification System
-- Real-time queue updates
-- Transaction notifications
-- System alerts
-- Status updates
-- Priority number announcements
+5. **Notification System**
+   - Real-time alerts
+   - Email notifications
+   - SMS integration
+   - Custom notification preferences
 
-## Prerequisites
+## Project Setup
 
-- Java JDK 11 or higher
-- Maven 3.6 or higher
-- Git
-- MySQL 8.0 or higher
-- Apache Tomcat 9.0 or higher
+### Prerequisites
+- JDK 17 or higher
+- Maven 3.9.9
+- Tomcat 10.1
+- Spring Tool Suite (STS) 4.27.0
 
-## Team Setup Guide
+### Installation Steps
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/L64Y14W36/AccountingManagementSystem.git
+   ```
 
-### 1. Initial Setup for New Team Members
+2. Import the project in STS:
+   - File → Import → Git → Projects from Git
+   - Choose URI: `https://github.com/L64Y14W36/AccountingManagementSystem.git`
+   - Select the main branch
+   - Choose "Import as general project"
 
-1. Create a GitHub account if you don't have one
-2. Accept the collaboration invitation sent to your email
-3. Install required software:
-   - Git
-   - Java JDK 11+
-   - Maven 3.6+
-   - MySQL 8.0+
-   - Apache Tomcat 9.0+
+3. Convert to Maven project:
+   - Right-click on the project
+   - Configure → Convert to Maven Project
+   - Update Maven project (Force Update)
 
-### 2. First Time Repository Setup
+4. Configure Tomcat:
+   - Window → Show View → Servers
+   - Add new Tomcat 10.1 server
+   - Configure project facets (Dynamic Web Module, Java)
 
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/AccountingManagementSystem.git
-cd AccountingManagementSystem
+5. Build the project:
+   ```bash
+   mvn clean install
+   ```
 
-# Configure Git
-git config --global user.name "Your Name"
-git config --global user.email "your.email@example.com"
+6. Deploy to Tomcat:
+   - Right-click on the project
+   - Run As → Run on Server
+   - Select Tomcat server
+   - Click Finish
+
+### Project Structure
+```
+src/
+├── main/
+│   ├── java/
+│   │   └── com/
+│   │       └── accounting/
+│   │           ├── controller/
+│   │           ├── service/
+│   │           ├── model/
+│   │           └── util/
+│   └── resources/
+│       ├── css/
+│       ├── js/
+│       └── images/
+└── test/
+    └── java/
+        └── com/
+            └── accounting/
+                └── test/
 ```
 
-### 3. Database Setup
+## Configuration Files
+- `pom.xml`: Maven dependencies and build configuration
+- `web.xml`: Web application deployment descriptor
+- `spring-mvc-servlet.xml`: Spring MVC configuration
 
-```bash
-# Create a MySQL database named 'accounting_db'
-mysql -u root -p
-CREATE DATABASE accounting_db;
-```
-
-### 4. Application Configuration
-
-1. Copy `src/main/resources/application.properties.example` to `src/main/resources/application.properties`
-2. Update the database credentials in `application.properties`
-
-### 5. Build and Deploy
-
-```bash
-# Build the project
-mvn clean install
-
-# Deploy to Tomcat
-# Copy the generated WAR file from target/ to Tomcat's webapps/ directory
-# Start Tomcat server
-```
-
-## Development Workflow
-
-### Daily Workflow
-
-```bash
-# Start new work
-git checkout main
-git pull origin main
-git checkout -b feature/your-feature-name
-
-# Make changes and commit
-git add .
-git commit -m "Your changes"
-git push origin feature/your-feature-name
-
-# Get latest changes
-git checkout main
-git pull origin main
-git checkout feature/your-feature-name
-git merge main
-```
-
-### Feature Branches
-
-Available feature branches:
-- feature/online-kiosk
-- feature/priority-number
-- feature/search-functionality
-- feature/user-profile
-- feature/admin-profile
-- feature/notification-system
-- feature/faq-navigation
-- feature/accounting-checker
-
-### Working on Features
-
-1. Create a new branch for your feature:
-```bash
-git checkout -b feature/your-feature-name
-```
-
-2. Make your changes and commit them:
-```bash
-git add .
-git commit -m "Description of your changes"
-```
-
-3. Push your changes:
-```bash
-git push origin feature/your-feature-name
-```
-
-4. Create a Pull Request on GitHub:
-   - Go to repository
-   - Click "Pull requests" tab
-   - Click "New pull request"
-   - Select your feature branch
-   - Add description of changes
-   - Create pull request
-
-## Project Structure
-
-```
-AccountingManagementSystem/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   ├── resources/
-│   │   └── webapp/
-│   └── test/
-├── WebContent/
-│   ├── css/
-│   ├── js/
-│   └── jsp/
-└── pom.xml
-```
-
-## Feature Details
-
-### 1. Payment Queue System
-- Integrated KIOSK and queue management
-- Smart priority number generation
-- Real-time queue status display
-- Payment type selection interface
-- Wait time estimation
-
-### 2. Search & Help System
-- Unified search interface for payments and FAQs
-- Advanced filtering and sorting
-- Category-based organization
-- Interactive help guides
-- Context-sensitive assistance
-
-### 3. User Management System
-- Unified user profile management
-- Role-based access control
-- Security settings
-- Account preferences
-- Activity tracking
-
-### 4. Transaction Management
-- Comprehensive payment processing
-- Receipt validation system
-- Transaction history tracking
-- Point of sales interface
-- External payment verification
-
-### 5. Notification System
-- Real-time updates
-- Multi-channel notifications
-- Priority announcements
-- Transaction confirmations
-- System status alerts
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Git Authentication Issues**
-   - Ensure you've accepted the collaboration invitation
-   - Check your Git credentials
-   - Use personal access token if needed
-
-2. **Database Connection**
-   - Verify MySQL is running
-   - Check database credentials
-   - Ensure database exists
-
-3. **Build Failures**
-   - Check Java version
-   - Verify Maven installation
-   - Clean and rebuild project
-
-4. **Deployment Issues**
-   - Check Tomcat logs
-   - Verify WAR file location
-   - Ensure proper permissions
-
-## Team Guidelines
-
-1. **Code Standards**
-   - Follow Java coding conventions
-   - Write clear commit messages
-   - Document new features
-   - Test before committing
-
-2. **Git Workflow**
-   - Create feature branches
-   - Keep commits small
-   - Pull before pushing
-   - Use meaningful branch names
-
-3. **Communication**
-   - Update team on major changes
-   - Report issues promptly
-   - Share knowledge and solutions
-
-## Team Members
-
-- [Your Name] - Project Lead
-- [Team Member 1] - Developer
-- [Team Member 2] - Developer
-- [Team Member 3] - Developer
-- [Team Member 4] - Developer
+## Contributing
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
 
 ## License
-
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+For support, please contact the development team or create an issue in the repository.
