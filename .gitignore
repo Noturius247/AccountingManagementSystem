@@ -25,55 +25,64 @@ logs/
 hs_err_pid*
 replay_pid*
 
-# IDE files
-.idea/
-*.iml
-.vscode/
-.project
-.classpath
-.settings/
-*.sublime-workspace
-*.sublime-project
-
-# Build directories
-target/
-build/
-out/
-bin/
-dist/
-.gradle/
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!gradle/wrapper/gradle-wrapper.properties
-
 # Maven
-.mvn/
-mvnw
-mvnw.cmd
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
 .mvn/wrapper/maven-wrapper.jar
-.mvn/wrapper/maven-wrapper.properties
 
-# Gradle
-.gradle/
-gradle-app.setting
-!gradle-wrapper.jar
-!gradle-wrapper.properties
+# Spring Boot
+application-*.properties
+!application-example.properties
+.springBeans
+.sts4-cache/
 
-# OS generated files
+# IDE - IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# IDE - Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+
+# IDE - VS Code
+.vscode/
+*.code-workspace
+
+# IDE - NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+
+# Mac OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
+.AppleDouble
+.LSOverride
+
+# Windows
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# Application specific
-*.properties
-!src/main/resources/application.properties
-!src/test/resources/application.properties
-
-# Local environment files
+# Local development
 .env
 .env.local
 .env.*.local
@@ -81,10 +90,12 @@ application-local.properties
 application-dev.properties
 application-prod.properties
 
-# Database files
-*.db
-*.sqlite
-*.sqlite3
+# Test reports
+test-output/
+reports/
+coverage/
+.coverage
+htmlcov/
 
 # Temporary files
 *.tmp
@@ -92,64 +103,9 @@ application-prod.properties
 *.swp
 *~
 
-# Web application specific
-WebContent/WEB-INF/classes/
-WebContent/WEB-INF/lib/
-WebContent/WEB-INF/web.xml.bak
-
-# Test coverage reports
-coverage/
-.coverage
-htmlcov/
-
-# Node modules (if using any frontend tools)
-node_modules/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
-
-# Eclipse specific
-.metadata/
+# Build directories
+build/
+out/
 bin/
-tmp/
-*.tmp
-*.bak
-*.swp
-*~.nib
-local.properties
-.classpath
-.recommenders
-.project
-.settings/
-.loadpath
-
-# NetBeans specific
-/nbproject/private/
-/build/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-# VS Code specific
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
-# Application specific
-*.bak
-*.orig
-*.rej
-*.tmp
-*.temp
-*.swp
-*~
-
-# Custom application files
-config/local/
-uploads/
-downloads/
-temp/
-cache/
+target/
+dist/
