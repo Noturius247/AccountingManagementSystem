@@ -4,14 +4,40 @@ A web-based accounting management system for handling school payments and transa
 
 ## Features
 
+### 1. Payment Queue System
 - Online KIOSK for payment selection
-- Priority Number Generator for queue management
-- Search functionality for payment items
-- User Profile Management
-- Accounting Admin Profile Management
-- Notification System
-- FAQs Navigation
-- Accounting Checker for receipt validation
+- Priority number generation and management
+- Real-time queue status updates
+- Estimated wait time display
+- Payment type categorization
+
+### 2. Search & Help System
+- Advanced payment item search
+- Category-based filtering
+- FAQ navigation and search
+- Transaction guides
+- Help documentation
+
+### 3. User Management System
+- User profile management
+- Admin profile management
+- Role-based access control
+- Account settings
+- Security management
+
+### 4. Transaction Management
+- Payment processing
+- Receipt validation
+- Transaction history
+- Point of sales management
+- External payment verification
+
+### 5. Notification System
+- Real-time queue updates
+- Transaction notifications
+- System alerts
+- Status updates
+- Priority number announcements
 
 ## Prerequisites
 
@@ -149,46 +175,40 @@ AccountingManagementSystem/
 
 ## Feature Details
 
-### 1. Online KIOSK
-- Allows users to select payment types
-- Handles payment processing
-- Provides payment confirmation
+### 1. Payment Queue System
+- Integrated KIOSK and queue management
+- Smart priority number generation
+- Real-time queue status display
+- Payment type selection interface
+- Wait time estimation
 
-### 2. Priority Number Generator
-- Generates queue numbers
-- Shows current and next numbers
-- Displays estimated wait times
+### 2. Search & Help System
+- Unified search interface for payments and FAQs
+- Advanced filtering and sorting
+- Category-based organization
+- Interactive help guides
+- Context-sensitive assistance
 
-### 3. Search Feature
-- Search payment items
-- Filter by category
-- Sort by various criteria
+### 3. User Management System
+- Unified user profile management
+- Role-based access control
+- Security settings
+- Account preferences
+- Activity tracking
 
-### 4. User Profile Management
-- Update personal information
-- View transaction history
-- Manage account settings
+### 4. Transaction Management
+- Comprehensive payment processing
+- Receipt validation system
+- Transaction history tracking
+- Point of sales interface
+- External payment verification
 
-### 5. Admin Profile Management
-- Handle priority numbers
-- Process payments
-- Manage point of sales
-- Track transactions
-
-### 6. Notification System
-- Real-time queue updates
-- Transaction notifications
-- System alerts
-
-### 7. FAQs Navigation
-- Browse common questions
-- Search for specific topics
-- View transaction guides
-
-### 8. Accounting Checker
-- Validate external receipts
-- Verify payment status
-- Process external payments
+### 5. Notification System
+- Real-time updates
+- Multi-channel notifications
+- Priority announcements
+- Transaction confirmations
+- System status alerts
 
 ## Troubleshooting
 
