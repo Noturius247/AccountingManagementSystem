@@ -3,17 +3,26 @@ package com.accounting.controller;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Controller
 public class AuthController {
 
     @GetMapping("/")
     public String home() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && !auth.getName().equals("anonymousUser")) {
+            return "redirect:/dashboard";
+        }
         return "redirect:/login";
     }
 
     @GetMapping("/login")
-    public String loginPage() {
+    public String loginPage(Model model, @RequestParam(required = false) String error) {
+        if (error != null) {
+            model.addAttribute("error", "Invalid username or password");
+        }
         return "login";
     }
 
@@ -22,20 +31,10 @@ public class AuthController {
         return "register";
     }
 
-    @PostMapping("/login")
-    public String handleLogin() {
-        // Temporary: just redirect to dashboard without authentication
-        return "redirect:/dashboard";
-    }
-
-    @PostMapping("/register")
-    public String handleRegistration() {
-        // Temporary: just redirect to login without registration
-        return "redirect:/login";
-    }
-
     @GetMapping("/dashboard")
-    public String dashboard() {
+    public String dashboard(Model model) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        model.addAttribute("username", auth.getName());
         return "dashboard";
     }
 } 
