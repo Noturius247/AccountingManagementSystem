@@ -1,19 +1,16 @@
 package com.accounting.model;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import lombok.Data;
 
 @Data
 public class Transaction {
     private Long id;
     private String type;
-    private double amount;
-    private String status;
-    private Date date;
+    private Double amount;
     private String description;
-    private Long userId;
-    private String referenceNumber;
-    private String paymentMethod;
+    private LocalDateTime date;
+    private String status;
     private String statusColor;
     
     // Additional fields for transaction details
@@ -25,19 +22,19 @@ public class Transaction {
     private String notes;
     private boolean isRecurring;
     private String recurringFrequency;
-    private Date nextDueDate;
+    private LocalDateTime nextDueDate;
     
     // Audit fields
-    private Date createdAt;
-    private Date updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private String createdBy;
     private String updatedBy;
     
     // Constructor
     public Transaction() {
-        this.date = new Date();
-        this.createdAt = new Date();
-        this.updatedAt = new Date();
+        this.date = LocalDateTime.now();
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
     
     // Helper method to set status color based on status
@@ -73,7 +70,7 @@ public class Transaction {
     // Helper method to check if transaction is overdue
     public boolean isOverdue() {
         if (nextDueDate != null) {
-            return new Date().after(nextDueDate);
+            return LocalDateTime.now().isAfter(nextDueDate);
         }
         return false;
     }

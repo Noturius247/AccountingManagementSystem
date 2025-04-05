@@ -5,10 +5,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import javax.servlet.ServletException;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 
 import com.accounting.model.Transaction;
 import com.accounting.model.Notification;
@@ -19,14 +22,16 @@ import com.accounting.service.NotificationService;
 public class DashboardServlet extends BaseServlet {
     private static final long serialVersionUID = 1L;
     
+    @Autowired
     private TransactionService transactionService;
+    
+    @Autowired
     private NotificationService notificationService;
     
     @Override
     public void init() throws ServletException {
         super.init();
-        transactionService = new TransactionService();
-        notificationService = new NotificationService();
+        SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
     }
     
     @Override
@@ -37,7 +42,7 @@ public class DashboardServlet extends BaseServlet {
         // Set page title
         request.setAttribute("pageTitle", "Dashboard");
         
-        // Set dashboard statistics
+        
         request.setAttribute("activeQueueCount", transactionService.getActiveQueueCount());
         request.setAttribute("lastUpdateTime", new Date());
         request.setAttribute("todayTransactions", transactionService.getTodayTransactionCount());
@@ -52,7 +57,7 @@ public class DashboardServlet extends BaseServlet {
         request.setAttribute("recentTransactions", recentTransactions);
         
         // Get system notifications
-        List<Notification> notifications = notificationService.getRecentNotifications(5);
+        List<Notification> notifications = notificationService.getSystemNotifications();
         request.setAttribute("notifications", notifications);
         
         // Forward to dashboard JSP

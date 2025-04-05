@@ -2,66 +2,87 @@ package com.accounting.service;
 
 import com.accounting.model.PaymentQueue;
 import org.springframework.stereotype.Service;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class PaymentQueueService {
-    
     private final Map<String, PaymentQueue> queueMap = new ConcurrentHashMap<>();
-    private final AtomicInteger currentNumber = new AtomicInteger(0);
-    private final AtomicInteger nextNumber = new AtomicInteger(1);
+    private int queueCounter = 1;
 
-    public PaymentQueue generatePriorityNumber(PaymentQueue request) {
-        int number = nextNumber.getAndIncrement();
-        request.setQueueNumber(String.format("P%03d", number));
-        request.setStatus("WAITING");
-        queueMap.put(request.getQueueNumber(), request);
-        return request;
+    public PaymentQueueService() {
+        // Initialize with some mock data
+        createMockData();
     }
 
-    public Map<String, Object> getCurrentStatus() {
-        return Map.of(
-            "currentNumber", currentNumber.get(),
-            "nextNumber", nextNumber.get(),
-            "totalInQueue", queueMap.size()
-        );
+    private void createMockData() {
+        addToQueue(new PaymentQueue("Q001", "PENDING", "CASH", 1000.0));
+        addToQueue(new PaymentQueue("Q002", "PROCESSING", "CREDIT_CARD", 2500.0));
+        addToQueue(new PaymentQueue("Q003", "COMPLETED", "BANK_TRANSFER", 1500.0));
+        addToQueue(new PaymentQueue("Q004", "PENDING", "CASH", 3000.0));
+        addToQueue(new PaymentQueue("Q005", "PENDING", "DEBIT_CARD", 750.0));
     }
 
-    public String getNextNumber() {
-        return String.format("P%03d", nextNumber.get());
+    public PaymentQueue addToQueue(PaymentQueue payment) {
+        if (payment.getQueueNumber() == null) {
+            payment.setQueueNumber(generateQueueNumber());
+        }
+        queueMap.put(payment.getQueueNumber(), payment);
+        return payment;
     }
 
-    public List<PaymentQueue> getQueueStatus() {
+    public PaymentQueue getQueueItem(String queueNumber) {
+        return queueMap.get(queueNumber);
+    }
+
+    public List<PaymentQueue> getAllQueues() {
+        return new ArrayList<>(queueMap.values());
+    }
+
+    public PaymentQueue updateQueueStatus(String queueNumber, String status) {
+        PaymentQueue queue = queueMap.get(queueNumber);
+        if (queue != null) {
+            queue.setStatus(status);
+            queueMap.put(queueNumber, queue);
+        }
+        return queue;
+    }
+
+    public void removeFromQueue(String queueNumber) {
+        queueMap.remove(queueNumber);
+    }
+
+    public List<PaymentQueue> getQueuesByStatus(String status) {
         return queueMap.values().stream()
-            .sorted((a, b) -> a.getQueueNumber().compareTo(b.getQueueNumber()))
-            .toList();
+                .filter(q -> q.getStatus().equals(status))
+                .toList();
     }
 
-    public PaymentQueue updateQueueStatus(String number) {
-        PaymentQueue queue = queueMap.get(number);
-        if (queue != null) {
-            queue.setStatus("PROCESSING");
-            currentNumber.set(Integer.parseInt(number.substring(1)));
-            return queue;
-        }
-        return null;
+    public int getQueueSize() {
+        return queueMap.size();
     }
 
-    public int getEstimatedWaitTime() {
-        // Calculate based on average processing time and queue length
-        return queueMap.size() * 5; // Assuming 5 minutes per person
+    private String generateQueueNumber() {
+        return String.format("Q%03d", queueCounter++);
     }
 
-    public PaymentQueue selectPaymentType(PaymentQueue request) {
-        PaymentQueue queue = queueMap.get(request.getQueueNumber());
-        if (queue != null) {
-            queue.setPaymentType(request.getPaymentType());
-            queue.setAmount(request.getAmount());
-            return queue;
-        }
-        return null;
+    // Mock statistics methods
+    public int getActiveQueueCount() {
+        return (int) queueMap.values().stream()
+                .filter(q -> q.getStatus().equals("PENDING") || q.getStatus().equals("PROCESSING"))
+                .count();
+    }
+
+    public double getTotalQueueAmount() {
+        return queueMap.values().stream()
+                .mapToDouble(PaymentQueue::getAmount)
+                .sum();
+    }
+
+    public List<String> getPaymentTypes() {
+        return queueMap.values().stream()
+                .map(PaymentQueue::getPaymentType)
+                .distinct()
+                .toList();
     }
 } 

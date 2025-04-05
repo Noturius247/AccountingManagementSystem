@@ -2,6 +2,7 @@ package com.accounting.model;
 
 import java.util.Date;
 import lombok.Data;
+import jakarta.annotation.PostConstruct;
 
 @Data
 public class Notification {
@@ -22,7 +23,8 @@ public class Notification {
     private boolean isDismissible;
     private String backgroundColor;
     
-    public Notification() {
+    @PostConstruct
+    private void init() {
         this.time = new Date();
         this.read = false;
         this.isDismissible = true;
