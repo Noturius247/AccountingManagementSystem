@@ -1,43 +1,53 @@
 package com.accounting.service;
 
 import com.accounting.model.Transaction;
-import org.springframework.stereotype.Service;
-import java.util.ArrayList;
 import java.util.List;
 
-@Service
-public class TransactionService {
+public interface TransactionService {
     
-    public int getActiveQueueCount() {
-        return 5; // Mock value
-    }
+    int getActiveQueueCount();
 
-    public int getTodayTransactionCount() {
-        return 10; // Mock value
-    }
+    int getTodayTransactionCount();
 
-    public double getTodayTotalAmount() {
-        return 1000.00; // Mock value
-    }
+    double getTodayTotalAmount();
 
-    public int getPendingApprovalCount() {
-        return 3; // Mock value
-    }
+    int getPendingApprovalCount();
 
-    public int getHighPriorityCount() {
-        return 2; // Mock value
-    }
+    int getHighPriorityCount();
 
-    public int getActiveUserCount() {
-        return 15; // Mock value
-    }
+    int getActiveUserCount();
 
-    public int getOnlineUserCount() {
-        return 8; // Mock value
-    }
+    int getOnlineUserCount();
 
-    public List<Transaction> getRecentTransactions(int limit) {
-        // Return mock list of transactions
-        return new ArrayList<>();
-    }
+    List<Transaction> getRecentTransactions(int limit);
+
+    /**
+     * Get all transactions for the current day
+     */
+    List<Transaction> getDailyTransactions();
+    
+    /**
+     * Get transactions between two dates
+     */
+    List<Transaction> getTransactionsByDateRange(String startDate, String endDate);
+    
+    /**
+     * Create a new transaction
+     */
+    Transaction createTransaction(Transaction transaction);
+    
+    /**
+     * Get transaction by ID
+     */
+    Transaction getTransactionById(Long id);
+    
+    /**
+     * Update transaction status
+     */
+    Transaction updateTransactionStatus(Long id, String status);
+    
+    /**
+     * Delete transaction
+     */
+    void deleteTransaction(Long id);
 } 

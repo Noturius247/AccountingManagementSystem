@@ -1,48 +1,62 @@
 package com.accounting.service;
 
-import org.springframework.stereotype.Service;
 import com.accounting.model.Notification;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Date;
 
-@Service
-public class NotificationService {
+public interface NotificationService {
     
-    public List<Notification> getSystemNotifications() {
-        List<Notification> notifications = new ArrayList<>();
-        
-        // Create mock notifications
-        Notification n1 = new Notification();
-        n1.setId(1L);
-        n1.setTitle("System Update");
-        n1.setMessage("Welcome to the Accounting System");
-        n1.setType("INFO");
-        n1.setPriority("LOW");
-        n1.setTime(new Date());
-        notifications.add(n1);
-        
-        Notification n2 = new Notification();
-        n2.setId(2L);
-        n2.setTitle("New Feature");
-        n2.setMessage("Check out our new dashboard features!");
-        n2.setType("SUCCESS");
-        n2.setPriority("MEDIUM");
-        n2.setTime(new Date());
-        notifications.add(n2);
-        
-        return notifications;
-    }
+    /**
+     * Get system-wide notifications
+     */
+    List<Notification> getSystemNotifications();
 
-    public int getUnreadNotificationCount() {
-        return 2; // Mock value
-    }
+    /**
+     * Get count of unread notifications
+     */
+    int getUnreadNotificationCount();
 
-    public void markNotificationAsRead(Long notificationId) {
-        // Mock implementation
-    }
+    /**
+     * Mark a notification as read
+     */
+    void markNotificationAsRead(Long notificationId);
 
-    public void createNotification(String message) {
-        // Mock implementation
-    }
+    /**
+     * Create a new notification
+     */
+    void createNotification(String message);
+    
+    /**
+     * Get queue position for a number
+     */
+    int getQueuePosition(String number);
+    
+    /**
+     * Get notifications for a specific user
+     */
+    List<Notification> getUserNotifications(String username);
+    
+    /**
+     * Subscribe a user to notifications
+     */
+    void subscribe(String username, String type, String queueNumber);
+    
+    /**
+     * Unsubscribe a user from notifications
+     */
+    void unsubscribe(String username, String type);
+    
+    /**
+     * Get notification settings for a user
+     */
+    Object getNotificationSettings(String username);
+    
+    /**
+     * Update notification settings for a user
+     */
+    void updateNotificationSettings(String username, Object settings);
+    
+    /**
+     * Mark notifications as read
+     */
+    void markAsRead(List<Long> notificationIds, String username);
 } 

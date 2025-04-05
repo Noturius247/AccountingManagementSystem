@@ -1,6 +1,93 @@
 # Accounting Management System
 
-A Spring Boot application for managing accounting operations.
+A Spring Boot application for managing accounting operations and student payments.
+
+## Features
+
+### 1. Online KIOSK System
+- Self-service payment selection interface
+- Categorized payment items
+- Real-time availability status
+- User-friendly payment item search
+- Detailed fee breakdown
+- Payment summary preview
+
+### 2. Priority Number System
+- Automated number generation
+- Real-time queue status
+- Estimated waiting time
+- Queue position tracking
+- Priority handling for special cases
+- Queue history logging
+
+### 3. Search and Navigation
+- Advanced payment item search
+- Filter by category, amount, or due date
+- Sort by various parameters
+- Search history tracking
+- Suggested searches
+- Quick access to frequent payments
+
+### 4. User Profile Management
+- Personal information management
+- Payment history tracking
+- Document uploads
+- Account balance monitoring
+- Payment preferences
+- Notification settings
+- Transaction history
+
+### 5. Accounting Admin Features
+#### Queue Management
+- Real-time queue monitoring
+- Priority number processing
+- Queue status updates
+- Service time tracking
+- Queue analytics
+
+#### Payment Processing
+- Payment verification
+- Receipt generation
+- Transaction logging
+- Balance updates
+- Payment method handling
+- Refund processing
+
+#### Transaction Management
+- Daily transaction reports
+- Revenue tracking
+- Payment reconciliation
+- Audit logging
+- Transaction search
+- Financial reporting
+
+### 6. Notification System
+- Queue position updates
+- Payment confirmations
+- Transaction receipts
+- Due date reminders
+- Account balance alerts
+- System announcements
+- Email notifications
+- SMS notifications (optional)
+
+### 7. FAQ System
+- Categorized FAQs
+- Search functionality
+- Quick answers
+- Guided solutions
+- Common issues
+- Payment guides
+- Contact information
+
+### 8. Receipt Verification
+- QR code scanning
+- Receipt validation
+- Payment verification
+- Fraud detection
+- Transaction lookup
+- Digital receipt storage
+- Verification history
 
 ## Prerequisites
 
