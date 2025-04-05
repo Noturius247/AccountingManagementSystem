@@ -1,182 +1,118 @@
 # Accounting Management System
 
-A Spring Boot application for managing accounting operations and student payments.
+A Spring Boot application for managing accounting transactions and user roles.
 
 ## Features
 
-### 1. Online KIOSK System
-- Self-service payment selection interface
-- Categorized payment items
-- Real-time availability status
-- User-friendly payment item search
-- Detailed fee breakdown
-- Payment summary preview
+- User authentication and authorization
+- Role-based access control (Admin and User roles)
+- Transaction management
+- Notification system
+- Queue management for pending transactions
 
-### 2. Priority Number System
-- Automated number generation
-- Real-time queue status
-- Estimated waiting time
-- Queue position tracking
-- Priority handling for special cases
-- Queue history logging
+## Technology Stack
 
-### 3. Search and Navigation
-- Advanced payment item search
-- Filter by category, amount, or due date
-- Sort by various parameters
-- Search history tracking
-- Suggested searches
-- Quick access to frequent payments
+- Java 17
+- Spring Boot 3.2.3
+- Spring Security
+- Spring Data JPA
+- H2 Database
+- Maven
+- Thymeleaf
+- Lombok
 
-### 4. User Profile Management
-- Personal information management
-- Payment history tracking
-- Document uploads
-- Account balance monitoring
-- Payment preferences
-- Notification settings
-- Transaction history
+## Database Schema
 
-### 5. Accounting Admin Features
-#### Queue Management
-- Real-time queue monitoring
-- Priority number processing
-- Queue status updates
-- Service time tracking
-- Queue analytics
+The application uses the following database tables:
 
-#### Payment Processing
-- Payment verification
-- Receipt generation
-- Transaction logging
-- Balance updates
-- Payment method handling
-- Refund processing
+### Users Table
+- Stores user information including credentials and personal details
+- Fields: id, username, password, email, first_name, last_name, enabled, created_at, updated_at
 
-#### Transaction Management
-- Daily transaction reports
-- Revenue tracking
-- Payment reconciliation
-- Audit logging
-- Transaction search
-- Financial reporting
+### Roles Table
+- Defines available roles in the system
+- Fields: id, name
 
-### 6. Notification System
-- Queue position updates
-- Payment confirmations
-- Transaction receipts
-- Due date reminders
-- Account balance alerts
-- System announcements
-- Email notifications
-- SMS notifications (optional)
+### User Roles Table
+- Manages many-to-many relationship between users and roles
+- Fields: id, user_id, role_id
 
-### 7. FAQ System
-- Categorized FAQs
-- Search functionality
-- Quick answers
-- Guided solutions
-- Common issues
-- Payment guides
-- Contact information
-
-### 8. Receipt Verification
-- QR code scanning
-- Receipt validation
-- Payment verification
-- Fraud detection
-- Transaction lookup
-- Digital receipt storage
-- Verification history
-
-## Prerequisites
-
-- Java 17 or higher
-- Maven 3.6 or higher
-- Your favorite IDE (Spring Tool Suite, IntelliJ IDEA, or Eclipse)
-- Git
+### Transaction Table
+- Stores financial transactions
+- Fields: id, amount, description, status, timestamp, user_id, created_at, updated_at
 
 ## Setup Instructions
 
-1. Clone the repository:
-```bash
-git clone [your-repository-url]
-cd AccountingManagementSystem
-```
-
-2. Configure application properties:
-   - Copy `src/main/resources/application.properties` to `src/main/resources/application-local.properties`
-   - Modify the database settings in your local properties file if needed
-
+1. Clone the repository
+2. Ensure you have Java 17 and Maven installed
 3. Build the project:
+   ```bash
+   mvn clean install
+   ```
+4. Run the application:
+   ```bash
+   mvn spring-boot:run
+   ```
+
+## Default Credentials
+
+- Username: admin
+- Password: password
+
+## Configuration
+
+The application uses an H2 in-memory database by default. Database configuration can be modified in `application.properties`.
+
+## API Endpoints
+
+### Authentication
+- POST /api/auth/login - User login
+- POST /api/auth/register - User registration
+
+### Admin
+- GET /api/admin/users - List all users
+- GET /api/admin/transactions - List all transactions
+- GET /api/admin/statistics - Get system statistics
+
+### Transactions
+- GET /api/transactions - List user's transactions
+- POST /api/transactions - Create new transaction
+- GET /api/transactions/{id} - Get transaction details
+- PUT /api/transactions/{id} - Update transaction
+- DELETE /api/transactions/{id} - Delete transaction
+
+### Notifications
+- GET /api/notifications - Get user notifications
+- PUT /api/notifications/settings - Update notification settings
+
+## Security
+
+The application uses Spring Security with:
+- BCrypt password encoding
+- JWT-based authentication
+- Role-based authorization
+- CSRF protection
+
+## Development
+
+### Prerequisites
+- Java 17
+- Maven 3.8+
+- IDE with Spring Boot support
+
+### Building
 ```bash
 mvn clean install
 ```
 
-4. Run the application:
+### Running Tests
 ```bash
-mvn spring-boot:run
+mvn test
 ```
 
-Or run it from your IDE by running the `AccountingApplication` class.
+### Code Style
+The project uses standard Java code style conventions.
 
-5. Access the application:
-   - Open a web browser
-   - Go to `http://localhost:8081/accounting/login`
-   - Default credentials:
-     - Username: admin
-     - Password: password
+## License
 
-## Project Structure
-
-```
-src/
-├── main/
-│   ├── java/
-│   │   └── com/
-│   │       └── accounting/
-│   │           ├── config/      # Configuration classes
-│   │           ├── controller/  # MVC Controllers
-│   │           ├── model/       # Entity classes
-│   │           ├── repository/  # Data repositories
-│   │           └── service/     # Business logic
-│   └── resources/
-│       ├── static/             # Static resources
-│       ├── templates/          # Thymeleaf templates
-│       └── application.properties
-```
-
-## Development Guidelines
-
-1. Always create a new branch for features/fixes:
-```bash
-git checkout -b feature/your-feature-name
-```
-
-2. Follow the existing code style and naming conventions
-
-3. Write unit tests for new features
-
-4. Update documentation when necessary
-
-## Common Issues
-
-1. Port 8081 already in use:
-   - Change the port in `application.properties`
-   - Or stop the process using the port
-
-2. Database connection issues:
-   - Verify database settings in application.properties
-   - Ensure H2 console is accessible at `/h2-console`
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-## Contact
-
-[Your Name/Team Contact Information]
+This project is licensed under the MIT License.
