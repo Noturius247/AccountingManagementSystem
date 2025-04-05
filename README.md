@@ -1,128 +1,95 @@
 # Accounting Management System
 
-## Project Overview
-A comprehensive accounting management system designed to streamline financial operations and improve efficiency in business processes.
+A Spring Boot application for managing accounting operations.
 
-## Technology Stack
-- **Java**: 17
-- **Spring Framework**: 6.1.3
-- **Spring Boot**: 3.2.3
-- **Jakarta EE**: 10
-- **Tomcat**: 10.1
-- **Hibernate**: 6.4.4.Final
-- **Maven**: 3.9.9
-- **Lombok**: 1.18.30
-- **Jackson**: 2.16.1
-- **JUnit**: 5.10.1
+## Prerequisites
 
-## Key Features
-1. **Payment Queue System**
-   - Priority-based queue management
-   - Real-time queue status updates
-   - Digital queue display
-   - Queue analytics and reporting
+- Java 17 or higher
+- Maven 3.6 or higher
+- Your favorite IDE (Spring Tool Suite, IntelliJ IDEA, or Eclipse)
+- Git
 
-2. **Search & Help System**
-   - Advanced search functionality
-   - FAQ management
-   - Help topic categorization
-   - User guidance system
+## Setup Instructions
 
-3. **User Management System**
-   - Role-based access control
-   - User authentication and authorization
-   - Profile management
-   - Activity logging
-
-4. **Transaction Management**
-   - Payment processing
-   - Transaction history
-   - Receipt generation
-   - Financial reporting
-
-5. **Notification System**
-   - Real-time alerts
-   - Email notifications
-   - SMS integration
-   - Custom notification preferences
-
-## Project Setup
-
-### Prerequisites
-- JDK 17 or higher
-- Maven 3.9.9
-- Tomcat 10.1
-- Spring Tool Suite (STS) 4.27.0
-
-### Installation Steps
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/L64Y14W36/AccountingManagementSystem.git
-   ```
+```bash
+git clone [your-repository-url]
+cd AccountingManagementSystem
+```
 
-2. Import the project in STS:
-   - File → Import → Git → Projects from Git
-   - Choose URI: `https://github.com/L64Y14W36/AccountingManagementSystem.git`
-   - Select the main branch
-   - Choose "Import as general project"
+2. Configure application properties:
+   - Copy `src/main/resources/application.properties` to `src/main/resources/application-local.properties`
+   - Modify the database settings in your local properties file if needed
 
-3. Convert to Maven project:
-   - Right-click on the project
-   - Configure → Convert to Maven Project
-   - Update Maven project (Force Update)
+3. Build the project:
+```bash
+mvn clean install
+```
 
-4. Configure Tomcat:
-   - Window → Show View → Servers
-   - Add new Tomcat 10.1 server
-   - Configure project facets (Dynamic Web Module, Java)
+4. Run the application:
+```bash
+mvn spring-boot:run
+```
 
-5. Build the project:
-   ```bash
-   mvn clean install
-   ```
+Or run it from your IDE by running the `AccountingApplication` class.
 
-6. Deploy to Tomcat:
-   - Right-click on the project
-   - Run As → Run on Server
-   - Select Tomcat server
-   - Click Finish
+5. Access the application:
+   - Open a web browser
+   - Go to `http://localhost:8081/accounting/login`
+   - Default credentials:
+     - Username: admin
+     - Password: password
 
-### Project Structure
+## Project Structure
+
 ```
 src/
 ├── main/
 │   ├── java/
 │   │   └── com/
 │   │       └── accounting/
-│   │           ├── controller/
-│   │           ├── service/
-│   │           ├── model/
-│   │           └── util/
+│   │           ├── config/      # Configuration classes
+│   │           ├── controller/  # MVC Controllers
+│   │           ├── model/       # Entity classes
+│   │           ├── repository/  # Data repositories
+│   │           └── service/     # Business logic
 │   └── resources/
-│       ├── css/
-│       ├── js/
-│       └── images/
-└── test/
-    └── java/
-        └── com/
-            └── accounting/
-                └── test/
+│       ├── static/             # Static resources
+│       ├── templates/          # Thymeleaf templates
+│       └── application.properties
 ```
 
-## Configuration Files
-- `pom.xml`: Maven dependencies and build configuration
-- `web.xml`: Web application deployment descriptor
-- `spring-mvc-servlet.xml`: Spring MVC configuration
+## Development Guidelines
+
+1. Always create a new branch for features/fixes:
+```bash
+git checkout -b feature/your-feature-name
+```
+
+2. Follow the existing code style and naming conventions
+
+3. Write unit tests for new features
+
+4. Update documentation when necessary
+
+## Common Issues
+
+1. Port 8081 already in use:
+   - Change the port in `application.properties`
+   - Or stop the process using the port
+
+2. Database connection issues:
+   - Verify database settings in application.properties
+   - Ensure H2 console is accessible at `/h2-console`
 
 ## Contributing
+
 1. Fork the repository
-2. Create a feature branch
+2. Create your feature branch
 3. Commit your changes
 4. Push to the branch
 5. Create a Pull Request
 
-## License
-This project is licensed under the MIT License - see the LICENSE file for details.
+## Contact
 
-## Support
-For support, please contact the development team or create an issue in the repository.
+[Your Name/Team Contact Information]
