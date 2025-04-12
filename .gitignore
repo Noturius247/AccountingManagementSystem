@@ -105,3 +105,25 @@ out/
 bin/
 target/
 dist/
+
+# IDE - Eclipse specific files only
+.settings/
+.classpath
+.project
+.factorypath
+
+# IDE - IntelliJ IDEA
+.idea/
+*.iml
+
+# IDE - VS Code
+.vscode/
+
+# Local configuration
+application-local.properties
+application-dev.properties
+application-prod.properties
+
+# OS generated files
+.DS_Store
+Thumbs.db
