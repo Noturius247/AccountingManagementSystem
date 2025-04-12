@@ -191,3 +191,49 @@ For technical support or issues:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Running the Application
+
+### Method 1: Using Spring Tools IDE (STS)
+1. Open the project in STS:
+   - File > Import > Maven > Existing Maven Projects
+   - Browse to the project directory
+   - Click Finish
+
+2. Run the application:
+   - Find `src/main/java/com/accounting/AccountingApplication.java` in Project Explorer
+   - Right-click > Run As > Spring Boot App
+
+### Method 2: Using Command Line
+1. Open terminal in project directory
+2. Build the project:
+   ```bash
+   mvn clean install
+   ```
+3. Run the application:
+   ```bash
+   mvn spring-boot:run
+   ```
+
+### Method 3: Using JAR file
+1. Build the JAR:
+   ```bash
+   mvn clean package
+   ```
+2. Run the JAR:
+   ```bash
+   java -jar target/accounting-management-system.jar
+   ```
+
+### Accessing the Application
+Once started:
+1. Open your web browser
+2. Navigate to `http://localhost:8080`
+3. Login with the credentials provided in the Login Information section
+
+### Troubleshooting
+If you encounter any issues:
+1. Ensure MySQL is running and the database is created
+2. Check application.properties has correct database credentials
+3. Make sure all required dependencies are downloaded (check Maven status)
+4. Look for errors in the console output
