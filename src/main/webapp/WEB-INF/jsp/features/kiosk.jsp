@@ -127,75 +127,95 @@
         </div>
 
         <div id="mainContent">
+            <!-- Dynamic Payment Items -->
             <div class="payment-grid">
-                <div class="payment-card" onclick="selectService('tuition')">
-                    <i class="fas fa-graduation-cap"></i>
-                    <h3>Tuition Payment</h3>
-                    <p>Pay your tuition fees</p>
-                    <button class="btn btn-primary">Select</button>
-                </div>
+                <c:forEach items="${paymentItems}" var="item">
+                    <div class="payment-card" onclick='selectService("payment", "${item.id}")'>
+                        <i class="${item.icon}"></i>
+                        <h3>${item.name}</h3>
+                        <p>${item.description}</p>
+                        <button class="btn btn-primary">Select</button>
+                    </div>
+                </c:forEach>
 
-                <div class="payment-card" onclick="selectService('library')">
-                    <i class="fas fa-book"></i>
-                    <h3>Library Fees</h3>
-                    <p>Pay library and resource fees</p>
-                    <button class="btn btn-primary">Select</button>
-                </div>
-
-                <div class="payment-card" onclick="selectService('lab')">
-                    <i class="fas fa-flask"></i>
-                    <h3>Laboratory Fees</h3>
-                    <p>Pay laboratory fees</p>
-                    <button class="btn btn-primary">Select</button>
-                </div>
-
-                <div class="payment-card" onclick="selectService('misc')">
-                    <i class="fas fa-file-invoice"></i>
-                    <h3>Miscellaneous</h3>
-                    <p>Other payments</p>
-                    <button class="btn btn-primary">Select</button>
-                </div>
-
+                <!-- Queue Status Card -->
                 <div class="payment-card" onclick="selectService('queue')">
                     <i class="fas fa-users"></i>
                     <h3>Queue Status</h3>
-                    <p>Check your queue number</p>
-                    <button class="btn btn-primary">Check</button>
+                    <p>Check your queue number and waiting time</p>
+                    <button class="btn btn-primary">Check Status</button>
                 </div>
 
+                <!-- Help Card -->
                 <div class="payment-card" onclick="selectService('help')">
                     <i class="fas fa-question-circle"></i>
                     <h3>Help</h3>
-                    <p>Get assistance</p>
-                    <button class="btn btn-primary">Help</button>
+                    <p>Get assistance with your payment</p>
+                    <button class="btn btn-primary">Get Help</button>
                 </div>
+            </div>
+
+            <!-- Search Section -->
+            <div class="search-section">
+                <form action="${pageContext.request.contextPath}/kiosk/search" method="GET" class="search-form">
+                    <input type="text" name="query" placeholder="Search payments..." class="search-input">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </form>
             </div>
         </div>
     </div>
 
     <script>
-        function selectService(service) {
+        function selectService(type, id = null) {
             const baseUrl = '${pageContext.request.contextPath}/kiosk';
             
-            switch(service) {
-                case 'tuition':
-                    window.location.href = `${baseUrl}/payment/1`;
-                    break;
-                case 'library':
-                    window.location.href = `${baseUrl}/payment/2`;
-                    break;
-                case 'lab':
-                    window.location.href = `${baseUrl}/payment/3`;
-                    break;
-                case 'misc':
-                    window.location.href = `${baseUrl}/payment/4`;
+            switch(type) {
+                case 'payment':
+                    if (id !== null) {
+                        window.location.href = `${baseUrl}/payment/${id}`;
+                    }
                     break;
                 case 'queue':
-                    window.location.href = `${baseUrl}/queue`;
+                    // First check if there's an existing queue number in session/local storage
+                    const queueNumber = localStorage.getItem('queueNumber');
+                    if (queueNumber) {
+                        window.location.href = `${baseUrl}/queue/status?number=${queueNumber}`;
+                    } else {
+                        window.location.href = `${baseUrl}/queue`;
+                    }
                     break;
                 case 'help':
                     window.location.href = `${baseUrl}/help`;
                     break;
+            }
+        }
+
+        // Function to handle queue number generation
+        async function generateQueueNumber(paymentItemId) {
+            try {
+                const response = await fetch(`${pageContext.request.contextPath}/kiosk/queue/new?paymentItemId=${paymentItemId}`);
+                const data = await response.json();
+                if (data.queueNumber) {
+                    localStorage.setItem('queueNumber', data.queueNumber);
+                    window.location.href = `${pageContext.request.contextPath}/kiosk/queue/status?number=${data.queueNumber}`;
+                }
+            } catch (error) {
+                console.error('Error generating queue number:', error);
+                alert('Failed to generate queue number. Please try again.');
+            }
+        }
+
+        // Function to check queue status
+        async function checkQueueStatus(queueNumber) {
+            try {
+                const response = await fetch(`${pageContext.request.contextPath}/kiosk/queue-status?number=${queueNumber}`);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error checking queue status:', error);
+                return null;
             }
         }
 
@@ -204,11 +224,28 @@
             window.location.href = '${pageContext.request.contextPath}/kiosk';
         }
 
-        // Add event listener for back button if it exists
+        // Initialize the page
         document.addEventListener('DOMContentLoaded', function() {
+            // Add back button listener if it exists
             const backButton = document.querySelector('.btn-back');
             if (backButton) {
                 backButton.addEventListener('click', returnToMain);
+            }
+
+            // Check for existing queue number
+            const queueNumber = localStorage.getItem('queueNumber');
+            if (queueNumber) {
+                checkQueueStatus(queueNumber).then(status => {
+                    if (status && status.status !== 'COMPLETED' && status.status !== 'CANCELLED') {
+                        // Show notification about existing queue
+                        const notification = document.createElement('div');
+                        notification.className = 'queue-notification';
+                        notification.innerHTML = 
+                            '<p>You have an active queue number: ' + queueNumber + '</p>' +
+                            '<button onclick="selectService(\'queue\')" class="btn btn-primary">Check Status</button>';
+                        document.querySelector('.header').appendChild(notification);
+                    }
+                });
             }
         });
     </script>
