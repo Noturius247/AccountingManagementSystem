@@ -38,8 +38,9 @@ buildNumber.properties
 .mvn/wrapper/maven-wrapper.jar
 
 # Spring Boot
-application-*.properties
-!application-example.properties
+application-local.properties
+application-dev.properties
+application-prod.properties
 .springBeans
 .sts4-cache/
 
@@ -86,9 +87,6 @@ Desktop.ini
 .env
 .env.local
 .env.*.local
-application-local.properties
-application-dev.properties
-application-prod.properties
 
 # Test reports
 test-output/
