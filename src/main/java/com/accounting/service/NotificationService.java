@@ -2,6 +2,7 @@ package com.accounting.service;
 
 import com.accounting.model.Notification;
 import java.util.List;
+import java.util.Map;
 
 public interface NotificationService {
     
@@ -11,9 +12,9 @@ public interface NotificationService {
     List<Notification> getSystemNotifications();
 
     /**
-     * Get count of unread notifications
+     * Get count of unread notifications for a user
      */
-    int getUnreadNotificationCount();
+    long getUnreadNotificationCount(String username);
 
     /**
      * Mark a notification as read
@@ -24,11 +25,6 @@ public interface NotificationService {
      * Create a new notification
      */
     void createNotification(String message);
-    
-    /**
-     * Get queue position for a number
-     */
-    int getQueuePosition(String number);
     
     /**
      * Get notifications for a specific user
@@ -53,10 +49,12 @@ public interface NotificationService {
     /**
      * Update notification settings for a user
      */
-    void updateNotificationSettings(String username, Object settings);
+    void updateNotificationSettings(String username, Map<String, Object> settings);
     
     /**
      * Mark notifications as read
      */
     void markAsRead(List<Long> notificationIds, String username);
+
+    int getQueuePosition(String queueNumber);
 } 

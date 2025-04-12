@@ -6,10 +6,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api/queue")
+@RequestMapping("/api/payment-queue")
 public class PaymentQueueController {
 
     private final PaymentQueueService paymentQueueService;
@@ -60,12 +62,22 @@ public class PaymentQueueController {
     }
 
     @GetMapping("/stats/total-amount")
-    public ResponseEntity<Double> getTotalQueueAmount() {
+    public ResponseEntity<BigDecimal> getTotalQueueAmount() {
         return ResponseEntity.ok(paymentQueueService.getTotalQueueAmount());
     }
 
     @GetMapping("/payment-types")
     public ResponseEntity<List<String>> getPaymentTypes() {
         return ResponseEntity.ok(paymentQueueService.getPaymentTypes());
+    }
+
+    @GetMapping("/total-amount")
+    public ResponseEntity<BigDecimal> getTotalAmount(@RequestParam String query) {
+        return ResponseEntity.ok(paymentQueueService.calculateTotalAmount(query));
+    }
+
+    @GetMapping("/statistics")
+    public ResponseEntity<Map<String, Object>> getStatistics(@RequestParam String query) {
+        return ResponseEntity.ok(paymentQueueService.getQueueStatistics(query));
     }
 } 

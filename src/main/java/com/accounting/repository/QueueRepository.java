@@ -1,46 +1,144 @@
 package com.accounting.repository;
 
+import com.accounting.model.Queue;
+import com.accounting.model.enums.QueueStatus;
+import com.accounting.model.enums.QueueType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import com.accounting.model.PaymentQueue;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface QueueRepository extends JpaRepository<PaymentQueue, Long> {
+public interface QueueRepository extends JpaRepository<Queue, Long> {
+    Optional<Queue> findByQueueNumber(String queueNumber);
     
-    /**
-     * Find the position of a queue number in the current queue
-     */
-    @Query("SELECT COUNT(q) + 1 FROM PaymentQueue q " +
-           "WHERE q.status = 'PENDING' AND q.timestamp < " +
-           "(SELECT pq.timestamp FROM PaymentQueue pq WHERE pq.queueNumber = :number AND pq.status = 'PENDING')")
-    int findQueuePosition(@Param("number") String number);
+    @Query("SELECT q FROM Queue q WHERE q.status = 'WAITING' ORDER BY q.createdAt ASC")
+    List<Queue> findWaitingQueuesOrderByCreatedAtAsc();
     
-    /**
-     * Find all pending queues ordered by timestamp
-     */
-    List<PaymentQueue> findByStatusOrderByTimestampAsc(String status);
+    @Query("SELECT COUNT(q) FROM Queue q WHERE q.status = ?1 AND q.createdAt < ?2")
+    long countByStatusAndCreatedAtBefore(String status, LocalDateTime dateTime);
     
-    /**
-     * Count queues by status
-     */
-    long countByStatus(String status);
+    Optional<Queue> findByUserUsername(String username);
     
-    /**
-     * Find queue by queue number
-     */
-    Optional<PaymentQueue> findByQueueNumber(String queueNumber);
+    @Query("SELECT q FROM Queue q WHERE q.status = 'WAITING' ORDER BY q.createdAt ASC")
+    Queue getNextInQueue();
     
-    /**
-     * Find queues by user ID
-     */
-    List<PaymentQueue> findByUserId(Long userId);
+    @Query("SELECT q FROM Queue q WHERE q.status = :status ORDER BY q.createdAt ASC")
+    List<Queue> findByStatusOrderByCreatedAtAsc(@Param("status") String status);
     
-    /**
-     * Find queues by status and user ID
-     */
-    List<PaymentQueue> findByStatusAndUserId(String status, Long userId);
+    @Query("SELECT COUNT(q) FROM Queue q WHERE q.status = 'WAITING' AND q.createdAt < (SELECT q2.createdAt FROM Queue q2 WHERE q2.userUsername = :username)")
+    int findQueuePosition(@Param("username") String username);
+    
+    @Query("SELECT AVG(TIMESTAMPDIFF(SECOND, q.createdAt, q.updatedAt)) FROM Queue q WHERE q.status = 'COMPLETED'")
+    Double calculateAverageProcessingTime();
+    
+    @Query("SELECT q FROM Queue q ORDER BY q.createdAt DESC LIMIT :limit")
+    List<Queue> findTopNByOrderByCreatedAtDesc(@Param("limit") int limit);
+    
+    @Query("SELECT q FROM Queue q WHERE q.userUsername = :username AND q.status = :status")
+    List<Queue> findByUsernameAndStatus(@Param("username") String username, @Param("status") String status);
+
+    @Query("SELECT q FROM Queue q WHERE q.user.username = :username ORDER BY q.createdAt DESC")
+    List<Queue> findByUserUsernameOrderByCreatedAtDesc(@Param("username") String username);
+
+    @Query("SELECT q FROM Queue q WHERE q.status = :status ORDER BY q.position ASC")
+    List<Queue> findByStatusOrderByPositionAsc(@Param("status") String status);
+
+    @Query("SELECT MAX(q.position) FROM Queue q WHERE q.status = :status")
+    Integer findMaxPositionByStatus(@Param("status") String status);
+
+    @Query("SELECT COUNT(q) FROM Queue q WHERE q.status = :status")
+    Long countByStatus(@Param("status") String status);
+
+    @Query("SELECT q.status, COUNT(q) FROM Queue q GROUP BY q.status")
+    List<Object[]> countByStatus();
+
+    @Query("SELECT q.type, COUNT(q) FROM Queue q GROUP BY q.type")
+    List<Object[]> countByType();
+
+    @Query("SELECT q.priority, COUNT(q) FROM Queue q GROUP BY q.priority")
+    List<Object[]> countByPriority();
+
+    @Query("SELECT q.status, AVG(q.estimatedWaitTime) FROM Queue q GROUP BY q.status")
+    List<Object[]> avgWaitTimeByStatus();
+
+    @Query("SELECT q.type, AVG(q.estimatedWaitTime) FROM Queue q GROUP BY q.type")
+    List<Object[]> avgWaitTimeByType();
+
+    @Query("SELECT q.priority, AVG(q.estimatedWaitTime) FROM Queue q GROUP BY q.priority")
+    List<Object[]> avgWaitTimeByPriority();
+
+    @Query("SELECT q FROM Queue q WHERE q.user.username = :username AND q.createdAt BETWEEN :startDate AND :endDate ORDER BY q.createdAt DESC")
+    List<Queue> findByUserUsernameAndCreatedAtBetweenOrderByCreatedAtDesc(
+        @Param("username") String username,
+        @Param("startDate") LocalDateTime startDate,
+        @Param("endDate") LocalDateTime endDate
+    );
+    
+    @Query("SELECT q FROM Queue q WHERE q.userUsername = :username AND " +
+           "(LOWER(q.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
+           "CAST(q.serviceId AS string) LIKE CONCAT('%', :keyword, '%')) " +
+           "ORDER BY q.createdAt DESC")
+    List<Queue> searchByUserAndKeyword(@Param("username") String username, @Param("keyword") String keyword);
+    
+    @Query("SELECT COUNT(q) FROM Queue q WHERE q.userUsername = :username")
+    long countByUserUsername(@Param("username") String username);
+    
+    @Query("SELECT COUNT(q) FROM Queue q WHERE q.userUsername = :username AND q.status = :status")
+    long countByUserUsernameAndStatus(@Param("username") String username, @Param("status") QueueStatus status);
+    
+    @Query("SELECT COUNT(q) FROM Queue q WHERE q.userUsername = :username AND q.type = :type")
+    long countByUserUsernameAndType(@Param("username") String username, @Param("type") QueueType type);
+    
+    @Query("SELECT AVG(q.estimatedWaitTime) FROM Queue q WHERE q.userUsername = :username")
+    Double averageWaitTimeByUserUsername(@Param("username") String username);
+    
+    @Query("SELECT q FROM Queue q WHERE q.userUsername = :username " +
+           "AND q.createdAt BETWEEN :startDate AND :endDate " +
+           "ORDER BY q.createdAt DESC")
+    Page<Queue> findByUserUsernameAndDateRange(
+        @Param("username") String username,
+        @Param("startDate") LocalDateTime startDate,
+        @Param("endDate") LocalDateTime endDate,
+        Pageable pageable);
+
+    @Query("SELECT q FROM Queue q WHERE q.createdAt BETWEEN :startDate AND :endDate")
+    List<Queue> findByCreatedAtBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+    
+    @Query("SELECT q FROM Queue q WHERE q.status = :status")
+    List<Queue> findByStatus(@Param("status") String status);
+    
+    @Query("SELECT q FROM Queue q WHERE q.user.username = :username AND q.status = :status")
+    List<Queue> findByUserUsernameAndStatus(@Param("username") String username, @Param("status") String status);
+
+    List<Queue> findByStatusOrderByCreatedAtDesc(QueueStatus status);
+    Optional<Queue> findFirstByStatusOrderByPositionAsc(QueueStatus status);
+    @Query("SELECT AVG(TIMESTAMPDIFF(SECOND, q.createdAt, q.processedAt)) FROM Queue q WHERE q.status = 'COMPLETED'")
+    Double avgWaitTime();
+    @Query("SELECT AVG(TIMESTAMPDIFF(SECOND, q.createdAt, q.processedAt)) FROM Queue q WHERE q.status = :status")
+    Double avgWaitTimeByStatus(@Param("status") String status);
+
+    @Query("SELECT MAX(q.position) FROM Queue q")
+    Optional<Integer> findMaxPosition();
+
+    List<Queue> findByTypeOrderByCreatedAtDesc(String type);
+
+    List<Queue> findByPriorityOrderByCreatedAtDesc(String priority);
+
+    List<Queue> findByDescriptionContainingIgnoreCaseOrderByCreatedAtDesc(String description);
+
+    List<Queue> findByEstimatedWaitTimeBetweenOrderByCreatedAtDesc(Integer minWaitTime, Integer maxWaitTime);
+
+    List<Queue> findByProcessedAtBetweenOrderByCreatedAtDesc(LocalDateTime startDate, LocalDateTime endDate);
+
+    @Query("SELECT COUNT(q) FROM Queue q WHERE q.type = :type")
+    long countByType(@Param("type") String type);
+
+    @Query("SELECT COUNT(q) FROM Queue q WHERE q.user.username = :username AND q.createdAt < (SELECT q2.createdAt FROM Queue q2 WHERE q2.user.username = :username AND q2.status = 'ACTIVE')")
+    int getPositionByUsername(@Param("username") String username);
 } 

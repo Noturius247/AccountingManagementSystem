@@ -1,16 +1,33 @@
 package com.accounting.controller;
 
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import com.accounting.service.SearchService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
-@RequestMapping("/api/search")
+@Controller
+@RequestMapping("/search")
 public class SearchController {
 
     @Autowired
     private SearchService searchService;
+
+    @GetMapping
+    public String search(@RequestParam(required = false) String query,
+                        @RequestParam(required = false) String type,
+                        Model model) {
+        if (query != null && !query.trim().isEmpty()) {
+            model.addAttribute("results", searchService.search(query, type));
+        }
+        model.addAttribute("query", query);
+        model.addAttribute("type", type);
+        return "search-results";
+    }
 
     @GetMapping("/payment-items")
     public ResponseEntity<?> searchPaymentItems(

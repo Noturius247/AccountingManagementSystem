@@ -1,6 +1,7 @@
 package com.accounting.servlet;
 
 import com.accounting.model.Notification;
+import com.accounting.model.enums.Priority;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,16 +24,16 @@ public class NotificationServlet extends BaseServlet {
         n1.setId(1L);
         n1.setTitle("System Update");
         n1.setMessage("System will be updated tonight at 10 PM");
-        n1.setType("INFO");
-        n1.setPriority("LOW");
+        n1.setNotificationType("INFO");
+        n1.setPriority(Priority.LOW);
         notifications.add(n1);
         
         Notification n2 = new Notification();
         n2.setId(2L);
         n2.setTitle("New Transaction");
         n2.setMessage("New payment received: $1000.00");
-        n2.setType("SUCCESS");
-        n2.setPriority("HIGH");
+        n2.setNotificationType("SUCCESS");
+        n2.setPriority(Priority.HIGH);
         notifications.add(n2);
     }
     

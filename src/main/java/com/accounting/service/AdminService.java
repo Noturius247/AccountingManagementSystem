@@ -31,4 +31,14 @@ public interface AdminService {
      * Get system settings and configurations
      */
     SystemSettings getSystemSettings();
+    
+    SystemSettings updateSystemSettings(SystemSettings settings);
+    
+    Object getSetting(String key);
+    
+    void updateSetting(String key, Object value);
+    
+    Map<String, Object> getAllSettings();
+    
+    void resetSettings();
 } 

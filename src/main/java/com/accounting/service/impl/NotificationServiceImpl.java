@@ -1,140 +1,190 @@
 package com.accounting.service.impl;
 
+import com.accounting.model.Notification;
+import com.accounting.model.Queue;
+import com.accounting.model.User;
+import com.accounting.repository.NotificationRepository;
+import com.accounting.repository.QueueRepository;
+import com.accounting.repository.UserRepository;
+import com.accounting.service.NotificationService;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.accounting.service.NotificationService;
-import com.accounting.model.Notification;
-import com.accounting.repository.NotificationRepository;
-import com.accounting.repository.UserRepository;
-import com.accounting.repository.QueueRepository;
-
-import java.util.List;
-import java.util.HashMap;
-import java.util.Map;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 @Service
+@Transactional
+@Slf4j
 public class NotificationServiceImpl implements NotificationService {
+    private final NotificationRepository notificationRepository;
+    private final UserRepository userRepository;
+    private final QueueRepository queueRepository;
 
     @Autowired
-    private NotificationRepository notificationRepository;
-    
-    @Autowired
-    private UserRepository userRepository;
-    
-    @Autowired
-    private QueueRepository queueRepository;
+    public NotificationServiceImpl(
+            NotificationRepository notificationRepository,
+            UserRepository userRepository,
+            QueueRepository queueRepository) {
+        this.notificationRepository = notificationRepository;
+        this.userRepository = userRepository;
+        this.queueRepository = queueRepository;
+    }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Notification> getSystemNotifications() {
-        return notificationRepository.findByTypeOrderByCreatedAtDesc("SYSTEM");
+        log.debug("Getting system notifications");
+        return notificationRepository.findSystemNotifications();
     }
 
     @Override
-    public int getUnreadNotificationCount() {
-        return (int) notificationRepository.count();
+    @Transactional(readOnly = true)
+    public long getUnreadNotificationCount(String username) {
+        log.debug("Getting unread notification count for user: {}", username);
+        if (!StringUtils.hasText(username)) {
+            throw new IllegalArgumentException("Username cannot be empty");
+        }
+        return notificationRepository.countUnreadByUsername(username);
     }
 
     @Override
+    @Transactional
     public void markNotificationAsRead(Long notificationId) {
-        notificationRepository.findById(notificationId).ifPresent(n -> {
-            n.setRead(true);
-            n.setReadAt(LocalDateTime.now());
-            notificationRepository.save(n);
-        });
-    }
-
-    @Override
-    public void createNotification(String message) {
-        Notification notification = new Notification();
-        notification.setMessage(message);
-        notification.setType("SYSTEM");
-        notification.setCreatedAt(LocalDateTime.now());
+        log.debug("Marking notification as read: {}", notificationId);
+        if (notificationId == null) {
+            throw new IllegalArgumentException("Notification ID cannot be null");
+        }
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() -> new RuntimeException("Notification not found with id: " + notificationId));
+        notification.setRead(true);
         notificationRepository.save(notification);
     }
 
     @Override
-    public int getQueuePosition(String number) {
-        return queueRepository.findQueuePosition(number);
+    @Transactional
+    public void createNotification(String message) {
+        log.debug("Creating new notification with message: {}", message);
+        if (!StringUtils.hasText(message)) {
+            throw new IllegalArgumentException("Notification message cannot be empty");
+        }
+        Notification notification = new Notification();
+        notification.setMessage(message);
+        notification.setCreatedAt(LocalDateTime.now());
+        notification.setRead(false);
+        notificationRepository.save(notification);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Notification> getUserNotifications(String username) {
-        return notificationRepository.findByUserUsernameOrderByCreatedAtDesc(username);
+        log.debug("Getting notifications for user: {}", username);
+        if (!StringUtils.hasText(username)) {
+            throw new IllegalArgumentException("Username cannot be empty");
+        }
+        return notificationRepository.findByUsernameOrderByCreatedAtDesc(username);
     }
 
     @Override
+    @Transactional
     public void subscribe(String username, String type, String queueNumber) {
-        var user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new RuntimeException("User not found"));
-            
-        var settings = user.getNotificationSettings();
-        if (settings == null) {
-            settings = new HashMap<>();
+        log.debug("Subscribing user {} to notifications of type {} for queue {}", username, type, queueNumber);
+        if (!StringUtils.hasText(username) || !StringUtils.hasText(type) || !StringUtils.hasText(queueNumber)) {
+            throw new IllegalArgumentException("Username, type and queue number cannot be empty");
         }
-        
-        if (!settings.containsKey("subscriptions")) {
-            settings.put("subscriptions", new HashMap<>());
-        }
-        
-        @SuppressWarnings("unchecked")
-        Map<String, Object> subscriptions = (Map<String, Object>) settings.get("subscriptions");
-        subscriptions.put(type, queueNumber != null ? queueNumber : true);
-        
-        user.setNotificationSettings(settings);
-        userRepository.save(user);
+        Notification notification = new Notification();
+        notification.setMessage("Subscribed to " + type + " notifications for queue " + queueNumber);
+        notification.setNotificationType(type);
+        notification.setUser(userRepository.findByUsername(username)
+            .orElseThrow(() -> new EntityNotFoundException("User not found")));
+        notification.setCreatedAt(LocalDateTime.now());
+        notification.setRead(false);
+        notificationRepository.save(notification);
     }
 
     @Override
+    @Transactional
     public void unsubscribe(String username, String type) {
-        var user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new RuntimeException("User not found"));
-            
-        var settings = user.getNotificationSettings();
-        if (settings != null && settings.containsKey("subscriptions")) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> subscriptions = (Map<String, Object>) settings.get("subscriptions");
-            subscriptions.remove(type);
-            user.setNotificationSettings(settings);
-            userRepository.save(user);
+        log.debug("Unsubscribing user {} from notifications of type {}", username, type);
+        if (!StringUtils.hasText(username) || !StringUtils.hasText(type)) {
+            throw new IllegalArgumentException("Username and type cannot be empty");
         }
+        // Implementation depends on your subscription mechanism
+        // This is just a placeholder
+        List<Notification> notifications = notificationRepository.findByUserUsernameAndTypeOrderByCreatedAtDesc(username, type);
+        notificationRepository.deleteAll(notifications);
     }
 
     @Override
-    public Object getNotificationSettings(String username) {
-        return userRepository.findByUsername(username)
-            .map(user -> user.getNotificationSettings())
-            .orElse(new HashMap<>());
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public void updateNotificationSettings(String username, Object settings) {
-        var user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new RuntimeException("User not found"));
-            
-        if (settings instanceof Map) {
-            user.setNotificationSettings((Map<String, Object>) settings);
-        } else {
-            // If settings is not a Map, create a new map with a default key
-            Map<String, Object> settingsMap = new HashMap<>();
-            settingsMap.put("settings", settings);
-            user.setNotificationSettings(settingsMap);
+    @Transactional(readOnly = true)
+    public Map<String, Object> getNotificationSettings(String username) {
+        log.debug("Getting notification settings for user: {}", username);
+        if (!StringUtils.hasText(username)) {
+            throw new IllegalArgumentException("Username cannot be empty");
         }
-        
-        userRepository.save(user);
+        List<Notification> notifications = notificationRepository.findTopByOrderByCreatedAtDesc(1);
+        if (notifications.isEmpty()) {
+            throw new RuntimeException("No notification settings found for user: " + username);
+        }
+        Notification notification = notifications.get(0);
+        return notification.getSettings();
     }
 
     @Override
+    @Transactional
+    public void updateNotificationSettings(String username, Map<String, Object> settings) {
+        log.debug("Updating notification settings for user: {} with settings: {}", username, settings);
+        if (!StringUtils.hasText(username)) {
+            throw new IllegalArgumentException("Username cannot be empty");
+        }
+        if (settings == null || settings.isEmpty()) {
+            throw new IllegalArgumentException("Settings cannot be null or empty");
+        }
+        List<Notification> notifications = notificationRepository.findTopByOrderByCreatedAtDesc(1);
+        if (notifications.isEmpty()) {
+            throw new RuntimeException("No notification settings found for user: " + username);
+        }
+        Notification notification = notifications.get(0);
+        notification.setSettings(settings);
+        notificationRepository.save(notification);
+    }
+
+    @Override
+    @Transactional
     public void markAsRead(List<Long> notificationIds, String username) {
-        var notifications = notificationRepository.findAllById(notificationIds);
-        notifications.forEach(n -> {
-            if (n.getUser().getUsername().equals(username)) {
-                n.setRead(true);
-                n.setReadAt(LocalDateTime.now());
+        log.debug("Marking notifications as read for user: {} with ids: {}", username, notificationIds);
+        if (!StringUtils.hasText(username)) {
+            throw new IllegalArgumentException("Username cannot be empty");
+        }
+        if (notificationIds == null || notificationIds.isEmpty()) {
+            throw new IllegalArgumentException("Notification IDs cannot be null or empty");
+        }
+        List<Notification> notifications = notificationRepository.findAllById(notificationIds);
+        for (Notification notification : notifications) {
+            if (!notification.getUser().getUsername().equals(username)) {
+                throw new RuntimeException("User " + username + " does not have permission to mark notification " + notification.getId() + " as read");
             }
-        });
+            notification.setRead(true);
+        }
         notificationRepository.saveAll(notifications);
+    }
+
+    @Override
+    public int getQueuePosition(String queueNumber) {
+        Queue queue = queueRepository.findByQueueNumber(queueNumber)
+            .orElseThrow(() -> new EntityNotFoundException("Queue not found"));
+        return queue.getPosition();
     }
 } 

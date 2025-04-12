@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import com.accounting.service.NotificationService;
 import com.accounting.model.Notification;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -46,7 +47,7 @@ public class NotificationController {
 
     @PostMapping("/settings")
     public void updateNotificationSettings(
-            @RequestBody Object settings,
+            @RequestBody Map<String, Object> settings,
             Authentication auth) {
         notificationService.updateNotificationSettings(auth.getName(), settings);
     }
