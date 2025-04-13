@@ -7,203 +7,341 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Accounting Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/main.css">
     <style>
+        :root {
+            --primary-color: #800000; /* Maroon */
+            --primary-dark: #600000;
+            --secondary-color: #D4AF37; /* Gold */
+            --secondary-light: #F4CF67;
+            --text-color: #333333;
+            --light-gray: #f8f9fa;
+            --medium-gray: #6c757d;
+            --border-color: #dee2e6;
+            --error-color: #dc3545;
+            --success-color: #198754;
+        }
+        
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            background: linear-gradient(135deg, var(--primary-color) 0%, #A52A2A 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: var(--text-color);
         }
+        
         .login-container {
             background: white;
             padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
             width: 100%;
-            max-width: 400px;
+            max-width: 450px;
             margin: 20px;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid var(--secondary-color);
         }
+        
+        .login-container::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+        
         .login-header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 35px;
+            position: relative;
         }
+        
         .login-header h1 {
-            color: #2c3e50;
+            color: var(--primary-color);
             margin: 0;
             font-size: 28px;
+            font-weight: 600;
         }
-        .login-header p {
-            color: #7f8c8d;
-            margin: 10px 0 0;
-        }
-        .form-group {
+        
+        .login-header .logo {
             margin-bottom: 20px;
+            font-size: 48px;
+            color: var(--secondary-color);
+            background: var(--primary-color);
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
+        
+        .login-header p {
+            color: var(--medium-gray);
+            margin: 10px 0 0;
+            font-size: 16px;
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+        }
+        
         .form-group label {
             display: block;
             margin-bottom: 8px;
-            color: #2c3e50;
+            color: var(--text-color);
             font-weight: 500;
+            font-size: 15px;
         }
+        
+        .input-group {
+            position: relative;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--medium-gray);
+        }
+        
         .form-control {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 12px 12px 12px 40px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
             font-size: 16px;
-            transition: border-color 0.3s;
+            transition: all 0.3s;
+            box-sizing: border-box;
         }
+        
         .form-control:focus {
-            border-color: #3498db;
+            border-color: var(--primary-color);
             outline: none;
-            box-shadow: 0 0 5px rgba(52,152,219,0.3);
+            box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.15);
         }
+        
         .btn-login {
             width: 100%;
-            padding: 12px;
-            background: #3498db;
+            padding: 14px;
+            background: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             font-size: 16px;
             font-weight: 500;
             cursor: pointer;
             transition: background 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
         }
+        
         .btn-login:hover {
-            background: #2980b9;
+            background: var(--primary-dark);
         }
+        
+        .btn-login:disabled {
+            background: var(--medium-gray);
+            cursor: not-allowed;
+        }
+        
         .login-footer {
             text-align: center;
-            margin-top: 20px;
-            color: #7f8c8d;
+            margin-top: 25px;
+            color: var(--medium-gray);
+            font-size: 15px;
         }
+        
         .login-footer a {
-            color: #3498db;
+            color: var(--primary-color);
             text-decoration: none;
+            font-weight: 500;
         }
+        
         .login-footer a:hover {
             text-decoration: underline;
         }
-        .error-message {
-            color: #e74c3c;
-            background: #fde8e8;
-            padding: 10px;
-            border-radius: 5px;
+        
+        .alert {
+            padding: 14px;
             margin-bottom: 20px;
-            text-align: center;
-            display: none;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
-        .password-toggle {
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            border-left: 4px solid var(--error-color);
+            color: #721c24;
+        }
+        
+        .alert-success {
+            background-color: #d1e7dd;
+            border-left: 4px solid var(--success-color);
+            color: #0f5132;
+        }
+        
+        .password-input {
             position: relative;
         }
-        .password-toggle .toggle-icon {
+        
+        .toggle-password {
             position: absolute;
             right: 12px;
             top: 50%;
             transform: translateY(-50%);
-            cursor: pointer;
-            color: #7f8c8d;
-        }
-        .remember-me {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .remember-me input {
-            margin-right: 8px;
-        }
-        .forgot-password {
-            text-align: right;
-            margin-bottom: 20px;
-        }
-        .forgot-password a {
-            color: #3498db;
-            text-decoration: none;
-            font-size: 14px;
-        }
-        .forgot-password a:hover {
-            text-decoration: underline;
-        }
-        .loading {
-            display: none;
-            text-align: center;
-            margin-top: 10px;
-        }
-        .loading:after {
-            content: '.';
-            animation: dots 1s steps(5, end) infinite;
-        }
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60% { content: '...'; }
-            80%, 100% { content: ''; }
-        }
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 10px auto;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .password-input {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-        .toggle-password {
-            position: absolute;
-            right: 10px;
             background: none;
             border: none;
             cursor: pointer;
-            color: #666;
+            color: var(--medium-gray);
+            padding: 0;
+            font-size: 16px;
         }
+        
         .toggle-password:hover {
-            color: #333;
+            color: var(--text-color);
         }
-        .alert {
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
         }
-        .alert-danger {
-            background-color: #f8d7da;
-            border-color: #f5c6cb;
-            color: #721c24;
+        
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-color);
         }
-        .alert-success {
-            background-color: #d4edda;
-            border-color: #c3e6cb;
-            color: #155724;
+        
+        .links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        
+        .links a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        
+        .links a:hover {
+            text-decoration: underline;
+        }
+        
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .system-info {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            font-size: 13px;
+            color: var(--medium-gray);
+        }
+        
+        .accounting-graphic {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+        
+        .accounting-icon-group {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .accounting-icon {
+            width: 40px;
+            height: 40px;
+            background: #FFF8E1;
+            border: 1px solid var(--secondary-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary-color);
+            font-size: 20px;
+        }
+        
+        .page-decoration {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle, var(--secondary-light) 0%, transparent 70%);
+            opacity: 0.1;
+            z-index: -1;
+        }
+        
+        .decoration-1 {
+            top: -100px;
+            right: -100px;
+        }
+        
+        .decoration-2 {
+            bottom: -100px;
+            left: -100px;
         }
     </style>
 </head>
 <body>
     <div class="login-container">
+        <div class="page-decoration decoration-1"></div>
+        <div class="page-decoration decoration-2"></div>
+        
         <div class="login-header">
+            <div class="logo">
+                <i class="fas fa-calculator"></i>
+            </div>
             <h1>Accounting Management System</h1>
-            <p>Please sign in to continue</p>
+            <p>Enter your credentials to access the system</p>
+        </div>
+        
+        <div class="accounting-graphic">
+            <div class="accounting-icon-group">
+                <div class="accounting-icon"><i class="fas fa-chart-pie"></i></div>
+                <div class="accounting-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+                <div class="accounting-icon"><i class="fas fa-coins"></i></div>
+                <div class="accounting-icon"><i class="fas fa-book"></i></div>
+            </div>
         </div>
 
         <c:if test="${param.error != null}">
             <div class="alert alert-danger" id="errorMessage">
+                <i class="fas fa-exclamation-circle"></i>
                 Invalid username or password
             </div>
         </c:if>
         <c:if test="${param.logout != null}">
             <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
                 You have been logged out successfully
             </div>
         </c:if>
@@ -213,47 +351,67 @@
             
             <div class="form-group">
                 <label for="username">Username</label>
-                <input type="text" id="username" name="username" class="form-control" required>
+                <div class="input-group">
+                    <i class="fas fa-user input-icon"></i>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="Enter your username" required autocomplete="username">
+                </div>
             </div>
             
             <div class="form-group">
                 <label for="password">Password</label>
                 <div class="password-input">
-                    <input type="password" id="password" name="password" class="form-control" required>
+                    <i class="fas fa-lock input-icon"></i>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
                     <button type="button" onclick="togglePassword()" class="toggle-password">
-                        <i class="fas fa-eye"></i>
+                        <i class="fas fa-eye" id="toggleIcon"></i>
                     </button>
                 </div>
             </div>
             
-            <div class="form-group">
-                <label>
-                    <input type="checkbox" name="remember-me"> Remember me
-                </label>
+            <div class="checkbox-group">
+                <input type="checkbox" id="remember-me" name="remember-me">
+                <label for="remember-me">Remember me</label>
             </div>
 
             <div class="form-group">
-                <button type="submit" id="loginButton" class="btn btn-primary">Sign In</button>
-                <div id="loadingIndicator" style="display: none;">
-                    <div class="spinner"></div>
-                </div>
+                <button type="submit" id="loginButton" class="btn-login">
+                    <span>Sign In</span>
+                    <div id="loadingIndicator" style="display: none;">
+                        <div class="spinner"></div>
+                    </div>
+                </button>
             </div>
             
             <div class="links">
                 <a href="${pageContext.request.contextPath}/forgot-password">Forgot Password?</a>
-                <a href="${pageContext.request.contextPath}/register">Register</a>
+                <a href="${pageContext.request.contextPath}/register">Create Account</a>
             </div>
         </form>
 
         <div class="login-footer">
             Don't have an account? <a href="${pageContext.request.contextPath}/register">Register here</a>
         </div>
+        
+        <div class="system-info">
+            <p>Accounting Management System v3.5 | © 2025 Your Company</p>
+            <p>Secure Enterprise Solution</p>
+        </div>
     </div>
 
     <script>
         function togglePassword() {
             const passwordInput = document.getElementById('password');
-            passwordInput.type = passwordInput.type === 'password' ? 'text' : 'password';
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
         }
 
         function handleSubmit(event) {
@@ -262,44 +420,74 @@
             const errorMessage = document.getElementById('errorMessage');
             const loadingIndicator = document.getElementById('loadingIndicator');
             const loginButton = document.getElementById('loginButton');
+            const loginText = loginButton.querySelector('span');
 
-            errorMessage.style.display = 'none';
+            // Hide any existing error messages
+            if (errorMessage) {
+                errorMessage.style.display = 'none';
+            }
             
             if (!username) {
-                errorMessage.textContent = 'Please enter your username';
-                errorMessage.style.display = 'block';
+                showError('Please enter your username');
                 return false;
             }
 
             if (!password) {
-                errorMessage.textContent = 'Please enter your password';
-                errorMessage.style.display = 'block';
+                showError('Please enter your password');
                 return false;
             }
 
             // Show loading state
             loadingIndicator.style.display = 'block';
             loginButton.disabled = true;
-            loginButton.textContent = 'Signing in...';
+            loginText.textContent = 'Signing in...';
 
             return true;
+        }
+        
+        function showError(message) {
+            let errorMessage = document.getElementById('errorMessage');
+            
+            if (!errorMessage) {
+                errorMessage = document.createElement('div');
+                errorMessage.id = 'errorMessage';
+                errorMessage.className = 'alert alert-danger';
+                
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-exclamation-circle';
+                errorMessage.appendChild(icon);
+                
+                const text = document.createTextNode(' ' + message);
+                errorMessage.appendChild(text);
+                
+                const form = document.querySelector('form');
+                form.parentNode.insertBefore(errorMessage, form);
+            } else {
+                errorMessage.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + message;
+                errorMessage.style.display = 'flex';
+            }
         }
 
         // Clear error message when user starts typing
         document.getElementById('username').addEventListener('input', () => {
-            document.getElementById('errorMessage').style.display = 'none';
+            const errorMessage = document.getElementById('errorMessage');
+            if (errorMessage) {
+                errorMessage.style.display = 'none';
+            }
         });
 
         document.getElementById('password').addEventListener('input', () => {
-            document.getElementById('errorMessage').style.display = 'none';
+            const errorMessage = document.getElementById('errorMessage');
+            if (errorMessage) {
+                errorMessage.style.display = 'none';
+            }
         });
 
         // Check for error message from server
         const errorParam = new URLSearchParams(window.location.search).get('error');
         if (errorParam) {
-            document.getElementById('errorMessage').textContent = decodeURIComponent(errorParam);
-            document.getElementById('errorMessage').style.display = 'block';
+            showError(decodeURIComponent(errorParam));
         }
     </script>
 </body>
-</html> 
+</html>
