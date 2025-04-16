@@ -34,7 +34,7 @@ public class SecurityConfig {
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**", "/static/**").permitAll()
                 .requestMatchers("/login", "/register", "/forgot-password").permitAll()
                 .requestMatchers("/WEB-INF/jsp/**").permitAll()
-                .requestMatchers("/kiosk/**").permitAll()
+                .requestMatchers("/kiosk/**", "/accounting/kiosk/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/manager/**").hasRole("MANAGER")
                 .requestMatchers("/user/**").hasRole("USER")

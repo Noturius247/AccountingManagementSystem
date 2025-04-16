@@ -6,188 +6,250 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Online KIOSK - Payment Selection</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>School Payment Kiosk</title>
+    <!-- Font Awesome 6 CSS via CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        :root {
-            --primary-color: #3498db;
-            --success-color: #2ecc71;
-            --danger-color: #e74c3c;
-            --warning-color: #f39c12;
-            --info-color: #17a2b8;
-            --dark-color: #2c3e50;
-            --light-color: #ecf0f1;
-        }
-
-        body {
-            background-color: #f5f7fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
-
-        .kiosk-container {
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            padding: 20px;
+        }
+        .header {
+            max-width: 1200px;
+            margin: 0 auto 20px;
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        .header p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .search-box {
+            display: flex;
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .search-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 1em;
+            transition: border-color 0.2s;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+        .search-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+        .search-btn:hover {
+            background: #1976D2;
+        }
+        .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 20px;
-        }
-
-        .header {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .header h1 {
-            color: var(--dark-color);
-            margin: 0;
-        }
-
-        .payment-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .payment-card {
-            background: white;
             padding: 20px;
+        }
+        .card {
+            background: white;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 20px;
             text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
             cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
         }
-
-        .payment-card:hover {
+        .card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: #2196F3;
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
         }
-
-        .payment-card i {
-            font-size: 2.5rem;
-            color: var(--primary-color);
+        .card:hover::after {
+            transform: scaleX(1);
+        }
+        .card i {
+            font-size: 2.5em;
             margin-bottom: 15px;
+            color: #2196F3;
+            transition: transform 0.3s ease;
         }
-
-        .payment-card h3 {
-            color: var(--dark-color);
-            margin: 10px 0;
+        .card:hover i {
+            transform: scale(1.1);
         }
-
-        .payment-card p {
+        .card h2 {
+            color: #333;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        .card p {
             color: #666;
             margin-bottom: 15px;
         }
-
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background-color 0.2s ease;
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #333;
+            padding: 10px;
+            text-align: center;
+        }
+        .footer-icons {
+            color: white;
+            font-size: 1.5em;
+            margin: 0 10px;
             text-decoration: none;
         }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background-color: #2980b9;
-        }
-
-        .btn-back {
-            background-color: var(--dark-color);
-            color: white;
-            margin-bottom: 20px;
-        }
-
-        .btn-back:hover {
-            background-color: #1a252f;
-        }
-
-        #mainContent {
-            min-height: 400px;
+        .footer-icons:hover {
+            color: #2196F3;
         }
     </style>
 </head>
 <body>
-    <div class="kiosk-container">
-        <div class="header">
-            <h1>School Payment Kiosk</h1>
-            <p>Select a service to proceed</p>
+    <!-- Header with Search -->
+    <div class="header">
+        <h1>School Payment Kiosk</h1>
+        <p>Select a service to proceed</p>
+        <!-- Debug info - hidden in production -->
+        <div style="display: none;" id="debugInfo">
+            Context Path: ${pageContext.request.contextPath}
         </div>
-
-        <div id="mainContent">
-            <!-- Dynamic Payment Items -->
-            <div class="payment-grid">
-                <c:forEach items="${paymentItems}" var="item">
-                    <div class="payment-card" onclick='selectService("payment", "${item.id}")'>
-                        <i class="${item.icon}"></i>
-                        <h3>${item.name}</h3>
-                        <p>${item.description}</p>
-                        <button class="btn btn-primary">Select</button>
-                    </div>
-                </c:forEach>
-
-                <!-- Queue Status Card -->
-                <div class="payment-card" onclick="selectService('queue')">
-                    <i class="fas fa-users"></i>
-                    <h3>Queue Status</h3>
-                    <p>Check your queue number and waiting time</p>
-                    <button class="btn btn-primary">Check Status</button>
-                </div>
-
-                <!-- Help Card -->
-                <div class="payment-card" onclick="selectService('help')">
-                    <i class="fas fa-question-circle"></i>
-                    <h3>Help</h3>
-                    <p>Get assistance with your payment</p>
-                    <button class="btn btn-primary">Get Help</button>
-                </div>
-            </div>
-
-            <!-- Search Section -->
-            <div class="search-section">
-                <form action="${pageContext.request.contextPath}/kiosk/search" method="GET" class="search-form">
-                    <input type="text" name="query" placeholder="Search payments..." class="search-input">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-search"></i> Search
-                    </button>
-                </form>
-            </div>
+        <div class="search-box">
+            <input type="text" class="search-input" placeholder="Search payments...">
+            <button class="search-btn">
+                <i class="fas fa-search"></i>
+                Search
+            </button>
         </div>
     </div>
 
+    <div class="container">
+        <!-- First Semester Tuition -->
+        <div class="card" onclick="selectService('payment', 'tuition')">
+            <i class="fas fa-graduation-cap"></i>
+            <h2>Tuition</h2>
+            <p>Regular term tuition payment</p>
+        </div>
+
+        <!-- Library Access Fee -->
+        <div class="card" onclick="selectService('payment', 'library')">
+            <i class="fas fa-book-reader"></i>
+            <h2>Library Access Fee</h2>
+            <p>Semester library access</p>
+        </div>
+
+        <!-- Chemistry Lab Fee -->
+        <div class="card" onclick="selectService('payment', 'lab')">
+            <i class="fas fa-flask"></i>
+            <h2>Chemistry Lab Fee</h2>
+            <p>Laboratory equipment and materials</p>
+        </div>
+
+        <!-- Student ID Replacement -->
+        <div class="card" onclick="selectService('payment', 'id')">
+            <i class="fas fa-id-card"></i>
+            <h2>Student ID Replacement</h2>
+            <p>Lost ID replacement fee</p>
+        </div>
+
+        <!-- Graduation Fee -->
+        <div class="card" onclick="selectService('payment', 'graduation')">
+            <i class="fas fa-user-graduate"></i>
+            <h2>Graduation Fee</h2>
+            <p>Graduation ceremony and documents</p>
+        </div>
+
+        <!-- Transcript Request -->
+        <div class="card" onclick="selectService('payment', 'transcript')">
+            <i class="fas fa-file-alt"></i>
+            <h2>Transcript Request</h2>
+            <p>Official transcript processing</p>
+        </div>
+
+        <!-- Queue Status -->
+        <div class="card" onclick="selectService('queue')">
+            <i class="fas fa-users"></i>
+            <h2>Queue Status</h2>
+            <p>Check your queue number and waiting time</p>
+        </div>
+
+        <!-- Help -->
+        <div class="card" onclick="selectService('help')">
+            <i class="fas fa-question-circle"></i>
+            <h2>Help</h2>
+            <p>Get assistance with your payment</p>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <a href="#" class="footer-icons"><i class="fas fa-home"></i></a>
+        <a href="#" class="footer-icons"><i class="fas fa-cog"></i></a>
+    </footer>
+
     <script>
+        // Store the context path in a variable that will be evaluated by JSP
+        var contextPath = '${pageContext.request.contextPath}';
+        
         function selectService(type, id = null) {
-            const baseUrl = '${pageContext.request.contextPath}/kiosk';
-            
             switch(type) {
                 case 'payment':
                     if (id !== null) {
-                        window.location.href = `${baseUrl}/payment/${id}`;
+                        console.log('Navigating to payment:', id);
+                        window.location.href = contextPath + '/kiosk/payment/' + id;
                     }
                     break;
                 case 'queue':
-                    // First check if there's an existing queue number in session/local storage
                     const queueNumber = localStorage.getItem('queueNumber');
                     if (queueNumber) {
-                        window.location.href = `${baseUrl}/queue/status?number=${queueNumber}`;
+                        window.location.href = contextPath + '/kiosk/queue/status?number=' + queueNumber;
                     } else {
-                        window.location.href = `${baseUrl}/queue`;
+                        window.location.href = contextPath + '/kiosk/queue';
                     }
                     break;
                 case 'help':
-                    window.location.href = `${baseUrl}/help`;
+                    window.location.href = contextPath + '/kiosk/help';
                     break;
             }
         }
@@ -195,11 +257,11 @@
         // Function to handle queue number generation
         async function generateQueueNumber(paymentItemId) {
             try {
-                const response = await fetch(`${pageContext.request.contextPath}/kiosk/queue/new?paymentItemId=${paymentItemId}`);
+                const response = await fetch(contextPath + '/kiosk/queue/new?paymentItemId=' + paymentItemId);
                 const data = await response.json();
                 if (data.queueNumber) {
                     localStorage.setItem('queueNumber', data.queueNumber);
-                    window.location.href = `${pageContext.request.contextPath}/kiosk/queue/status?number=${data.queueNumber}`;
+                    window.location.href = contextPath + '/kiosk/queue/status?number=' + data.queueNumber;
                 }
             } catch (error) {
                 console.error('Error generating queue number:', error);
@@ -210,7 +272,7 @@
         // Function to check queue status
         async function checkQueueStatus(queueNumber) {
             try {
-                const response = await fetch(`${pageContext.request.contextPath}/kiosk/queue-status?number=${queueNumber}`);
+                const response = await fetch(contextPath + '/kiosk/queue-status?number=' + queueNumber);
                 const data = await response.json();
                 return data;
             } catch (error) {
@@ -221,11 +283,13 @@
 
         // Function to return to main kiosk page
         function returnToMain() {
-            window.location.href = '${pageContext.request.contextPath}/kiosk';
+            window.location.href = contextPath + '/kiosk';
         }
 
         // Initialize the page
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Context Path:', contextPath); // Debug log
+            
             // Add back button listener if it exists
             const backButton = document.querySelector('.btn-back');
             if (backButton) {

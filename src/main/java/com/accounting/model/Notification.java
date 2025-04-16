@@ -15,10 +15,12 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.accounting.model.converter.JsonToMapConverter;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Entity
@@ -76,9 +78,18 @@ public class Notification {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(columnDefinition = "jsonb")
-    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(columnDefinition = "JSON")
+    @Convert(converter = JsonToMapConverter.class)
     private Map<String, Object> settings = new HashMap<>();
+
+    @Column(name = "payment_settings", columnDefinition = "JSON")
+    @Convert(converter = JsonToMapConverter.class)
+    private Map<String, Object> paymentSettings = new HashMap<>(Map.of(
+        "allowedMethods", List.of("CASH"),
+        "defaultMethod", "CASH",
+        "cashOnly", true,
+        "version", "1.0"
+    ));
 
     @PrePersist
     protected void onCreate() {
@@ -108,7 +119,7 @@ public class Notification {
 
     public void updateSettings(Map<String, Object> newSettings) {
         if (newSettings != null) {
-            this.settings.putAll(newSettings);
+            this.settings = newSettings;
         }
     }
 
@@ -120,24 +131,12 @@ public class Notification {
         return readAt != null ? readAt.format(DATE_FORMATTER) : "";
     }
 
-    public void setSettingsFromJson(String json) {
-        try {
-            if (json != null && !json.isEmpty()) {
-                this.settings = objectMapper.readValue(json, Map.class);
-            }
-        } catch (JsonProcessingException e) {
-            log.error("Error parsing settings JSON: {}", e.getMessage());
-            this.settings = new HashMap<>();
-        }
+    public Map<String, Object> getSettings() {
+        return settings;
     }
 
-    public String getSettingsAsJson() {
-        try {
-            return objectMapper.writeValueAsString(settings);
-        } catch (JsonProcessingException e) {
-            log.error("Error converting settings to JSON: {}", e.getMessage());
-            return "{}";
-        }
+    public void setSettings(Map<String, Object> settings) {
+        this.settings = settings != null ? settings : new HashMap<>();
     }
 
     public String getPriorityLevel() {
@@ -164,5 +163,13 @@ public class Notification {
 
     public String getFormattedExpiresAt() {
         return expiresAt != null ? expiresAt.format(DATE_FORMATTER) : "";
+    }
+
+    public Map<String, Object> getPaymentSettings() {
+        return paymentSettings;
+    }
+
+    public void setPaymentSettings(Map<String, Object> paymentSettings) {
+        this.paymentSettings = paymentSettings != null ? paymentSettings : new HashMap<>();
     }
 } 

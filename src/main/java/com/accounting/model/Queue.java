@@ -41,9 +41,9 @@ public class Queue {
     @Enumerated(EnumType.STRING)
     private QueueType type;
 
-    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private Priority priority;
+    @Column(nullable = false)
+    private Priority priority = Priority.NORMAL;
 
     @Column(nullable = false)
     private Integer position = 1;
@@ -87,7 +87,7 @@ public class Queue {
             updatedAt = LocalDateTime.now();
         }
         if (priority == null) {
-            priority = Priority.MEDIUM;
+            priority = Priority.NORMAL;
         }
     }
 
