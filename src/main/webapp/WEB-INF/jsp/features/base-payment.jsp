@@ -6,19 +6,8 @@
     <meta charset="UTF-8">
     <title>${title} - Accounting System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        .payment-form {
-            max-width: 600px;
-            margin: 2rem auto;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        .error-message {
-            color: #dc3545;
-            margin-bottom: 1rem;
-        }
-    </style>
+    <!-- Custom CSS -->
+    <link href="${pageContext.request.contextPath}/static/css/main.css" rel="stylesheet" type="text/css">
 </head>
 <body>
     <div class="container">

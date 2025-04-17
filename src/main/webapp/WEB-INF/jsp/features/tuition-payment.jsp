@@ -6,93 +6,93 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tuition Payment - School Payment Kiosk</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="${pageContext.request.contextPath}/static/css/main.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            padding: 20px;
-        }
         .container {
             max-width: 800px;
-            margin: 0 auto;
+            margin: var(--spacing-lg) auto;
             background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: var(--spacing-lg);
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-md);
         }
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: var(--spacing-lg);
         }
         .header h1 {
-            color: #333;
-            margin-bottom: 10px;
+            color: var(--primary-color);
+            margin-bottom: var(--spacing-sm);
+            font-weight: 600;
         }
         .header p {
-            color: #666;
+            color: var(--dark-color);
         }
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: var(--spacing-md);
         }
         label {
             display: block;
-            margin-bottom: 8px;
-            color: #333;
+            margin-bottom: var(--spacing-xs);
+            color: var(--dark-color);
             font-weight: 500;
         }
         .input-field {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 5px;
-            font-size: 1em;
-            transition: border-color 0.2s;
+            padding: var(--spacing-sm);
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius-sm);
+            font-size: var(--font-size-base);
+            transition: var(--transition-base);
         }
         .input-field:focus {
             outline: none;
-            border-color: #2196F3;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(128, 0, 0, 0.25);
         }
         .required {
-            color: #e74c3c;
+            color: var(--danger-color);
             margin-left: 3px;
         }
         .back-btn {
             background: none;
             border: none;
-            color: #2196F3;
+            color: var(--primary-color);
             cursor: pointer;
-            font-size: 1em;
+            font-size: var(--font-size-base);
             display: flex;
             align-items: center;
-            gap: 5px;
-            margin-bottom: 20px;
+            gap: var(--spacing-xs);
+            margin-bottom: var(--spacing-md);
+            transition: var(--transition-base);
         }
         .back-btn:hover {
-            color: #1976D2;
+            color: var(--secondary-color);
         }
         .submit-btn {
             width: 100%;
-            padding: 12px;
-            background: #2196F3;
+            padding: var(--spacing-sm);
+            background: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 5px;
-            font-size: 1em;
+            border-radius: var(--border-radius-sm);
+            font-size: var(--font-size-base);
             cursor: pointer;
-            transition: background 0.2s;
-            margin-top: 20px;
+            transition: var(--transition-base);
+            margin-top: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-xs);
         }
         .submit-btn:hover {
-            background: #1976D2;
-        }
-        .btn-icon {
-            margin-right: 8px;
+            background: var(--secondary-color);
+            color: var(--primary-color);
         }
         .input-group {
             position: relative;
@@ -101,30 +101,29 @@
         }
         .input-prefix {
             position: absolute;
-            left: 12px;
-            color: #666;
+            left: var(--spacing-sm);
+            color: var(--dark-color);
             font-weight: 500;
         }
         .input-group .input-field {
-            padding-left: 30px;
+            padding-left: calc(var(--spacing-sm) * 2);
         }
         .form-text {
             font-size: 0.85em;
-            color: #666;
-            margin-top: 4px;
+            color: var(--dark-color);
+            margin-top: var(--spacing-xs);
         }
         .alert {
-            padding: 12px;
-            border-radius: 5px;
-            margin-bottom: 20px;
+            padding: var(--spacing-sm);
+            border-radius: var(--border-radius-sm);
+            margin-bottom: var(--spacing-md);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: var(--spacing-xs);
         }
         .alert-danger {
-            background-color: #fee2e2;
-            border: 1px solid #fecaca;
-            color: #dc2626;
+            background-color: var(--danger-color);
+            color: white;
         }
         .alert i {
             font-size: 1.1em;
@@ -134,7 +133,7 @@
 <body>
     <div class="container">
         <button class="back-btn" onclick="window.history.back()">
-            <i class="fas fa-arrow-left"></i> Back to Services
+            <i class="bi bi-arrow-left"></i> Back to Services
         </button>
         
         <div class="header">
@@ -145,7 +144,7 @@
         <form id="tuitionForm" action="${pageContext.request.contextPath}/kiosk/payment/tuition/process" method="POST">
             <c:if test="${not empty error}">
                 <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-circle"></i> ${error}
+                    <i class="bi bi-exclamation-circle"></i> ${error}
                 </div>
             </c:if>
             
@@ -197,11 +196,11 @@
                            min="0" step="0.01" placeholder="Enter payment amount"
                            value="${empty amount ? '25000.00' : amount}">
                 </div>
-                <small class="form-text text-muted">Default amount: ₱25,000.00</small>
+                <small class="form-text">Default amount: ₱25,000.00</small>
             </div>
 
             <button type="submit" class="submit-btn">
-                <i class="fas fa-check btn-icon"></i>Proceed to Payment
+                <i class="bi bi-check-circle"></i>Proceed to Payment
             </button>
         </form>
     </div>

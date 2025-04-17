@@ -8,6 +8,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Accounting Management System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/main.css">
     <style>
         :root {
@@ -309,9 +311,67 @@
             bottom: -100px;
             left: -100px;
         }
+
+        /* Kiosk Access Button */
+        .kiosk-access {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--secondary-color);
+            color: var(--primary-color);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            cursor: pointer;
+            border: 2px solid var(--primary-color);
+        }
+
+        .kiosk-access:hover {
+            background: var(--secondary-light);
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .kiosk-access i {
+            font-size: 24px;
+        }
+
+        .kiosk-access .tooltip {
+            position: absolute;
+            right: 60px;
+            background: var(--secondary-color);
+            color: var(--primary-color);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid var(--primary-color);
+            font-weight: 500;
+        }
+
+        .kiosk-access:hover .tooltip {
+            opacity: 1;
+            visibility: visible;
+            right: 70px;
+        }
     </style>
 </head>
 <body>
+    <!-- Kiosk Access Button -->
+    <a href="${pageContext.request.contextPath}/kiosk" class="kiosk-access">
+        <i class="bi bi-display"></i>
+        <span class="tooltip">Access Kiosk</span>
+    </a>
+
     <div class="login-container">
         <div class="page-decoration decoration-1"></div>
         <div class="page-decoration decoration-2"></div>

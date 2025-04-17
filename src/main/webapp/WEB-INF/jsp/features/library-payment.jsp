@@ -4,6 +4,9 @@
 <c:set var="actionUrl" value="/kiosk/payment/library/process"/>
 <c:set var="amount" value="500.00"/>
 
+<!-- Custom CSS -->
+<link href="${pageContext.request.contextPath}/static/css/main.css" rel="stylesheet" type="text/css">
+
 <c:set var="additionalFields">
     <div class="mb-3">
         <label for="feeType" class="form-label">Fee Type</label>

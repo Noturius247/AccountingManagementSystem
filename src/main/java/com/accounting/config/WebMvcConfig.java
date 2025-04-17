@@ -20,24 +20,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/static/**")
-               .addResourceLocations("classpath:/static/", "/static/")
-               .setCachePeriod(3600)
-               .resourceChain(true);
-               
-        registry.addResourceHandler("/css/**")
-               .addResourceLocations("classpath:/static/css/", "/static/css/")
-               .setCachePeriod(3600)
-               .resourceChain(true);
-               
-        registry.addResourceHandler("/js/**")
-               .addResourceLocations("classpath:/static/js/", "/static/js/")
-               .setCachePeriod(3600)
-               .resourceChain(true);
-               
-        registry.addResourceHandler("/images/**")
-               .addResourceLocations("classpath:/static/images/", "/static/images/")
-               .setCachePeriod(3600)
-               .resourceChain(true);
+                .addResourceLocations("file:src/main/webapp/static/")
+                .setCachePeriod(3600)
+                .resourceChain(true);
     }
 
     @Bean

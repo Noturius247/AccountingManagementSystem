@@ -7,149 +7,149 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>School Payment Kiosk</title>
-    <!-- Font Awesome 6 CSS via CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="${pageContext.request.contextPath}/static/css/main.css" rel="stylesheet" type="text/css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            padding: 20px;
-        }
-        .header {
-            max-width: 1200px;
-            margin: 0 auto 20px;
-            text-align: center;
-            padding: 20px;
+        .kiosk-header {
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-sm);
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            text-align: center;
         }
-        .header h1 {
-            color: #333;
-            margin-bottom: 10px;
+
+        .kiosk-header h1 {
+            color: var(--primary-color);
+            margin-bottom: var(--spacing-sm);
             font-size: 2em;
         }
-        .header p {
-            color: #666;
-            margin-bottom: 20px;
+
+        .kiosk-header p {
+            color: var(--dark-color);
+            margin-bottom: var(--spacing-md);
         }
+
         .search-box {
             display: flex;
-            gap: 10px;
+            gap: var(--spacing-sm);
             max-width: 600px;
             margin: 0 auto;
         }
+
         .search-input {
             flex: 1;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 5px;
-            font-size: 1em;
-            transition: border-color 0.2s;
+            padding: var(--spacing-sm);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            font-size: var(--font-size-base);
+            transition: var(--transition-base);
         }
+
         .search-input:focus {
             outline: none;
-            border-color: #2196F3;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(128, 0, 0, 0.25);
         }
-        .search-btn {
-            background: #2196F3;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: background 0.2s;
-        }
-        .search-btn:hover {
-            background: #1976D2;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
+
+        .kiosk-container {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            padding: 20px;
+            gap: var(--spacing-md);
+            padding: var(--spacing-md);
         }
-        .card {
+
+        .kiosk-card {
             background: white;
-            border-radius: 10px;
-            padding: 20px;
+            border-radius: var(--border-radius-md);
+            padding: var(--spacing-lg);
             text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition-base);
             cursor: pointer;
             position: relative;
             overflow: hidden;
         }
-        .card::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: #2196F3;
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
-        }
-        .card:hover {
+
+        .kiosk-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.2);
+            box-shadow: var(--shadow-md);
         }
-        .card:hover::after {
-            transform: scaleX(1);
-        }
-        .card i {
+
+        .kiosk-card i {
             font-size: 2.5em;
-            margin-bottom: 15px;
-            color: #2196F3;
-            transition: transform 0.3s ease;
+            margin-bottom: var(--spacing-md);
+            color: var(--primary-color);
+            transition: var(--transition-base);
         }
-        .card:hover i {
+
+        .kiosk-card:hover i {
             transform: scale(1.1);
+            color: var(--secondary-color);
         }
-        .card h2 {
-            color: #333;
+
+        .kiosk-card h2 {
+            color: var(--primary-color);
             font-size: 1.5em;
-            margin-bottom: 10px;
+            margin-bottom: var(--spacing-sm);
         }
-        .card p {
-            color: #666;
-            margin-bottom: 15px;
+
+        .kiosk-card p {
+            color: var(--dark-color);
+            margin-bottom: var(--spacing-md);
         }
-        .footer {
+
+        .kiosk-footer {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            background: #333;
-            padding: 10px;
-            text-align: center;
+            background: var(--primary-color);
+            padding: var(--spacing-md);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
         }
-        .footer-icons {
+
+        .footer-content {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .footer-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             color: white;
-            font-size: 1.5em;
-            margin: 0 10px;
             text-decoration: none;
+            transition: var(--transition-base);
+            padding: var(--spacing-sm);
         }
-        .footer-icons:hover {
-            color: #2196F3;
+
+        .footer-link:hover {
+            color: var(--secondary-color);
+            transform: translateY(-3px);
+        }
+
+        .footer-link i {
+            font-size: 1.5em;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .footer-link span {
+            font-size: 0.8em;
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
     <!-- Header with Search -->
-    <div class="header">
+    <div class="kiosk-header">
         <h1>School Payment Kiosk</h1>
         <p>Select a service to proceed</p>
         <!-- Debug info - hidden in production -->
@@ -158,76 +158,96 @@
         </div>
         <div class="search-box">
             <input type="text" class="search-input" placeholder="Search payments...">
-            <button class="search-btn">
-                <i class="fas fa-search"></i>
+            <button class="btn btn-primary">
+                <i class="bi bi-search"></i>
                 Search
             </button>
         </div>
     </div>
 
-    <div class="container">
+    <div class="kiosk-container">
         <!-- First Semester Tuition -->
-        <div class="card" onclick="selectService('payment', 'tuition')">
-            <i class="fas fa-graduation-cap"></i>
+        <div class="kiosk-card" onclick="selectService('payment', 'tuition')">
+            <i class="bi bi-mortarboard"></i>
             <h2>Tuition</h2>
             <p>Regular term tuition payment</p>
         </div>
 
         <!-- Library Access Fee -->
-        <div class="card" onclick="selectService('payment', 'library')">
-            <i class="fas fa-book-reader"></i>
+        <div class="kiosk-card" onclick="selectService('payment', 'library')">
+            <i class="bi bi-book"></i>
             <h2>Library Access Fee</h2>
             <p>Semester library access</p>
         </div>
 
         <!-- Chemistry Lab Fee -->
-        <div class="card" onclick="selectService('payment', 'lab')">
-            <i class="fas fa-flask"></i>
+        <div class="kiosk-card" onclick="selectService('payment', 'lab')">
+            <i class="bi bi-eyedropper"></i>
             <h2>Chemistry Lab Fee</h2>
             <p>Laboratory equipment and materials</p>
         </div>
 
         <!-- Student ID Replacement -->
-        <div class="card" onclick="selectService('payment', 'id')">
-            <i class="fas fa-id-card"></i>
+        <div class="kiosk-card" onclick="selectService('payment', 'id')">
+            <i class="bi bi-person-badge"></i>
             <h2>Student ID Replacement</h2>
             <p>Lost ID replacement fee</p>
         </div>
 
         <!-- Graduation Fee -->
-        <div class="card" onclick="selectService('payment', 'graduation')">
-            <i class="fas fa-user-graduate"></i>
+        <div class="kiosk-card" onclick="selectService('payment', 'graduation')">
+            <i class="bi bi-award"></i>
             <h2>Graduation Fee</h2>
             <p>Graduation ceremony and documents</p>
         </div>
 
         <!-- Transcript Request -->
-        <div class="card" onclick="selectService('payment', 'transcript')">
-            <i class="fas fa-file-alt"></i>
+        <div class="kiosk-card" onclick="selectService('payment', 'transcript')">
+            <i class="bi bi-file-text"></i>
             <h2>Transcript Request</h2>
             <p>Official transcript processing</p>
         </div>
 
         <!-- Queue Status -->
-        <div class="card" onclick="selectService('queue')">
-            <i class="fas fa-users"></i>
+        <div class="kiosk-card" onclick="selectService('queue')">
+            <i class="bi bi-people"></i>
             <h2>Queue Status</h2>
             <p>Check your queue number and waiting time</p>
         </div>
 
         <!-- Help -->
-        <div class="card" onclick="selectService('help')">
-            <i class="fas fa-question-circle"></i>
+        <div class="kiosk-card" onclick="selectService('help')">
+            <i class="bi bi-question-circle"></i>
             <h2>Help</h2>
             <p>Get assistance with your payment</p>
         </div>
     </div>
 
-    <footer class="footer">
-        <a href="#" class="footer-icons"><i class="fas fa-home"></i></a>
-        <a href="#" class="footer-icons"><i class="fas fa-cog"></i></a>
+    <footer class="kiosk-footer">
+        <div class="container">
+            <div class="footer-content">
+                <a href="${pageContext.request.contextPath}/kiosk" class="footer-link">
+                    <i class="bi bi-house-door"></i>
+                    <span>Home</span>
+                </a>
+                <a href="${pageContext.request.contextPath}/kiosk/queue" class="footer-link">
+                    <i class="bi bi-people"></i>
+                    <span>Check Queue</span>
+                </a>
+                <a href="${pageContext.request.contextPath}/kiosk/help" class="footer-link">
+                    <i class="bi bi-question-circle"></i>
+                    <span>Help</span>
+                </a>
+                <a href="#" onclick="contactStaff()" class="footer-link">
+                    <i class="bi bi-headset"></i>
+                    <span>Call Staff</span>
+                </a>
+            </div>
+        </div>
     </footer>
 
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Store the context path in a variable that will be evaluated by JSP
         var contextPath = '${pageContext.request.contextPath}';
@@ -312,6 +332,32 @@
                 });
             }
         });
+
+        function contactStaff() {
+            if (confirm('Do you need assistance? A staff member will be notified to help you.')) {
+                // Here you would implement the actual staff notification logic
+                alert('A staff member has been notified and will assist you shortly.');
+                
+                // You could make an API call here to notify staff
+                fetch('${pageContext.request.contextPath}/kiosk/notify-staff', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        location: 'Kiosk Area',
+                        type: 'Assistance Request'
+                    })
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to notify staff');
+                    }
+                }).catch(error => {
+                    console.error('Error:', error);
+                    alert('Unable to contact staff at this moment. Please try again.');
+                });
+            }
+        }
     </script>
 </body>
 </html> 
