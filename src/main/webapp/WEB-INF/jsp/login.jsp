@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <!DOCTYPE html>
 <html>
@@ -8,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Accounting Management System</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/main.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/main.css">
     <style>
         :root {
             --primary-color: #800000; /* Maroon */
@@ -346,14 +346,12 @@
             </div>
         </c:if>
 
-        <form action="${pageContext.request.contextPath}/login" method="post" onsubmit="return handleSubmit(event);">
-            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
-            
+        <form action="${pageContext.request.contextPath}/login" method="post">
             <div class="form-group">
                 <label for="username">Username</label>
                 <div class="input-group">
                     <i class="fas fa-user input-icon"></i>
-                    <input type="text" id="username" name="username" class="form-control" placeholder="Enter your username" required autocomplete="username">
+                    <input type="text" id="username" name="username" class="form-control" required>
                 </div>
             </div>
             
@@ -361,35 +359,19 @@
                 <label for="password">Password</label>
                 <div class="password-input">
                     <i class="fas fa-lock input-icon"></i>
-                    <input type="password" id="password" name="password" class="form-control" placeholder="Enter your password" required autocomplete="current-password">
-                    <button type="button" onclick="togglePassword()" class="toggle-password">
-                        <i class="fas fa-eye" id="toggleIcon"></i>
-                    </button>
+                    <input type="password" id="password" name="password" class="form-control" required>
                 </div>
-            </div>
-            
-            <div class="checkbox-group">
-                <input type="checkbox" id="remember-me" name="remember-me">
-                <label for="remember-me">Remember me</label>
             </div>
 
             <div class="form-group">
-                <button type="submit" id="loginButton" class="btn-login">
+                <button type="submit" class="btn-login">
                     <span>Sign In</span>
-                    <div id="loadingIndicator" style="display: none;">
-                        <div class="spinner"></div>
-                    </div>
                 </button>
-            </div>
-            
-            <div class="links">
-                <a href="${pageContext.request.contextPath}/forgot-password">Forgot Password?</a>
-                <a href="${pageContext.request.contextPath}/register">Create Account</a>
             </div>
         </form>
 
         <div class="login-footer">
-            Don't have an account? <a href="${pageContext.request.contextPath}/register">Register here</a>
+            <p>Don't have an account? <a href="${pageContext.request.contextPath}/register">Register here</a></p>
         </div>
         
         <div class="system-info">

@@ -80,17 +80,4 @@ public class DashboardController {
         }
         return "redirect:/login";
     }
-
-    @GetMapping("/user/dashboard")
-    public String userDashboard(Model model, Authentication authentication) {
-        if (authentication != null && authentication.isAuthenticated()) {
-            for (GrantedAuthority authority : authentication.getAuthorities()) {
-                if (authority.getAuthority().equals("ROLE_USER")) {
-                    model.addAttribute("username", authentication.getName());
-                    return "jsp/user/dashboard";
-                }
-            }
-        }
-        return "redirect:/login";
-    }
 } 

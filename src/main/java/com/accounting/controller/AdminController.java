@@ -1,6 +1,7 @@
 package com.accounting.controller;
 
 import com.accounting.model.User;
+import com.accounting.model.Transaction;
 import com.accounting.service.AdminDashboardService;
 import com.accounting.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,10 +9,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -28,6 +31,7 @@ public class AdminController {
     }
 
     @GetMapping("/dashboard")
+    @Transactional(readOnly = true)
     public String showDashboard(Model model, 
                               @RequestParam(defaultValue = "1") int page,
                               @RequestParam(defaultValue = "10") int size) {
@@ -55,14 +59,49 @@ public class AdminController {
         model.addAttribute("queueLabels", queueStats.get("labels"));
         model.addAttribute("queueData", queueStats.get("data"));
 
-        // Get paginated users
+        // Get paginated users and initialize their collections
         Page<User> usersPage = userService.findAllUsers(PageRequest.of(page - 1, size));
-        model.addAttribute("users", usersPage.getContent());
+        List<User> users = usersPage.getContent();
+        for (User user : users) {
+            // Initialize all collections
+            if (user.getNotificationSettings() != null) {
+                user.getNotificationSettings().size();
+            }
+            if (user.getTransactions() != null) {
+                user.getTransactions().size();
+            }
+            if (user.getDocuments() != null) {
+                user.getDocuments().size();
+            }
+            if (user.getNotifications() != null) {
+                user.getNotifications().size();
+            }
+        }
+        model.addAttribute("users", users);
         model.addAttribute("currentPage", page);
         model.addAttribute("totalPages", usersPage.getTotalPages());
 
-        // Get recent transactions
-        model.addAttribute("recentTransactions", adminDashboardService.getRecentTransactions());
+        // Get recent transactions and initialize their user collections
+        List<Transaction> recentTransactions = adminDashboardService.getRecentTransactions();
+        for (Transaction transaction : recentTransactions) {
+            if (transaction.getUser() != null) {
+                User user = transaction.getUser();
+                // Initialize all collections for the transaction's user
+                if (user.getNotificationSettings() != null) {
+                    user.getNotificationSettings().size();
+                }
+                if (user.getTransactions() != null) {
+                    user.getTransactions().size();
+                }
+                if (user.getDocuments() != null) {
+                    user.getDocuments().size();
+                }
+                if (user.getNotifications() != null) {
+                    user.getNotifications().size();
+                }
+            }
+        }
+        model.addAttribute("recentTransactions", recentTransactions);
         
         // Get notifications
         model.addAttribute("notifications", adminDashboardService.getRecentNotifications());

@@ -34,7 +34,8 @@ public class CustomUserDetailsService implements UserDetailsService {
         log.info("User found: {}, Role: {}", user.getUsername(), user.getRole());
         log.info("Stored password hash: {}", user.getPassword());
         
-        String role = "ROLE_" + user.getRole();
+        // Add ROLE_ prefix only if it's not already present
+        String role = user.getRole().startsWith("ROLE_") ? user.getRole() : "ROLE_" + user.getRole();
         log.info("Granting authority: {}", role);
         
         return new org.springframework.security.core.userdetails.User(

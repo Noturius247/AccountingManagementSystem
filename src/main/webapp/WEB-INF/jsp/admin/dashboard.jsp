@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <!-- @jsx-ignore -->
 <!DOCTYPE html>
 <html>
@@ -7,309 +8,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Accounting Management System</title>
-    <link rel="stylesheet" href="../../css/main.css">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="${pageContext.request.contextPath}/static/css/main.css" rel="stylesheet">
+    
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            background-color: #f5f7fa;
-            color: #1a1f36;
-        }
-
+        /* Only dashboard-specific styles that are not in main.css */
         .admin-dashboard {
             padding: 2rem;
             max-width: 1400px;
             margin: 0 auto;
         }
 
-        h1 {
-            font-size: 2rem;
-            font-weight: 600;
-            margin-bottom: 2rem;
-            color: #1a1f36;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: #ffffff;
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        .stat-card h3 {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: #6b7280;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-card .value {
-            font-size: 1.875rem;
-            font-weight: 600;
-            color: #2563eb;
-        }
-
-        .admin-section {
-            background: #ffffff;
-            padding: 1.5rem;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            margin-bottom: 2rem;
-        }
-
-        .admin-section h2 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #1a1f36;
-            margin-bottom: 1.5rem;
-        }
-
-        .search-section {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .search-section input,
-        .search-section select {
-            padding: 0.75rem 1rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            flex: 1;
-            min-width: 200px;
-            outline: none;
-            transition: border-color 0.2s ease;
-        }
-
-        .search-section input:focus,
-        .search-section select:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-
-        .table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin-bottom: 1rem;
-        }
-
-        .table th,
-        .table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid #e5e7eb;
-        }
-
-        .table th {
-            background-color: #f8fafc;
-            font-weight: 500;
-            color: #6b7280;
-            font-size: 0.875rem;
-        }
-
-        .table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .btn-action {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
-        }
-
-        .btn-edit {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .btn-edit:hover {
-            background: #fde68a;
-        }
-
-        .btn-delete {
-            background: #fee2e2;
-            color: #b91c1c;
-        }
-
-        .btn-delete:hover {
-            background: #fecaca;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 0.75rem;
-            margin-top: 1.5rem;
-        }
-
-        .pagination button {
-            padding: 0.5rem 1rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            background: #ffffff;
-            color: #4b5563;
-            font-weight: 500;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .pagination button:hover:not(:disabled) {
-            background: #f3f4f6;
-            border-color: #d1d5db;
-        }
-
-        .pagination button:disabled {
-            background: #f3f4f6;
-            color: #9ca3af;
-            cursor: not-allowed;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-            z-index: 1000;
-        }
-
-        .modal-content {
-            background: #ffffff;
-            margin: 5% auto;
-            padding: 2rem;
-            width: 90%;
-            max-width: 500px;
-            border-radius: 12px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        .modal-content h2 {
-            margin-bottom: 1.5rem;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        .modal-content form > div {
-            margin-bottom: 1.5rem;
-        }
-
-        .modal-content label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #374151;
-        }
-
-        .modal-content input,
-        .modal-content select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            font-size: 0.875rem;
-            transition: all 0.2s ease;
-        }
-
-        .modal-content input:focus,
-        .modal-content select:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-            outline: none;
-        }
-
-        .modal-content button[type="submit"] {
-            background: #2563eb;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-        }
-
-        .modal-content button[type="submit"]:hover {
-            background: #1d4ed8;
-        }
-
-        .modal-content button[type="button"] {
-            background: #f3f4f6;
-            color: #4b5563;
-            padding: 0.75rem 1.5rem;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            font-weight: 500;
-            cursor: pointer;
-            margin-left: 0.75rem;
-            transition: all 0.2s ease;
-        }
-
-        .modal-content button[type="button"]:hover {
-            background: #e5e7eb;
-        }
-
-        @media (max-width: 768px) {
-            .admin-dashboard {
-                padding: 1rem;
-            }
-
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .search-section {
-                flex-direction: column;
-            }
-
-            .search-section input,
-            .search-section select {
-                width: 100%;
-            }
-
-            .table {
-                display: block;
-                overflow-x: auto;
-                white-space: nowrap;
-            }
-        }
-
         .chart-container {
             height: 300px;
             margin-bottom: 2rem;
         }
-        
+
         .notification-badge {
-            background: #ef4444;
+            background: var(--danger-color);
             color: white;
             padding: 0.25rem 0.5rem;
             border-radius: 9999px;
@@ -342,7 +68,7 @@
 
         .notification-item {
             padding: 1rem;
-            border-bottom: 1px solid #e5e7eb;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             align-items: center;
             gap: 1rem;
@@ -366,15 +92,15 @@
             padding: 0.75rem 1.5rem;
             border: none;
             border-radius: 8px;
-            background: #f3f4f6;
-            color: #4b5563;
+            background: var(--light-color);
+            color: var(--text-color);
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s ease;
         }
 
         .tab-button.active {
-            background: #2563eb;
+            background: var(--primary-color);
             color: white;
         }
 
@@ -404,214 +130,518 @@
             height: 12px;
             border-radius: 3px;
         }
+
+        /* Sidebar styles */
+        .sidebar {
+            background: var(--primary-color);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar .nav-link:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar .nav-link.active {
+            color: white;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .sidebar .nav-link i {
+            width: 1.5rem;
+            text-align: center;
+        }
+
+        /* Main content area */
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        /* Top navigation bar */
+        .top-nav {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .top-nav .nav-item {
+            margin-left: 1rem;
+        }
+
+        .top-nav .nav-link {
+            color: var(--text-color);
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        .top-nav .nav-link:hover {
+            background: var(--light-color);
+        }
+
+        .top-nav .dropdown-menu {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .top-nav .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+        }
     </style>
 </head>
 <body>
-    <%@ include file="../includes/header.jsp" %>
-    
-    <div class="admin-dashboard">
-        <h1>Admin Dashboard</h1>
-        
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>Total Users</h3>
-                <div class="value">${totalUsers}</div>
-            </div>
-            <div class="stat-card">
-                <h3>Active Users</h3>
-                <div class="value">${activeUsers}</div>
-            </div>
-            <div class="stat-card">
-                <h3>Total Revenue</h3>
-                <div class="value">$${totalRevenue}</div>
-            </div>
-            <div class="stat-card">
-                <h3>Pending Queues</h3>
-                <div class="value">${pendingQueues}</div>
-            </div>
-            <div class="stat-card">
-                <h3>Today's Transactions</h3>
-                <div class="value">${todayTransactions}</div>
-            </div>
-            <div class="stat-card">
-                <h3>Average Wait Time</h3>
-                <div class="value">${averageWaitTime} min</div>
-            </div>
+    <!-- Sidebar -->
+    <div class="sidebar col-md-3 col-lg-2">
+        <div class="d-flex flex-column p-3">
+            <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+                <span class="fs-4">Admin Panel</span>
+            </a>
+            <hr>
+            <ul class="nav nav-pills flex-column mb-auto">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active">
+                        <i class="bi bi-speedometer2"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link">
+                        <i class="bi bi-people"></i>
+                        Users
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link">
+                        <i class="bi bi-cash-stack"></i>
+                        Transactions
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link">
+                        <i class="bi bi-clock-history"></i>
+                        Queue
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link">
+                        <i class="bi bi-file-earmark-text"></i>
+                        Reports
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="nav-link">
+                        <i class="bi bi-gear"></i>
+                        Settings
+                    </a>
+                </li>
+                <li class="mt-auto">
+                    <form action="${pageContext.request.contextPath}/logout" method="post" class="nav-item">
+                        <button type="submit" class="nav-link text-danger w-100 border-0 bg-transparent">
+                            <i class="bi bi-box-arrow-right"></i>
+                            Logout
+                        </button>
+                    </form>
+                </li>
+            </ul>
         </div>
+    </div>
 
-        <div class="admin-section">
-            <h2>Analytics Overview</h2>
-            <div class="dashboard-grid">
-                <div class="chart-container" id="transactionChart">
-                    <!-- Transaction Chart will be rendered here -->
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Navigation -->
+        <nav class="top-nav">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h4 mb-0">Dashboard Overview</h1>
                 </div>
-                <div class="chart-container" id="queueChart">
-                    <!-- Queue Chart will be rendered here -->
-                </div>
-            </div>
-        </div>
-
-        <div class="admin-section">
-            <h2>Queue Management</h2>
-            <div class="search-section">
-                <input type="text" id="queueSearch" placeholder="Search queues...">
-                <select id="queueStatusFilter">
-                    <option value="">All Status</option>
-                    <option value="WAITING">Waiting</option>
-                    <option value="PROCESSING">Processing</option>
-                    <option value="COMPLETED">Completed</option>
-                    <option value="CANCELLED">Cancelled</option>
-                </select>
-                <select id="queuePriorityFilter">
-                    <option value="">All Priorities</option>
-                    <option value="LOW">Low</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="HIGH">High</option>
-                    <option value="URGENT">Urgent</option>
-                </select>
-            </div>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Queue Number</th>
-                        <th>User</th>
-                        <th>Status</th>
-                        <th>Priority</th>
-                        <th>Wait Time</th>
-                        <th>Created At</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="queueTableBody">
-                    <c:forEach items="${queues}" var="queue">
-                        <tr>
-                            <td>${queue.queueNumber}</td>
-                            <td>${queue.userUsername}</td>
-                            <td><span class="status-badge status-${queue.status.toLowerCase()}">${queue.status}</span></td>
-                            <td>${queue.priority}</td>
-                            <td>${queue.estimatedWaitTime} min</td>
-                            <td>${queue.createdAt}</td>
-                            <td>
-                                <button class="btn-action btn-edit" onclick="processQueue('${queue.id}')">Process</button>
-                                <button class="btn-action btn-delete" onclick="cancelQueue('${queue.id}')">Cancel</button>
-                            </td>
-                        </tr>
-                    </c:forEach>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="admin-section">
-            <h2>User Management</h2>
-            <div class="search-section">
-                <input type="text" id="userSearch" placeholder="Search users..." onkeyup="searchUsers()">
-                <select id="roleFilter" onchange="filterUsers()">
-                    <option value="">All Roles</option>
-                    <option value="USER">User</option>
-                    <option value="MANAGER">Manager</option>
-                    <option value="ADMIN">Admin</option>
-                </select>
-                <select id="statusFilter" onchange="filterUsers()">
-                    <option value="">All Status</option>
-                    <option value="true">Active</option>
-                    <option value="false">Inactive</option>
-                </select>
-                <button class="btn-action" onclick="showAddUserModal()">Add New User</button>
-            </div>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Username</th>
-                        <th>Email</th>
-                        <th>Role</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="userTableBody">
-                    <c:forEach items="${users}" var="user">
-                        <tr>
-                            <td>${user.username}</td>
-                            <td>${user.email}</td>
-                            <td>${user.role}</td>
-                            <td>${user.enabled ? 'Active' : 'Inactive'}</td>
-                            <td>
-                                <button class="btn-action btn-edit" onclick="editUser('${user.username}')">Edit</button>
-                                <button class="btn-action btn-delete" onclick="deleteUser('${user.username}')">Delete</button>
-                            </td>
-                        </tr>
-                    </c:forEach>
-                </tbody>
-            </table>
-            <div class="pagination">
-                <button onclick="prevPage()" ${currentPage == 1 ? 'disabled' : ''}>Previous</button>
-                <span>Page ${currentPage} of ${totalPages}</span>
-                <button onclick="nextPage()" ${currentPage == totalPages ? 'disabled' : ''}>Next</button>
-            </div>
-        </div>
-
-        <div class="admin-section">
-            <h2>Transaction Management</h2>
-            <div class="tab-container">
-                <div class="tab-buttons">
-                    <button class="tab-button active" onclick="switchTab('recent')">Recent</button>
-                    <button class="tab-button" onclick="switchTab('pending')">Pending</button>
-                    <button class="tab-button" onclick="switchTab('completed')">Completed</button>
-                    <button class="tab-button" onclick="switchTab('failed')">Failed</button>
-                </div>
-                <div class="search-section">
-                    <input type="text" id="transactionSearch" placeholder="Search transactions...">
-                    <input type="date" id="startDate">
-                    <input type="date" id="endDate">
-                    <select id="transactionTypeFilter">
-                        <option value="">All Types</option>
-                        <option value="PAYMENT">Payment</option>
-                        <option value="REFUND">Refund</option>
-                        <option value="ADJUSTMENT">Adjustment</option>
-                    </select>
-                    <button class="btn-action" onclick="exportTransactions()">Export</button>
-                </div>
-            </div>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>User</th>
-                        <th>Amount</th>
-                        <th>Type</th>
-                        <th>Priority</th>
-                        <th>Status</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody id="transactionTableBody">
-                    <c:forEach items="${recentTransactions}" var="transaction">
-                        <tr>
-                            <td>${transaction.id}</td>
-                            <td>${transaction.user.username}</td>
-                            <td>$${transaction.amount}</td>
-                            <td>${transaction.type}</td>
-                            <td>${transaction.priority}</td>
-                            <td>${transaction.status}</td>
-                            <td>${transaction.createdAt}</td>
-                        </tr>
-                    </c:forEach>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="admin-section">
-            <h2>Notification Center</h2>
-            <div class="notification-list">
-                <c:forEach items="${notifications}" var="notification">
-                    <div class="notification-item">
-                        <span class="notification-badge">${notification.type}</span>
-                        <div>
-                            <p>${notification.message}</p>
-                            <small>${notification.createdAt}</small>
+                <div class="d-flex align-items-center">
+                    <div class="btn-group me-3">
+                        <button type="button" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-download"></i> Export
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-printer"></i> Print
+                        </button>
+                    </div>
+                    <div class="dropdown me-3">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-calendar"></i> This week
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Today</a></li>
+                            <li><a class="dropdown-item" href="#">This week</a></li>
+                            <li><a class="dropdown-item" href="#">This month</a></li>
+                            <li><a class="dropdown-item" href="#">This year</a></li>
+                        </ul>
+                    </div>
+                    <div class="dropdown">
+                        <a href="#" class="nav-link position-relative" data-bs-toggle="dropdown">
+                            <i class="bi bi-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end">
+                            <h6 class="dropdown-header">Notifications</h6>
+                            <div class="notification-list">
+                                <a href="#" class="dropdown-item">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <i class="bi bi-check-circle-fill text-success"></i>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <p class="mb-0">New transaction completed</p>
+                                            <small class="text-muted">2 minutes ago</small>
+                                        </div>
+                                    </div>
+                                </a>
+                                <a href="#" class="dropdown-item">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <i class="bi bi-exclamation-circle-fill text-warning"></i>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <p class="mb-0">System maintenance scheduled</p>
+                                            <small class="text-muted">1 hour ago</small>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </c:forEach>
+                    <div class="dropdown ms-3">
+                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i>
+                            Admin
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form action="${pageContext.request.contextPath}/logout" method="post">
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="bi bi-box-arrow-right me-2"></i>Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Dashboard Content -->
+        <div class="admin-dashboard">
+            <!-- Top Navigation -->
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Dashboard Overview</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary">Print</button>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
+                        <i class="bi bi-calendar"></i>
+                        This week
+                    </button>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>${totalUsers}</h3>
+                        <p>Total Users</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="bi bi-person-check-fill"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>${activeUsers}</h3>
+                        <p>Active Users</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="bi bi-cash-stack"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3><fmt:formatNumber value="${totalRevenue}" type="currency"/></h3>
+                        <p>Total Revenue</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>${pendingQueues}</h3>
+                        <p>Pending Queues</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row">
+                <!-- Transaction Chart -->
+                <div class="col-xl-8 col-lg-7">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Transaction Overview</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="transactionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Queue Status -->
+                <div class="col-xl-4 col-lg-5">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Queue Status</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="queueChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions and Users -->
+            <div class="row">
+                <!-- Recent Transactions -->
+                <div class="col-lg-8 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Recent Transactions</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>User</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <c:forEach items="${recentTransactions}" var="transaction">
+                                            <tr>
+                                                <td>${transaction.id}</td>
+                                                <td>${transaction.user.username}</td>
+                                                <td><fmt:formatNumber value="${transaction.amount}" type="currency"/></td>
+                                                <td>
+                                                    <span class="badge bg-${transaction.status == 'COMPLETED' ? 'success' : 
+                                                                          transaction.status == 'PENDING' ? 'warning' : 'danger'}">
+                                                        ${transaction.status}
+                                                    </span>
+                                                </td>
+                                                <td><fmt:formatDate value="${transaction.createdAt}" pattern="yyyy-MM-dd HH:mm"/></td>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Users -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Recent Users</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Username</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <c:forEach items="${users}" var="user">
+                                            <tr>
+                                                <td>${user.username}</td>
+                                                <td>
+                                                    <span class="badge bg-${user.enabled ? 'success' : 'danger'}">
+                                                        ${user.enabled ? 'Active' : 'Inactive'}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-primary">
+                                                        <i class="bi bi-eye"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-warning">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents and Payments Section -->
+            <div class="row mt-4">
+                <!-- Documents Overview -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Documents Overview</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="dashboard-stats">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-file-earmark-text"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <h3>${totalDocuments}</h3>
+                                        <p>Total Documents</p>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-file-earmark-check"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <h3>${verifiedDocuments}</h3>
+                                        <p>Verified</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-responsive mt-3">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Document</th>
+                                            <th>User</th>
+                                            <th>Status</th>
+                                            <th>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <c:forEach items="${recentDocuments}" var="document">
+                                            <tr>
+                                                <td>${document.fileName}</td>
+                                                <td>${document.user.username}</td>
+                                                <td>
+                                                    <span class="badge bg-${document.status == 'VERIFIED' ? 'success' : 
+                                                                          document.status == 'PENDING' ? 'warning' : 'danger'}">
+                                                        ${document.status}
+                                                    </span>
+                                                </td>
+                                                <td><fmt:formatDate value="${document.uploadedAt}" pattern="yyyy-MM-dd"/></td>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payments Overview -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Payments Overview</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="dashboard-stats">
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-cash-stack"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <h3><fmt:formatNumber value="${totalPayments}" type="currency"/></h3>
+                                        <p>Total Payments</p>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-clock-history"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <h3>${pendingPayments}</h3>
+                                        <p>Pending</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-responsive mt-3">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Payment ID</th>
+                                            <th>User</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <c:forEach items="${recentPayments}" var="payment">
+                                            <tr>
+                                                <td>${payment.id}</td>
+                                                <td>${payment.user.username}</td>
+                                                <td><fmt:formatNumber value="${payment.amount}" type="currency"/></td>
+                                                <td>
+                                                    <span class="badge bg-${payment.status == 'COMPLETED' ? 'success' : 
+                                                                          payment.status == 'PENDING' ? 'warning' : 'danger'}">
+                                                        ${payment.status}
+                                                    </span>
+                                                </td>
+                                                <td><fmt:formatDate value="${payment.createdAt}" pattern="yyyy-MM-dd"/></td>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -693,6 +723,7 @@
 
     <%@ include file="../includes/footer.jsp" %>
     
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>
@@ -865,21 +896,51 @@
                     datasets: [{
                         label: 'Transactions',
                         data: chartData.transaction.data,
-                        borderColor: '#2563eb'
+                        borderColor: '#4e73df',
+                        backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                        pointRadius: 3,
+                        pointBackgroundColor: '#4e73df',
+                        pointBorderColor: '#4e73df',
+                        pointHoverRadius: 3,
+                        pointHoverBackgroundColor: '#4e73df',
+                        pointHoverBorderColor: '#4e73df',
+                        pointHitRadius: 10,
+                        pointBorderWidth: 2,
+                        fill: true
                     }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
                 }
             });
 
             // Queue Chart
             const queueCtx = document.getElementById('queueChart').getContext('2d');
             new Chart(queueCtx, {
-                type: 'pie',
+                type: 'doughnut',
                 data: {
                     labels: chartData.queue.labels,
                     datasets: [{
                         data: chartData.queue.data,
-                        backgroundColor: ['#fef3c7', '#dbeafe', '#dcfce7', '#fee2e2']
+                        backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
+                        hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf'],
+                        hoverBorderColor: "rgba(234, 236, 244, 1)",
                     }]
+                },
+                options: {
+                    maintainAspectRatio: false,
+                    cutout: '80%',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        }
+                    }
                 }
             });
         }

@@ -1,197 +1,253 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Dashboard - Accounting Management System</title>
-    <link rel="stylesheet" href="../../css/main.css">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <link href="${pageContext.request.contextPath}/static/css/main.css" rel="stylesheet">
+    
     <style>
+        /* Dashboard-specific styles */
         .user-dashboard {
-            padding: 20px;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+
+        .chart-container {
+            height: 300px;
+            margin-bottom: 2rem;
         }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-pending { background: var(--warning-bg); color: var(--warning-text); }
+        .status-completed { background: var(--success-bg); color: var(--success-text); }
+        .status-failed { background: var(--danger-bg); color: var(--danger-text); }
+        .status-processing { background: var(--info-bg); color: var(--info-text); }
+
         .stat-card {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .stat-card h3 {
-            margin-top: 0;
-            color: #666;
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
         }
-        .stat-card .value {
-            font-size: 24px;
-            font-weight: bold;
-            color: #007bff;
-        }
-        .user-section {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        .user-section h2 {
-            margin-top: 0;
-            color: #333;
-        }
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .table th, .table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        .table th {
-            background-color: #f8f9fa;
-            font-weight: bold;
-        }
-        .btn-action {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-right: 5px;
-        }
-        .btn-pay {
-            background: #28a745;
-            color: white;
-        }
-        .btn-view {
-            background: #17a2b8;
-            color: white;
-        }
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
+
         .action-card {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.2s;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: transform 0.2s ease;
         }
+
         .action-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-2px);
         }
-        .action-card h3 {
-            margin-top: 0;
-            color: #333;
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
         }
-        .action-card i {
-            font-size: 24px;
-            color: #007bff;
-            margin-bottom: 10px;
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
         }
-        .status-pending {
-            color: #ffc107;
-        }
-        .status-completed {
-            color: #28a745;
-        }
-        .status-failed {
-            color: #dc3545;
+
+        .table {
+            --bs-table-hover-bg: var(--hover-bg);
         }
     </style>
 </head>
 <body>
     <%@ include file="../includes/header.jsp" %>
-    
-    <div class="user-dashboard">
-        <h1>Welcome, ${user.username}!</h1>
-        
-        <div class="stats-grid">
-            <div class="stat-card">
-                <h3>Pending Payments</h3>
-                <div class="value">${pendingPayments}</div>
-            </div>
-            <div class="stat-card">
-                <h3>Total Paid</h3>
-                <div class="value">$${totalPaid}</div>
-            </div>
-            <div class="stat-card">
-                <h3>Queue Position</h3>
-                <div class="value">#${queuePosition}</div>
-            </div>
-        </div>
 
-        <div class="user-section">
-            <h2>Recent Payments</h2>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Amount</th>
-                        <th>Type</th>
-                        <th>Status</th>
-                        <th>Date</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <c:forEach items="${recentPayments}" var="payment">
-                        <tr>
-                            <td>${payment.id}</td>
-                            <td>$${payment.amount}</td>
-                            <td>${payment.type}</td>
-                            <td class="status-${payment.status.toLowerCase()}">${payment.status}</td>
-                            <td>${payment.createdAt}</td>
-                            <td>
-                                <c:if test="${payment.status == 'PENDING'}">
-                                    <button class="btn-action btn-pay" onclick="payNow('${payment.id}')">Pay Now</button>
-                                </c:if>
-                                <button class="btn-action btn-view" onclick="viewReceipt('${payment.id}')">View Receipt</button>
-                            </td>
-                        </tr>
-                    </c:forEach>
-                </tbody>
-            </table>
-        </div>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Main Content -->
+            <main class="col-md-12 ms-sm-auto px-md-4">
+                <!-- Welcome Section -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Welcome, ${user.firstName}!</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary">Print</button>
+                        </div>
+                    </div>
+                </div>
 
-        <div class="quick-actions">
-            <div class="action-card" onclick="window.location.href='${pageContext.request.contextPath}/user/payment'">
-                <i>💳</i>
-                <h3>Make Payment</h3>
-                <p>Pay your pending fees</p>
-            </div>
-            <div class="action-card" onclick="window.location.href='${pageContext.request.contextPath}/user/receipts'">
-                <i>📄</i>
-                <h3>View Receipts</h3>
-                <p>View your payment history</p>
-            </div>
-            <div class="action-card" onclick="window.location.href='${pageContext.request.contextPath}/user/profile'">
-                <i>👤</i>
-                <h3>Update Profile</h3>
-                <p>Manage your account details</p>
-            </div>
+                <!-- Statistics Cards -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="bi bi-receipt text-primary"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h5 class="text-muted mb-2">Total Transactions</h5>
+                                <h2 class="mb-0">${statistics.totalTransactions}</h2>
+                                <p class="text-muted mb-0">This month</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="bi bi-clock-history text-warning"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h5 class="text-muted mb-2">Pending Payments</h5>
+                                <h2 class="mb-0">${statistics.pendingPayments}</h2>
+                                <p class="text-muted mb-0">Require attention</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="bi bi-cash-stack text-success"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h5 class="text-muted mb-2">Total Amount</h5>
+                                <h2 class="mb-0"><fmt:formatNumber value="${statistics.totalAmount}" type="currency"/></h2>
+                                <p class="text-muted mb-0">This month</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="bi bi-file-earmark-text text-info"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h5 class="text-muted mb-2">Documents</h5>
+                                <h2 class="mb-0">${statistics.totalDocuments}</h2>
+                                <p class="text-muted mb-0">Uploaded files</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 font-weight-bold text-primary">Recent Transactions</h6>
+                        <a href="${pageContext.request.contextPath}/user/transactions" class="btn btn-sm btn-primary">
+                            View All
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <c:forEach items="${recentTransactions}" var="transaction">
+                                        <tr>
+                                            <td>
+                                                <c:set var="dateStr" value="${transaction.createdAt}" />
+                                                <c:choose>
+                                                    <c:when test="${not empty dateStr}">
+                                                        ${fn:substring(dateStr, 0, 10)}
+                                                    </c:when>
+                                                    <c:otherwise>
+                                                        N/A
+                                                    </c:otherwise>
+                                                </c:choose>
+                                            </td>
+                                            <td>${transaction.type}</td>
+                                            <td><fmt:formatNumber value="${transaction.amount}" type="currency"/></td>
+                                            <td>
+                                                <span class="status-badge status-${fn:toLowerCase(transaction.status)}">
+                                                    ${transaction.status}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="${pageContext.request.contextPath}/user/transactions/${transaction.id}" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-eye"></i> View
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </c:forEach>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="action-card">
+                            <h5 class="card-title">Make a Payment</h5>
+                            <p class="card-text text-muted">Pay your pending bills and invoices</p>
+                            <a href="${pageContext.request.contextPath}/user/payments/new" class="btn btn-primary">
+                                <i class="bi bi-credit-card"></i> Pay Now
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="action-card">
+                            <h5 class="card-title">Upload Document</h5>
+                            <p class="card-text text-muted">Submit required documents and receipts</p>
+                            <a href="${pageContext.request.contextPath}/user/documents/upload" class="btn btn-primary">
+                                <i class="bi bi-upload"></i> Upload
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="action-card">
+                            <h5 class="card-title">View Reports</h5>
+                            <p class="card-text text-muted">Access your transaction history and reports</p>
+                            <a href="${pageContext.request.contextPath}/user/reports" class="btn btn-primary">
+                                <i class="bi bi-file-earmark-text"></i> View Reports
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
     </div>
 
-    <%@ include file="../includes/footer.jsp" %>
-    
-    <script>
-        function payNow(paymentId) {
-            window.location.href = '${pageContext.request.contextPath}/user/payment/' + paymentId;
-        }
-
-        function viewReceipt(paymentId) {
-            window.location.href = '${pageContext.request.contextPath}/user/receipt/' + paymentId;
-        }
-    </script>
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html> 

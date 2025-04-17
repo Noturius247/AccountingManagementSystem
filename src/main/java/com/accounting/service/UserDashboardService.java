@@ -57,4 +57,19 @@ public interface UserDashboardService {
      * Get recent documents for a user
      */
     List<Map<String, Object>> getRecentDocuments(String username);
+
+    /**
+     * Verify receipt
+     */
+    boolean verifyReceipt(String receiptId, String username);
+
+    /**
+     * Get user profile
+     */
+    Map<String, Object> getUserProfile(String username);
+
+    /**
+     * Get total spent amount
+     */
+    double getTotalSpentAmount(String username);
 } 

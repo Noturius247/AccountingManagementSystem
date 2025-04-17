@@ -62,4 +62,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     @Query("SELECT COUNT(u) FROM User u WHERE u.enabled = :enabled")
     long countByEnabled(@Param("enabled") boolean enabled);
+
+    @Query("UPDATE User u SET u.lastActivity = CURRENT_TIMESTAMP WHERE u.username = :username")
+    void updateLastActivity(@Param("username") String username);
 } 

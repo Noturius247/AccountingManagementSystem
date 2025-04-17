@@ -34,6 +34,27 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public User findByUsernameWithCollections(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        // Initialize all collections to prevent LazyInitializationException
+        if (user.getNotificationSettings() != null) {
+            user.getNotificationSettings().size();
+        }
+        if (user.getDocuments() != null) {
+            user.getDocuments().size();
+        }
+        if (user.getTransactions() != null) {
+            user.getTransactions().size();
+        }
+        if (user.getNotifications() != null) {
+            user.getNotifications().size();
+        }
+        return user;
+    }
+
+    @Override
     public void updateUser(String username, User userData) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -82,5 +103,25 @@ public class UserServiceImpl implements UserService {
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(username)
             .orElseThrow(() -> new EntityNotFoundException("User not found: " + username));
+    }
+
+    @Override
+    public User save(User user) {
+        return userRepository.save(user);
+    }
+
+    @Override
+    public void updateLastActivity(String username) {
+        userRepository.updateLastActivity(username);
+    }
+
+    @Override
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
     }
 } 

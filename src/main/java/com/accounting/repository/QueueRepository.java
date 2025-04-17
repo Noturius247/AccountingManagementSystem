@@ -21,7 +21,7 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
     List<Queue> findWaitingQueuesOrderByCreatedAtAsc();
     
     @Query("SELECT COUNT(q) FROM Queue q WHERE q.status = ?1 AND q.createdAt < ?2")
-    long countByStatusAndCreatedAtBefore(String status, LocalDateTime dateTime);
+    long countByStatusAndCreatedAtBefore(QueueStatus status, LocalDateTime dateTime);
     
     Optional<Queue> findByUserUsername(String username);
     
@@ -29,7 +29,7 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
     Queue getNextInQueue();
     
     @Query("SELECT q FROM Queue q WHERE q.status = :status ORDER BY q.createdAt ASC")
-    List<Queue> findByStatusOrderByCreatedAtAsc(@Param("status") String status);
+    List<Queue> findByStatusOrderByCreatedAtAsc(@Param("status") QueueStatus status);
     
     @Query("SELECT COUNT(q) FROM Queue q WHERE q.status = 'WAITING' AND q.createdAt < (SELECT q2.createdAt FROM Queue q2 WHERE q2.userUsername = :username)")
     int findQueuePosition(@Param("username") String username);
@@ -41,19 +41,19 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
     List<Queue> findTopNByOrderByCreatedAtDesc(@Param("limit") int limit);
     
     @Query("SELECT q FROM Queue q WHERE q.userUsername = :username AND q.status = :status")
-    List<Queue> findByUsernameAndStatus(@Param("username") String username, @Param("status") String status);
+    List<Queue> findByUsernameAndStatus(@Param("username") String username, @Param("status") QueueStatus status);
 
     @Query("SELECT q FROM Queue q WHERE q.user.username = :username ORDER BY q.createdAt DESC")
     List<Queue> findByUserUsernameOrderByCreatedAtDesc(@Param("username") String username);
 
     @Query("SELECT q FROM Queue q WHERE q.status = :status ORDER BY q.position ASC")
-    List<Queue> findByStatusOrderByPositionAsc(@Param("status") String status);
+    List<Queue> findByStatusOrderByPositionAsc(@Param("status") QueueStatus status);
 
     @Query("SELECT MAX(q.position) FROM Queue q WHERE q.status = :status")
-    Integer findMaxPositionByStatus(@Param("status") String status);
+    Integer findMaxPositionByStatus(@Param("status") QueueStatus status);
 
     @Query("SELECT COUNT(q) FROM Queue q WHERE q.status = :status")
-    Long countByStatus(@Param("status") String status);
+    Long countByStatus(@Param("status") QueueStatus status);
 
     @Query("SELECT q.status, COUNT(q) FROM Queue q GROUP BY q.status")
     List<Object[]> countByStatus();
@@ -111,17 +111,17 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
     List<Queue> findByCreatedAtBetween(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
     
     @Query("SELECT q FROM Queue q WHERE q.status = :status")
-    List<Queue> findByStatus(@Param("status") String status);
+    List<Queue> findByStatus(@Param("status") QueueStatus status);
     
     @Query("SELECT q FROM Queue q WHERE q.user.username = :username AND q.status = :status")
-    List<Queue> findByUserUsernameAndStatus(@Param("username") String username, @Param("status") String status);
+    List<Queue> findByUserUsernameAndStatus(@Param("username") String username, @Param("status") QueueStatus status);
 
     List<Queue> findByStatusOrderByCreatedAtDesc(QueueStatus status);
     Optional<Queue> findFirstByStatusOrderByPositionAsc(QueueStatus status);
     @Query("SELECT AVG(TIMESTAMPDIFF(SECOND, q.createdAt, q.processedAt)) FROM Queue q WHERE q.status = 'COMPLETED'")
     Double avgWaitTime();
     @Query("SELECT AVG(TIMESTAMPDIFF(SECOND, q.createdAt, q.processedAt)) FROM Queue q WHERE q.status = :status")
-    Double avgWaitTimeByStatus(@Param("status") String status);
+    Double avgWaitTimeByStatus(@Param("status") QueueStatus status);
 
     @Query("SELECT MAX(q.position) FROM Queue q")
     Optional<Integer> findMaxPosition();

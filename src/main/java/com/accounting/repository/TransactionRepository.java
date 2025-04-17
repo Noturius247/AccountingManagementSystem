@@ -45,12 +45,12 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     /**
      * Count transactions by status
      */
-    long countByStatus(String status);
+    long countByStatus(TransactionStatus status);
     
     /**
      * Find transactions by status
      */
-    List<Transaction> findByStatus(String status);
+    List<Transaction> findByStatus(TransactionStatus status);
     
     /**
      * Find transactions by user
@@ -60,12 +60,12 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     /**
      * Find transactions by status and user
      */
-    List<Transaction> findByStatusAndUser(String status, User user);
+    List<Transaction> findByStatusAndUser(TransactionStatus status, User user);
     
     List<Transaction> findTop5ByOrderByCreatedAtDesc();
 
     List<Transaction> findByUserId(Long userId);
-    long countByUserIdAndStatus(Long userId, String status);
+    long countByUserIdAndStatus(Long userId, TransactionStatus status);
 
     Page<Transaction> findByUserUsername(String username, Pageable pageable);
     List<Transaction> findByUserUsername(String username);
@@ -76,10 +76,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     Optional<BigDecimal> sumAmountByUserUsername(@Param("username") String username);
     
     @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.status = :status")
-    Optional<BigDecimal> sumAmountByStatus(@Param("status") String status);
+    Optional<BigDecimal> sumAmountByStatus(@Param("status") TransactionStatus status);
     
     @Query("SELECT COUNT(t) FROM Transaction t WHERE t.user.username = :username AND t.status = :status")
-    long countByUserUsernameAndStatus(@Param("username") String username, @Param("status") String status);
+    long countByUserUsernameAndStatus(@Param("username") String username, @Param("status") TransactionStatus status);
 
     @Query("SELECT COUNT(t) FROM Transaction t WHERE t.user.username = :username")
     long countByUserUsername(@Param("username") String username);
@@ -90,7 +90,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     Optional<BigDecimal> sumAmountByUser(@Param("user") User user);
 
     @Query("SELECT t FROM Transaction t WHERE t.user.username = :username AND t.status = :status")
-    List<Transaction> findByUserUsernameAndStatus(@Param("username") String username, @Param("status") String status);
+    List<Transaction> findByUserUsernameAndStatus(@Param("username") String username, @Param("status") TransactionStatus status);
     
     /**
      * Search transactions by username, notes or status
@@ -109,7 +109,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.notes LIKE %:query% OR t.status LIKE %:query%")
     Optional<BigDecimal> sumAmountByNotesContainingOrStatusContaining(@Param("query") String query);
 
-    List<Transaction> findByNotesContaining(String query);
+    List<Transaction> findByNotesContaining(@Param("notes") String notes);
     
     @Query("SELECT t FROM Transaction t WHERE t.notes LIKE %:query% ORDER BY t.createdAt DESC LIMIT 5")
     List<Transaction> findTop5ByNotesContaining(@Param("query") String query);
@@ -137,7 +137,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
            "ORDER BY t.createdAt DESC")
     List<Transaction> searchByUserAndKeyword(@Param("username") String username, @Param("keyword") String keyword);
 
-    List<Transaction> findByStatusOrderByCreatedAtDesc(String status);
+    List<Transaction> findByStatusOrderByCreatedAtDesc(TransactionStatus status);
     List<Transaction> findByTypeOrderByCreatedAtDesc(TransactionType type);
     List<Transaction> findByPriorityOrderByCreatedAtDesc(String priority);
     
@@ -183,20 +183,21 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByAmountBetweenOrderByCreatedAtDesc(@Param("min") BigDecimal min, @Param("max") BigDecimal max);
 
     @Query("SELECT COUNT(t) FROM Transaction t WHERE t.status = :status AND t.createdAt BETWEEN :start AND :end")
-    long countByStatusAndCreatedAtBetween(@Param("status") String status, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+    long countByStatusAndCreatedAtBetween(@Param("status") TransactionStatus status, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     @Query("SELECT AVG(t.amount) FROM Transaction t")
     Optional<BigDecimal> averageAmount();
 
-    @Query("SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END FROM Transaction t WHERE t.transactionNumber = :receiptId")
+    @Query("SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END FROM Transaction t WHERE t.receiptId = :receiptId AND t.user.username = :username")
+    boolean existsByReceiptIdAndUserUsername(@Param("receiptId") String receiptId, @Param("username") String username);
+
+    @Query("SELECT t FROM Transaction t WHERE t.notes LIKE %:notes% AND t.status = :status")
+    List<Transaction> findByNotesContainingAndStatus(@Param("notes") String notes, @Param("status") TransactionStatus status);
+
+    @Query("SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END FROM Transaction t WHERE t.receiptId = :receiptId")
     boolean existsByReceiptId(@Param("receiptId") String receiptId);
 
-    @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.notes LIKE %:query% OR t.status LIKE %:query%")
-    Optional<BigDecimal> sumAmountByDescriptionContainingOrStatusContaining(@Param("query") String query);
-
-    @Query("SELECT t FROM Transaction t WHERE t.notes LIKE %:description% AND t.status = :status")
-    List<Transaction> findByDescriptionContainingAndStatus(@Param("description") String description, @Param("status") String status);
-
-    @Query("SELECT t FROM Transaction t WHERE t.notes LIKE %:description%")
-    List<Transaction> findByDescriptionContaining(@Param("description") String description);
+    List<Transaction> findByUserUsernameAndStatusAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(String username, TransactionStatus status, String notes);
+    List<Transaction> findByStatusAndTypeAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(TransactionStatus status, TransactionType type, String notes);
+    List<Transaction> findByStatusAndPriorityAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(TransactionStatus status, String priority, String notes);
 } 

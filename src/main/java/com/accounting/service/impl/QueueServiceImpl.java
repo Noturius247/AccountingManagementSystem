@@ -57,7 +57,7 @@ public class QueueServiceImpl implements QueueService {
         queue.setUserUsername(username);
         queue.setQueueNumber(getNextQueueNumber());
         queue.setCreatedAt(LocalDateTime.now());
-        queue.setStatus(QueueStatus.WAITING.toString());
+        queue.setStatus(QueueStatus.WAITING);
         queue.setPosition(getNextPosition());
         return queueRepository.save(queue);
     }
@@ -66,7 +66,7 @@ public class QueueServiceImpl implements QueueService {
     @Transactional
     public Queue createQueue(Queue queue) {
         queue.setCreatedAt(LocalDateTime.now());
-        queue.setStatus(QueueStatus.WAITING.toString());
+        queue.setStatus(QueueStatus.WAITING);
         queue.setPosition(getNextPosition());
         return queueRepository.save(queue);
     }
@@ -75,8 +75,8 @@ public class QueueServiceImpl implements QueueService {
     @Transactional
     public Queue updateQueueStatus(Long id, String status) {
         Queue queue = getQueueById(id);
-        queue.setStatus(QueueStatus.valueOf(status).toString());
-        if (QueueStatus.COMPLETED.equals(queue.getStatus())) {
+        queue.setStatus(QueueStatus.valueOf(status));
+        if (queue.getStatus() == QueueStatus.COMPLETED) {
             queue.setProcessedAt(LocalDateTime.now());
         }
         return queueRepository.save(queue);
@@ -118,14 +118,14 @@ public class QueueServiceImpl implements QueueService {
     @Override
     @Transactional(readOnly = true)
     public double getAverageWaitTimeByStatus(String status) {
-        Double avgWait = queueRepository.avgWaitTimeByStatus(status);
+        Double avgWait = queueRepository.avgWaitTimeByStatus(QueueStatus.valueOf(status));
         return avgWait != null ? avgWait : 0.0;
     }
 
     @Override
     @Transactional(readOnly = true)
     public long getQueueCountByStatus(String status) {
-        return queueRepository.countByStatus(status);
+        return queueRepository.countByStatus(QueueStatus.valueOf(status));
     }
 
     private int getNextPosition() {
@@ -135,7 +135,7 @@ public class QueueServiceImpl implements QueueService {
     @Override
     @Transactional(readOnly = true)
     public List<Queue> getActiveQueues() {
-        return queueRepository.findByStatus(QueueStatus.WAITING.toString());
+        return queueRepository.findByStatus(QueueStatus.WAITING);
     }
 
     @Override
@@ -270,7 +270,7 @@ public class QueueServiceImpl implements QueueService {
 
     @Override
     public int getQueuePosition(String queueNumber) {
-        List<Queue> waitingList = queueRepository.findByStatusOrderByCreatedAtAsc(QueueStatus.WAITING.toString());
+        List<Queue> waitingList = queueRepository.findByStatusOrderByCreatedAtAsc(QueueStatus.WAITING);
         for (int i = 0; i < waitingList.size(); i++) {
             if (waitingList.get(i).getQueueNumber().equals(queueNumber)) {
                 return i + 1; // Return 1-based position
@@ -300,7 +300,7 @@ public class QueueServiceImpl implements QueueService {
             throw new IllegalStateException("Cannot cancel a queue that is not in waiting status");
         }
         
-        queue.setStatus(QueueStatus.CANCELLED.toString());
+        queue.setStatus(QueueStatus.CANCELLED);
         queueRepository.save(queue);
     }
 
@@ -338,10 +338,10 @@ public class QueueServiceImpl implements QueueService {
         try {
             Queue queue = getNextInQueue();
             if (queue != null) {
-                queue.setStatus(QueueStatus.PROCESSING.toString());
+                queue.setStatus(QueueStatus.PROCESSING);
                 queue.setProcessedAt(LocalDateTime.now());
                 queueRepository.save(queue);
-                notifyQueueStatus(queue.getId(), QueueStatus.PROCESSING.toString());
+                notifyQueueStatus(queue.getId(), QueueStatus.PROCESSING.name());
             }
         } catch (Exception e) {
             logger.error("Error processing next in queue", e);
@@ -355,9 +355,9 @@ public class QueueServiceImpl implements QueueService {
         try {
             Map<String, Object> stats = new HashMap<>();
             stats.put("totalQueues", queueRepository.count());
-            stats.put("pendingQueues", queueRepository.countByStatus(QueueStatus.WAITING.toString()));
-            stats.put("processingQueues", queueRepository.countByStatus(QueueStatus.PROCESSING.toString()));
-            stats.put("completedQueues", queueRepository.countByStatus(QueueStatus.COMPLETED.toString()));
+            stats.put("pendingQueues", queueRepository.countByStatus(QueueStatus.WAITING));
+            stats.put("processingQueues", queueRepository.countByStatus(QueueStatus.PROCESSING));
+            stats.put("completedQueues", queueRepository.countByStatus(QueueStatus.COMPLETED));
             return stats;
         } catch (Exception e) {
             logger.error("Error getting queue statistics", e);
@@ -484,7 +484,12 @@ public class QueueServiceImpl implements QueueService {
     @Transactional(readOnly = true)
     public Queue getCurrentQueue() {
         try {
-            return getNextInQueue();
+            Queue queue = getNextInQueue();
+            if (queue != null && queue.getUser() != null) {
+                // Force initialization of the User entity
+                queue.getUser().getUsername();
+            }
+            return queue;
         } catch (Exception e) {
             logger.error("Error getting current queue", e);
             throw new RuntimeException("Failed to get current queue", e);
@@ -495,7 +500,7 @@ public class QueueServiceImpl implements QueueService {
     @Transactional(readOnly = true)
     public long getAverageProcessingTime() {
         try {
-            List<Queue> completedQueues = queueRepository.findByStatus("COMPLETED");
+            List<Queue> completedQueues = queueRepository.findByStatus(QueueStatus.COMPLETED);
             if (completedQueues.isEmpty()) {
                 return 300; // Default 5 minutes
             }
@@ -518,7 +523,9 @@ public class QueueServiceImpl implements QueueService {
                 throw new IllegalArgumentException("Queue ID cannot be null");
             }
             
-        updateQueueStatus(queueId, QueueStatus.COMPLETED.toString());
+            Queue queue = getQueueById(queueId);
+            queue.setStatus(QueueStatus.COMPLETED);
+            queueRepository.save(queue);
             notifyQueueCompletion(queueId);
         } catch (Exception e) {
             logger.error("Error completing queue", e);

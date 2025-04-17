@@ -43,7 +43,7 @@ public class SecurityConfig {
             .formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
-                .defaultSuccessUrl("/admin/dashboard", true)
+                .successHandler(authenticationSuccessHandler())
                 .failureUrl("/login?error=true")
                 .permitAll()
             )
@@ -77,7 +77,7 @@ public class SecurityConfig {
                 clearAuthenticationAttributes(request);
                 String targetUrl = determineTargetUrl(authentication);
                 if (response.isCommitted()) {
-                    logger.debug("Response has already been committed. Unable to redirect to " + targetUrl);
+                    log.debug("Response has already been committed. Unable to redirect to " + targetUrl);
                     return;
                 }
                 getRedirectStrategy().sendRedirect(request, response, targetUrl);

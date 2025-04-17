@@ -10,6 +10,20 @@ public interface TransactionService {
     
     int getActiveQueueCount();
 
+    int getCompletedQueueCount();
+
+    int getFailedQueueCount();
+
+    int getCancelledQueueCount();
+
+    BigDecimal getTotalRevenue();
+
+    int getTotalTransactions();
+
+    int getTotalPendingTransactions();
+
+    int getTotalFailedTransactions();
+
     int getTodayTransactionCount();
 
     double getTodayTotalAmount();

@@ -83,7 +83,49 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
     @Override
     @Transactional(readOnly = true)
     public int getActiveQueueCount() {
-        return Math.toIntExact(transactionRepository.countByStatus("PENDING"));
+        return Math.toIntExact(transactionRepository.countByStatus(TransactionStatus.PENDING));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getCompletedQueueCount() {
+        return Math.toIntExact(transactionRepository.countByStatus(TransactionStatus.COMPLETED));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getFailedQueueCount() {
+        return Math.toIntExact(transactionRepository.countByStatus(TransactionStatus.FAILED));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getCancelledQueueCount() {
+        return Math.toIntExact(transactionRepository.countByStatus(TransactionStatus.CANCELLED));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public BigDecimal getTotalRevenue() {
+        return transactionRepository.sumAmountByStatus(TransactionStatus.COMPLETED).orElse(BigDecimal.ZERO);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getTotalTransactions() {
+        return Math.toIntExact(transactionRepository.countByStatus(TransactionStatus.COMPLETED));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getTotalPendingTransactions() {
+        return Math.toIntExact(transactionRepository.countByStatus(TransactionStatus.PENDING));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public int getTotalFailedTransactions() {
+        return Math.toIntExact(transactionRepository.countByStatus(TransactionStatus.FAILED));
     }
 
     @Override
@@ -107,25 +149,25 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
     @Override
     @Transactional(readOnly = true)
     public int getPendingApprovalCount() {
-        return Math.toIntExact(transactionRepository.countByStatus("PENDING_APPROVAL"));
+        return Math.toIntExact(transactionRepository.countByStatus(TransactionStatus.PENDING));
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getHighPriorityCount() {
-        return Math.toIntExact(transactionRepository.countByStatus("HIGH_PRIORITY"));
+        return Math.toIntExact(transactionRepository.countByStatus(TransactionStatus.PENDING));
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getActiveUserCount() {
-        return Math.toIntExact(transactionRepository.countByStatus("ACTIVE"));
+        return Math.toIntExact(transactionRepository.countByStatus(TransactionStatus.PENDING));
     }
 
     @Override
     @Transactional(readOnly = true)
     public int getOnlineUserCount() {
-        return Math.toIntExact(transactionRepository.countByStatus("ONLINE"));
+        return Math.toIntExact(transactionRepository.countByStatus(TransactionStatus.PENDING));
     }
 
     @Override
@@ -258,7 +300,7 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
         if (!StringUtils.hasText(status)) {
             throw new IllegalArgumentException("Status cannot be empty");
         }
-        return transactionRepository.findByStatusOrderByCreatedAtDesc(status);
+        return transactionRepository.findByStatusOrderByCreatedAtDesc(TransactionStatus.valueOf(status.toUpperCase()));
     }
 
     @Override
@@ -352,7 +394,7 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
     public Map<String, Long> getTransactionCountByStatus() {
         Map<String, Long> countByStatus = new HashMap<>();
         for (TransactionStatus status : TransactionStatus.values()) {
-            countByStatus.put(status.name(), transactionRepository.countByStatus(status.name()));
+            countByStatus.put(status.name(), transactionRepository.countByStatus(status));
         }
         return countByStatus;
     }
@@ -360,7 +402,7 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
     @Override
     @Transactional(readOnly = true)
     public long getTransactionCountByStatus(String status) {
-        return transactionRepository.countByStatus(status);
+        return transactionRepository.countByStatus(TransactionStatus.valueOf(status));
     }
 
     @Override
@@ -379,7 +421,7 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
     @Override
     @Transactional(readOnly = true)
     public double getTransactionAmountByStatus(String status) {
-        Optional<BigDecimal> amount = transactionRepository.sumAmountByStatus(status);
+        Optional<BigDecimal> amount = transactionRepository.sumAmountByStatus(TransactionStatus.valueOf(status));
         return amount.map(BigDecimal::doubleValue).orElse(0.0);
     }
 
@@ -387,8 +429,8 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
     @Transactional(readOnly = true)
     public Map<String, Long> getTransactionCountByPriority() {
         Map<String, Long> countByPriority = new HashMap<>();
-        for (String priority : new String[]{"HIGH", "MEDIUM", "LOW"}) {
-            countByPriority.put(priority, transactionRepository.countByStatus(priority));
+        for (TransactionStatus priority : TransactionStatus.values()) {
+            countByPriority.put(priority.name(), transactionRepository.countByStatus(priority));
         }
         return countByPriority;
     }
@@ -396,7 +438,7 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
     @Override
     @Transactional(readOnly = true)
     public long getTransactionCountByPriority(String priority) {
-        return transactionRepository.countByStatus(priority);
+        return transactionRepository.countByStatus(TransactionStatus.valueOf(priority));
     }
 
     @Override

@@ -83,4 +83,14 @@ public interface AdminDashboardService {
     List<Map<String, Object>> getRecentActivities();
 
     List<Transaction> searchTransactions(String search, String status);
+
+    /**
+     * Get transaction amount by status
+     */
+    double getTransactionAmountByStatus(String status);
+
+    /**
+     * Get transaction count by status
+     */
+    long getTransactionCountByStatus(String status);
 } 

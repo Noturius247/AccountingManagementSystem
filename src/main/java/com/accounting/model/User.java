@@ -72,9 +72,7 @@ public class User {
         updatedAt = LocalDateTime.now();
         lastActivity = LocalDateTime.now();
         if (role == null) {
-            role = "ROLE_USER";
-        } else if (!role.startsWith("ROLE_")) {
-            role = "ROLE_" + role;
+            role = "USER";
         }
         if (balance == null) {
             balance = BigDecimal.ZERO;

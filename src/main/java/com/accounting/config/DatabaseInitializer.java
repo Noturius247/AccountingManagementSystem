@@ -27,13 +27,7 @@ public class DatabaseInitializer implements CommandLineRunner {
     private RoleRepository roleRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private SystemSettingsRepository systemSettingsRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -44,40 +38,7 @@ public class DatabaseInitializer implements CommandLineRunner {
             Role managerRole = new Role("MANAGER", "Manager with elevated privileges");
             Role userRole = new Role("USER", "Regular user with basic access");
             roleRepository.saveAll(Arrays.asList(adminRole, managerRole, userRole));
-        }
-
-        // Initialize admin user if it doesn't exist
-        if (!userRepository.existsByUsername("admin")) {
-            User admin = new User();
-            admin.setUsername("admin");
-            String adminPassword = passwordEncoder.encode("admin");
-            logger.info("Creating admin user with password hash: {}", adminPassword);
-            admin.setPassword(adminPassword);
-            admin.setEmail("admin@example.com");
-            admin.setFirstName("Admin");
-            admin.setLastName("User");
-            admin.setEnabled(true);
-            admin.setCreatedAt(LocalDateTime.now());
-            admin.setRole("ADMIN");
-            admin.setBalance(BigDecimal.ZERO);
-            userRepository.save(admin);
-        }
-
-        // Initialize manager user if it doesn't exist
-        if (!userRepository.existsByUsername("manager")) {
-            User manager = new User();
-            manager.setUsername("manager");
-            String managerPassword = passwordEncoder.encode("manager");
-            logger.info("Creating manager user with password hash: {}", managerPassword);
-            manager.setPassword(managerPassword);
-            manager.setEmail("manager@example.com");
-            manager.setFirstName("Manager");
-            manager.setLastName("User");
-            manager.setEnabled(true);
-            manager.setCreatedAt(LocalDateTime.now());
-            manager.setRole("MANAGER");
-            manager.setBalance(BigDecimal.ZERO);
-            userRepository.save(manager);
+            logger.info("Initialized default roles");
         }
 
         // Initialize system settings if they don't exist
@@ -93,6 +54,7 @@ public class DatabaseInitializer implements CommandLineRunner {
                 createSetting("system.payment.methods", "CASH,CREDIT_CARD,BANK_TRANSFER", "Available payment methods")
             };
             systemSettingsRepository.saveAll(Arrays.asList(settings));
+            logger.info("Initialized system settings");
         }
     }
 

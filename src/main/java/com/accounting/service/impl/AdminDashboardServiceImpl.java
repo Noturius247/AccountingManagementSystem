@@ -12,6 +12,7 @@ import com.accounting.model.Payment;
 import com.accounting.model.Queue;
 import com.accounting.model.Notification;
 import com.accounting.model.enums.PaymentStatus;
+import com.accounting.model.enums.QueueStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
@@ -28,6 +29,9 @@ import java.math.BigDecimal;
 import java.util.stream.Collectors;
 import java.util.ArrayList;
 import org.springframework.transaction.annotation.Transactional;
+import com.accounting.model.enums.TransactionStatus;
+import java.util.Optional;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Service
 @Transactional
@@ -61,7 +65,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         stats.put("totalUsers", userRepository.count());
         stats.put("totalTransactions", transactionRepository.count());
         stats.put("totalPayments", paymentRepository.count());
-        stats.put("activeQueues", queueRepository.countByStatus("ACTIVE"));
+        stats.put("activeQueues", queueRepository.countByStatus(QueueStatus.WAITING));
         return stats;
     }
 
@@ -70,7 +74,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         Map<String, Double> revenue = new HashMap<>();
         revenue.put("totalRevenue", transactionRepository.sumAmount().orElse(BigDecimal.ZERO).doubleValue());
         revenue.put("averageTransaction", transactionRepository.averageAmount().orElse(BigDecimal.ZERO).doubleValue());
-        revenue.put("pendingAmount", transactionRepository.sumAmountByStatus("PENDING").orElse(BigDecimal.ZERO).doubleValue());
+        revenue.put("pendingAmount", transactionRepository.sumAmountByStatus(TransactionStatus.PENDING).orElse(BigDecimal.ZERO).doubleValue());
         return revenue;
     }
 
@@ -85,9 +89,9 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     @Override
     public Map<String, Long> getQueueStats() {
         Map<String, Long> stats = new HashMap<>();
-        stats.put("waiting", queueRepository.countByStatus("WAITING"));
-        stats.put("processing", queueRepository.countByStatus("PROCESSING"));
-        stats.put("completed", queueRepository.countByStatus("COMPLETED"));
+        stats.put("waiting", queueRepository.countByStatus(QueueStatus.WAITING));
+        stats.put("processing", queueRepository.countByStatus(QueueStatus.PROCESSING));
+        stats.put("completed", queueRepository.countByStatus(QueueStatus.COMPLETED));
         return stats;
     }
 
@@ -171,7 +175,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     public double getTotalRevenue() {
         logger.info("Fetching total revenue");
         try {
-            BigDecimal revenue = transactionRepository.sumAmountByStatus("COMPLETED").orElse(BigDecimal.ZERO);
+            BigDecimal revenue = transactionRepository.sumAmountByStatus(TransactionStatus.COMPLETED).orElse(BigDecimal.ZERO);
             double result = revenue.doubleValue();
             logger.debug("Total revenue: {}", result);
             return result;
@@ -185,7 +189,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     public long getPendingTransactionsCount() {
         logger.info("Fetching pending transactions count");
         try {
-            long count = transactionRepository.countByStatus("PENDING");
+            long count = transactionRepository.countByStatus(TransactionStatus.PENDING);
             logger.debug("Pending transactions count: {}", count);
             return count;
         } catch (Exception e) {
@@ -204,8 +208,8 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
             
             report.put("totalTransactions", transactionRepository.countByCreatedAtBetween(startOfDay, endOfDay));
             report.put("totalAmount", transactionRepository.sumAmountByCreatedAtBetween(startOfDay, endOfDay));
-            report.put("completedTransactions", transactionRepository.countByStatusAndCreatedAtBetween("COMPLETED", startOfDay, endOfDay));
-            report.put("pendingTransactions", transactionRepository.countByStatusAndCreatedAtBetween("PENDING", startOfDay, endOfDay));
+            report.put("completedTransactions", transactionRepository.countByStatusAndCreatedAtBetween(TransactionStatus.COMPLETED, startOfDay, endOfDay));
+            report.put("pendingTransactions", transactionRepository.countByStatusAndCreatedAtBetween(TransactionStatus.PENDING, startOfDay, endOfDay));
             
             logger.debug("Daily report: {}", report);
             return report;
@@ -226,8 +230,8 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
             
             report.put("totalTransactions", transactionRepository.countByCreatedAtBetween(startOfMonth, endOfMonth));
             report.put("totalAmount", transactionRepository.sumAmountByCreatedAtBetween(startOfMonth, endOfMonth));
-            report.put("completedTransactions", transactionRepository.countByStatusAndCreatedAtBetween("COMPLETED", startOfMonth, endOfMonth));
-            report.put("pendingTransactions", transactionRepository.countByStatusAndCreatedAtBetween("PENDING", startOfMonth, endOfMonth));
+            report.put("completedTransactions", transactionRepository.countByStatusAndCreatedAtBetween(TransactionStatus.COMPLETED, startOfMonth, endOfMonth));
+            report.put("pendingTransactions", transactionRepository.countByStatusAndCreatedAtBetween(TransactionStatus.PENDING, startOfMonth, endOfMonth));
             
             logger.debug("Monthly report: {}", report);
             return report;
@@ -269,21 +273,39 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Map<String, Object> getTransactionStatistics(LocalDateTime startDate, LocalDateTime endDate) {
         Map<String, Object> stats = new HashMap<>();
         
         // Transaction counts by status
         stats.put("completedTransactions", 
-            transactionRepository.countByStatusAndCreatedAtBetween("COMPLETED", startDate, endDate));
+            transactionRepository.countByStatusAndCreatedAtBetween(TransactionStatus.COMPLETED, startDate, endDate));
         stats.put("pendingTransactions", 
-            transactionRepository.countByStatusAndCreatedAtBetween("PENDING", startDate, endDate));
+            transactionRepository.countByStatusAndCreatedAtBetween(TransactionStatus.PENDING, startDate, endDate));
         stats.put("failedTransactions", 
-            transactionRepository.countByStatusAndCreatedAtBetween("FAILED", startDate, endDate));
+            transactionRepository.countByStatusAndCreatedAtBetween(TransactionStatus.FAILED, startDate, endDate));
         
         // Transaction amounts
         stats.put("totalAmount", 
-            transactionRepository.sumAmountByDescriptionContainingOrStatusContaining("")
-                .orElse(BigDecimal.ZERO).doubleValue());
+            transactionRepository.sumAmountByCreatedAtBetween(startDate, endDate));
+        
+        // Initialize collections for the current user
+        User currentUser = userRepository.findByUsername(SecurityContextHolder.getContext().getAuthentication().getName())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        // Initialize all collections
+        if (currentUser.getNotificationSettings() != null) {
+            currentUser.getNotificationSettings().size();
+        }
+        if (currentUser.getTransactions() != null) {
+            currentUser.getTransactions().size();
+        }
+        if (currentUser.getDocuments() != null) {
+            currentUser.getDocuments().size();
+        }
+        if (currentUser.getNotifications() != null) {
+            currentUser.getNotifications().size();
+        }
         
         return stats;
     }
@@ -335,7 +357,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
 
     @Override
     public List<Queue> getActiveQueues() {
-        return queueRepository.findByStatus("ACTIVE");
+        return queueRepository.findByStatus(QueueStatus.WAITING);
     }
 
     @Override
@@ -346,11 +368,11 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     @Override
     public Map<String, Long> getStatusCounts() {
         Map<String, Long> counts = new HashMap<>();
-        counts.put("pendingTransactions", transactionRepository.countByStatus("PENDING"));
-        counts.put("completedTransactions", transactionRepository.countByStatus("COMPLETED"));
-        counts.put("failedTransactions", transactionRepository.countByStatus("FAILED"));
-        counts.put("activeQueues", queueRepository.countByStatus("ACTIVE"));
-        counts.put("waitingQueues", queueRepository.countByStatus("WAITING"));
+        counts.put("pendingTransactions", transactionRepository.countByStatus(TransactionStatus.PENDING));
+        counts.put("completedTransactions", transactionRepository.countByStatus(TransactionStatus.COMPLETED));
+        counts.put("failedTransactions", transactionRepository.countByStatus(TransactionStatus.FAILED));
+        counts.put("activeQueues", queueRepository.countByStatus(QueueStatus.WAITING));
+        counts.put("waitingQueues", queueRepository.countByStatus(QueueStatus.WAITING));
         return counts;
     }
 
@@ -407,12 +429,23 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     public List<Transaction> searchTransactions(String search, String status) {
         if (search != null && !search.isEmpty()) {
             if (status != null && !status.isEmpty()) {
-                return transactionRepository.findByDescriptionContainingAndStatus(search, status);
+                return transactionRepository.findByNotesContainingAndStatus(search, TransactionStatus.valueOf(status.toUpperCase()));
             }
-            return transactionRepository.findByDescriptionContaining(search);
+            return transactionRepository.findByNotesContaining(search);
         } else if (status != null && !status.isEmpty()) {
-            return transactionRepository.findByStatus(status);
+            return transactionRepository.findByStatus(TransactionStatus.valueOf(status.toUpperCase()));
         }
         return transactionRepository.findTop10ByOrderByCreatedAtDesc();
+    }
+
+    @Override
+    public double getTransactionAmountByStatus(String status) {
+        Optional<BigDecimal> amount = transactionRepository.sumAmountByStatus(TransactionStatus.valueOf(status));
+        return amount.map(BigDecimal::doubleValue).orElse(0.0);
+    }
+
+    @Override
+    public long getTransactionCountByStatus(String status) {
+        return transactionRepository.countByStatus(TransactionStatus.valueOf(status));
     }
 } 

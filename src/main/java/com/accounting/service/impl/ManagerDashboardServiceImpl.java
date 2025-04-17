@@ -8,6 +8,7 @@ import com.accounting.repository.KioskRepository;
 import com.accounting.repository.UserRepository;
 import com.accounting.model.Kiosk;
 import com.accounting.model.Transaction;
+import com.accounting.model.enums.TransactionStatus;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,7 +48,7 @@ public class ManagerDashboardServiceImpl implements ManagerDashboardService {
     @Override
     public List<Transaction> getRecentTransactions() {
         return transactionRepository.findAll(
-            PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "timestamp"))
+            PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"))
         ).getContent();
     }
 
@@ -71,6 +72,6 @@ public class ManagerDashboardServiceImpl implements ManagerDashboardService {
 
     @Override
     public int getCurrentQueueCount() {
-        return (int) transactionRepository.countByStatus("PENDING");
+        return (int) transactionRepository.countByStatus(TransactionStatus.PENDING);
     }
 } 

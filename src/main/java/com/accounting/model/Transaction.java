@@ -14,12 +14,14 @@ import lombok.AllArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.util.Currency;
+import lombok.ToString;
 
 @Entity
 @Table(name = "transactions")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class Transaction {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     
@@ -29,6 +31,9 @@ public class Transaction {
     
     @Column(name = "transaction_number", nullable = false, unique = true)
     private String transactionNumber;
+    
+    @Column(name = "receipt_id", unique = true)
+    private String receiptId;
     
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
@@ -88,6 +93,7 @@ public class Transaction {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
     private User user;
     
     @Transient
@@ -342,5 +348,31 @@ public class Transaction {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    @Override
+    public String toString() {
+        return "Transaction{" +
+            "id=" + id +
+            ", transactionNumber='" + transactionNumber + '\'' +
+            ", receiptId='" + receiptId + '\'' +
+            ", amount=" + amount +
+            ", status=" + status +
+            ", type=" + type +
+            ", priority=" + priority +
+            ", category='" + category + '\'' +
+            ", subCategory='" + subCategory + '\'' +
+            ", currency='" + currency + '\'' +
+            ", taxAmount=" + taxAmount +
+            ", notes='" + notes + '\'' +
+            ", isRecurring=" + isRecurring +
+            ", recurringFrequency='" + recurringFrequency + '\'' +
+            ", nextDueDate=" + nextDueDate +
+            ", createdAt=" + createdAt +
+            ", updatedAt=" + updatedAt +
+            ", processedAt=" + processedAt +
+            ", createdBy='" + createdBy + '\'' +
+            ", updatedBy='" + updatedBy + '\'' +
+            '}';
     }
 } 

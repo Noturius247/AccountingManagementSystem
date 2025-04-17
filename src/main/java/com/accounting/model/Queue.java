@@ -175,8 +175,12 @@ public class Queue {
         return status != null ? status.toString().toLowerCase() : "waiting";
     }
 
-    public void setStatus(String status) {
-        this.status = QueueStatus.valueOf(status);
+    public void setStatus(QueueStatus status) {
+        this.status = status;
+    }
+
+    public QueueStatus getStatus() {
+        return status;
     }
 
     public Date getCreatedAtAsDate() {
