@@ -58,7 +58,7 @@
                         <div class="card stat-card">
                             <div class="card-body">
                                 <h5 class="card-title">Total Amount</h5>
-                                <h2 class="card-text"><fmt:formatNumber value="${statistics.totalAmount}" type="currency"/></h2>
+                                <h2 class="card-text"><fmt:formatNumber value="${statistics.totalAmount.orElse(0)}" type="currency"/></h2>
                                 <p class="text-muted">This month</p>
                             </div>
                         </div>
@@ -141,8 +141,8 @@
                                             <td>${payment.description}</td>
                                             <td><fmt:formatNumber value="${payment.amount}" type="currency"/></td>
                                             <td>
-                                                <span class="badge bg-${payment.status == 'COMPLETED' ? 'success' : 
-                                                                        payment.status == 'PENDING' ? 'warning' : 
+                                                <span class="badge bg-${payment.status.name() == 'COMPLETED' ? 'success' : 
+                                                                        payment.status.name() == 'PENDING' ? 'warning' : 
                                                                         'danger'}">
                                                     ${payment.status}
                                                 </span>
@@ -152,7 +152,7 @@
                                                    class="btn btn-sm btn-outline-primary">
                                                     <i class="bi bi-eye"></i> View
                                                 </a>
-                                                <c:if test="${payment.status == 'COMPLETED'}">
+                                                <c:if test="${payment.status.name() == 'COMPLETED'}">
                                                     <a href="${pageContext.request.contextPath}/user/payments/${payment.id}/receipt" 
                                                        class="btn btn-sm btn-outline-secondary">
                                                         <i class="bi bi-receipt"></i> Receipt

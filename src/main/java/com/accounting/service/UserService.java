@@ -19,4 +19,9 @@ public interface UserService {
     void updateLastActivity(String username);
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
+    
+    // New methods for user settings
+    void updateProfile(String username, User userData);
+    void changePassword(String username, String currentPassword, String newPassword);
+    void updateNotificationSettings(String username, boolean emailNotifications, boolean paymentNotifications, boolean documentNotifications);
 } 

@@ -1,30 +1,19 @@
 package com.accounting.controller;
 
+import com.accounting.model.User;
+import com.accounting.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import java.util.HashMap;
-import java.util.Map;
 
 @Controller
 @RequestMapping("/profile")
 public class ProfileController {
     
-    // Mock user profile data
-    private static final Map<String, Map<String, String>> userProfiles = new HashMap<>();
-    
-    static {
-        // Initialize mock profile for admin user
-        Map<String, String> adminProfile = new HashMap<>();
-        adminProfile.put("fullName", "Admin User");
-        adminProfile.put("email", "admin@example.com");
-        adminProfile.put("phone", "+1234567890");
-        adminProfile.put("department", "Administration");
-        adminProfile.put("role", "System Administrator");
-        adminProfile.put("joinDate", "2024-01-01");
-        userProfiles.put("admin", adminProfile);
-    }
+    @Autowired
+    private UserService userService;
     
     @GetMapping
     public String viewProfile(Model model, Authentication authentication) {
@@ -33,15 +22,15 @@ public class ProfileController {
         }
         
         String username = authentication.getName();
-        Map<String, String> userProfile = userProfiles.get(username);
+        User user = userService.findByUsernameWithCollections(username);
         
         model.addAttribute("pageTitle", "User Profile");
-        model.addAttribute("profile", userProfile);
-        return "profile";
+        model.addAttribute("profile", user);
+        return "user/profile";
     }
     
     @PostMapping
-    public String updateProfile(@RequestParam Map<String, String> formData, 
+    public String updateProfile(@ModelAttribute User userData, 
                               Model model, 
                               Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -49,16 +38,10 @@ public class ProfileController {
         }
         
         String username = authentication.getName();
-        Map<String, String> profile = userProfiles.get(username);
-        
-        // Update profile with form data
-        profile.put("fullName", formData.get("fullName"));
-        profile.put("email", formData.get("email"));
-        profile.put("phone", formData.get("phone"));
-        profile.put("department", formData.get("department"));
+        userService.updateProfile(username, userData);
         
         model.addAttribute("success", "Profile updated successfully");
-        model.addAttribute("profile", profile);
-        return "profile";
+        model.addAttribute("profile", userService.findByUsernameWithCollections(username));
+        return "user/profile";
     }
 } 

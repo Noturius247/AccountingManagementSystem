@@ -117,9 +117,13 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
     List<Queue> findByUserUsernameAndStatus(@Param("username") String username, @Param("status") QueueStatus status);
 
     List<Queue> findByStatusOrderByCreatedAtDesc(QueueStatus status);
-    Optional<Queue> findFirstByStatusOrderByPositionAsc(QueueStatus status);
+    
+    @Query("SELECT q FROM Queue q LEFT JOIN FETCH q.user u LEFT JOIN FETCH u.notificationSettings WHERE q.status = :status ORDER BY q.position ASC")
+    Optional<Queue> findFirstByStatusOrderByPositionAsc(@Param("status") QueueStatus status);
+    
     @Query("SELECT AVG(TIMESTAMPDIFF(SECOND, q.createdAt, q.processedAt)) FROM Queue q WHERE q.status = 'COMPLETED'")
     Double avgWaitTime();
+
     @Query("SELECT AVG(TIMESTAMPDIFF(SECOND, q.createdAt, q.processedAt)) FROM Queue q WHERE q.status = :status")
     Double avgWaitTimeByStatus(@Param("status") QueueStatus status);
 

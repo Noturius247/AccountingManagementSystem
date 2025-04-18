@@ -484,12 +484,9 @@ public class QueueServiceImpl implements QueueService {
     @Transactional(readOnly = true)
     public Queue getCurrentQueue() {
         try {
-            Queue queue = getNextInQueue();
-            if (queue != null && queue.getUser() != null) {
-                // Force initialization of the User entity
-                queue.getUser().getUsername();
-            }
-            return queue;
+            // Use a JOIN FETCH to eagerly load the User entity
+            return queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.WAITING)
+                    .orElse(null);
         } catch (Exception e) {
             logger.error("Error getting current queue", e);
             throw new RuntimeException("Failed to get current queue", e);

@@ -6,9 +6,11 @@ import com.accounting.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityNotFoundException;
+import org.hibernate.Hibernate;
 
 import java.util.Optional;
 
@@ -17,10 +19,12 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -38,19 +42,13 @@ public class UserServiceImpl implements UserService {
     public User findByUsernameWithCollections(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+        
         // Initialize all collections to prevent LazyInitializationException
-        if (user.getNotificationSettings() != null) {
-            user.getNotificationSettings().size();
-        }
-        if (user.getDocuments() != null) {
-            user.getDocuments().size();
-        }
-        if (user.getTransactions() != null) {
-            user.getTransactions().size();
-        }
-        if (user.getNotifications() != null) {
-            user.getNotifications().size();
-        }
+        Hibernate.initialize(user.getNotificationSettings());
+        Hibernate.initialize(user.getDocuments());
+        Hibernate.initialize(user.getTransactions());
+        Hibernate.initialize(user.getNotifications());
+        
         return user;
     }
 
@@ -123,5 +121,48 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
+    }
+
+    @Override
+    public void updateProfile(String username, User userData) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found: " + username));
+        
+        if (userData.getFirstName() != null) {
+            user.setFirstName(userData.getFirstName());
+        }
+        if (userData.getLastName() != null) {
+            user.setLastName(userData.getLastName());
+        }
+        if (userData.getEmail() != null) {
+            user.setEmail(userData.getEmail());
+        }
+        
+        userRepository.save(user);
+    }
+
+    @Override
+    public void changePassword(String username, String currentPassword, String newPassword) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found: " + username));
+        
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Current password is incorrect");
+        }
+        
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
+    @Override
+    public void updateNotificationSettings(String username, boolean emailNotifications, boolean paymentNotifications, boolean documentNotifications) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("User not found: " + username));
+        
+        user.getNotificationSettings().put("email", String.valueOf(emailNotifications));
+        user.getNotificationSettings().put("payment", String.valueOf(paymentNotifications));
+        user.getNotificationSettings().put("document", String.valueOf(documentNotifications));
+        
+        userRepository.save(user);
     }
 } 

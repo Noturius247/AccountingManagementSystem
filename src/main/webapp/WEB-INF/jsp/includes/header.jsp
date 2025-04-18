@@ -27,13 +27,22 @@
                                 <i class="bi bi-credit-card me-1"></i> Transactions
                             </a>
                         </li>
+                        <sec:authorize access="hasRole('MANAGER')">
+                            <li class="nav-item">
+                                <a class="nav-link" href="${pageContext.request.contextPath}/manager/payments">
+                                    <i class="bi bi-cash-stack me-1"></i> Payments
+                                </a>
+                            </li>
+                        </sec:authorize>
+                        <sec:authorize access="hasRole('USER')">
+                            <li class="nav-item">
+                                <a class="nav-link" href="${pageContext.request.contextPath}/user/payments">
+                                    <i class="bi bi-cash-stack me-1"></i> Payments
+                                </a>
+                            </li>
+                        </sec:authorize>
                         <li class="nav-item">
-                            <a class="nav-link" href="${pageContext.request.contextPath}/payments">
-                                <i class="bi bi-cash-stack me-1"></i> Payments
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="${pageContext.request.contextPath}/documents">
+                            <a class="nav-link" href="${pageContext.request.contextPath}/user/documents">
                                 <i class="bi bi-file-earmark-text me-1"></i> Documents
                             </a>
                         </li>
@@ -73,7 +82,7 @@
                                 <li><a class="dropdown-item" href="${pageContext.request.contextPath}/profile">
                                     <i class="bi bi-person me-2"></i> Profile
                                 </a></li>
-                                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/settings">
+                                <li><a class="dropdown-item" href="${pageContext.request.contextPath}/user/settings">
                                     <i class="bi bi-gear me-2"></i> Settings
                                 </a></li>
                                 <li><hr class="dropdown-divider"></li>

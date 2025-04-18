@@ -184,7 +184,7 @@ public class KioskController {
             Payment payment = new Payment();
             payment.setDescription("Tuition Payment - " + academicYear + " Semester " + semester);
             payment.setAmount(amount);
-            payment.setStatus(PaymentStatus.PENDING);
+            payment.setPaymentStatus(PaymentStatus.PENDING);
             payment.setType(PaymentType.CASH);
             
             payment.setUser(student.getUser());
@@ -250,7 +250,7 @@ public class KioskController {
             Payment payment = new Payment();
             payment.setDescription("Library Fee Payment");
             payment.setAmount(amount);
-            payment.setStatus(PaymentStatus.PENDING);
+            payment.setPaymentStatus(PaymentStatus.PENDING);
             payment.setType(PaymentType.CASH);
             payment.setUser(student.getUser());
             payment.setPaymentMethod("KIOSK");
@@ -289,7 +289,7 @@ public class KioskController {
             Payment payment = new Payment();
             payment.setDescription("Laboratory Fee Payment - " + labType);
             payment.setAmount(amount);
-            payment.setStatus(PaymentStatus.PENDING);
+            payment.setPaymentStatus(PaymentStatus.PENDING);
             payment.setType(PaymentType.CASH);
             payment.setUser(student.getUser());
             payment.setPaymentMethod("KIOSK");
@@ -329,7 +329,7 @@ public class KioskController {
             Payment payment = new Payment();
             payment.setDescription("ID Replacement - " + reason);
             payment.setAmount(amount);
-            payment.setStatus(PaymentStatus.PENDING);
+            payment.setPaymentStatus(PaymentStatus.PENDING);
             payment.setType(PaymentType.CASH);
             payment.setUser(student.getUser());
             payment.setPaymentMethod("KIOSK");
@@ -369,7 +369,7 @@ public class KioskController {
             Payment payment = new Payment();
             payment.setDescription("Graduation Fee - " + graduationType);
             payment.setAmount(amount);
-            payment.setStatus(PaymentStatus.PENDING);
+            payment.setPaymentStatus(PaymentStatus.PENDING);
             payment.setType(PaymentType.CASH);
             payment.setUser(student.getUser());
             payment.setPaymentMethod("KIOSK");
@@ -409,7 +409,7 @@ public class KioskController {
             Payment payment = new Payment();
             payment.setDescription("Transcript Request - " + copies + " copies");
             payment.setAmount(amount);
-            payment.setStatus(PaymentStatus.PENDING);
+            payment.setPaymentStatus(PaymentStatus.PENDING);
             payment.setType(PaymentType.CASH);
             payment.setUser(student.getUser());
             payment.setPaymentMethod("KIOSK");

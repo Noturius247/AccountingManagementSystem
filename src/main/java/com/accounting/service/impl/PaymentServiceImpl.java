@@ -48,7 +48,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public Payment processPayment(Payment payment) {
         logger.debug("Processing payment: {}", payment);
-        payment.setStatus(PaymentStatus.PENDING);
+        payment.setPaymentStatus(PaymentStatus.PENDING);
         payment.setProcessedAt(LocalDateTime.now());
         return paymentRepository.save(payment);
     }
@@ -58,7 +58,7 @@ public class PaymentServiceImpl implements PaymentService {
     public Payment completePayment(Long paymentId) {
         Payment payment = paymentRepository.findById(paymentId)
             .orElseThrow(() -> new RuntimeException("Payment not found"));
-        payment.setStatus(PaymentStatus.PROCESSED);
+        payment.setPaymentStatus(PaymentStatus.PROCESSED);
         payment.setUpdatedAt(LocalDateTime.now());
         return paymentRepository.save(payment);
     }
@@ -68,7 +68,7 @@ public class PaymentServiceImpl implements PaymentService {
     public Payment cancelPayment(Long paymentId) {
         Payment payment = paymentRepository.findById(paymentId)
             .orElseThrow(() -> new RuntimeException("Payment not found"));
-        payment.setStatus(PaymentStatus.FAILED);
+        payment.setPaymentStatus(PaymentStatus.FAILED);
         payment.setUpdatedAt(LocalDateTime.now());
         return paymentRepository.save(payment);
     }
@@ -233,5 +233,25 @@ public class PaymentServiceImpl implements PaymentService {
     public Payment getPaymentById(Long id) {
         return paymentRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Payment not found with id: " + id));
+    }
+
+    @Override
+    @Transactional
+    public Payment approvePayment(Long id) {
+        Payment payment = paymentRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Payment not found"));
+        payment.setPaymentStatus(PaymentStatus.PROCESSED);
+        payment.setUpdatedAt(LocalDateTime.now());
+        return paymentRepository.save(payment);
+    }
+
+    @Override
+    @Transactional
+    public Payment rejectPayment(Long id) {
+        Payment payment = paymentRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Payment not found"));
+        payment.setPaymentStatus(PaymentStatus.FAILED);
+        payment.setUpdatedAt(LocalDateTime.now());
+        return paymentRepository.save(payment);
     }
 }

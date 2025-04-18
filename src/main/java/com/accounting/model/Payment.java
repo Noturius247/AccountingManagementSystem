@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -55,6 +56,7 @@ public class Payment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
     private User user;
 
     @Column(name = "queue_number")
@@ -62,7 +64,7 @@ public class Payment {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private PaymentStatus status = PaymentStatus.PENDING;
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -90,8 +92,8 @@ public class Payment {
             String randomPart = String.format("%05d", (int) (Math.random() * 100000));
             paymentNumber = String.format("PAY-%s-%s", datePart, randomPart);
         }
-        if (status == null) {
-            status = PaymentStatus.PENDING;
+        if (paymentStatus == null) {
+            paymentStatus = PaymentStatus.PENDING;
         }
         if (currency == null || currency.isEmpty()) {
             currency = "PHP";
@@ -163,10 +165,66 @@ public class Payment {
     }
 
     public String getStatusColor() {
-        return status != null ? status.toString().toLowerCase() : "pending";
+        return paymentStatus != null ? paymentStatus.toString().toLowerCase() : "pending";
     }
 
     public String getTypeIcon() {
         return type != null ? type.toString().toLowerCase() : "payment";
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public PaymentType getType() {
+        return type;
+    }
+
+    public void setType(PaymentType type) {
+        this.type = type;
+    }
+
+    public PaymentStatus getPaymentStatus() {
+        return paymentStatus;
+    }
+
+    public void setPaymentStatus(PaymentStatus paymentStatus) {
+        this.paymentStatus = paymentStatus;
     }
 } 

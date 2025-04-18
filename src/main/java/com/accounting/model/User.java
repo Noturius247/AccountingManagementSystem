@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.HashMap;
 
 @Entity
 @Table(name = "users")
@@ -55,7 +56,7 @@ public class User {
     @CollectionTable(name = "user_notification_settings", joinColumns = @JoinColumn(name = "user_id"))
     @MapKeyColumn(name = "setting_key")
     @Column(name = "setting_value")
-    private Map<String, String> notificationSettings;
+    private Map<String, String> notificationSettings = new HashMap<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Transaction> transactions = new HashSet<>();
@@ -82,6 +83,13 @@ public class User {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    @PostLoad
+    protected void onLoad() {
+        if (notificationSettings == null) {
+            notificationSettings = new HashMap<>();
+        }
     }
 
     public Long getId() {

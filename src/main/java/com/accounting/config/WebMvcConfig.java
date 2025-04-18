@@ -23,6 +23,16 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .addResourceLocations("file:src/main/webapp/static/")
                 .setCachePeriod(3600)
                 .resourceChain(true);
+                
+        registry.addResourceHandler("/css/**")
+                .addResourceLocations("file:src/main/webapp/static/css/")
+                .setCachePeriod(3600)
+                .resourceChain(true);
+                
+        registry.addResourceHandler("/js/**")
+                .addResourceLocations("file:src/main/webapp/static/js/")
+                .setCachePeriod(3600)
+                .resourceChain(true);
     }
 
     @Bean
@@ -31,6 +41,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
         resolver.setPrefix("/WEB-INF/jsp/");
         resolver.setSuffix(".jsp");
         resolver.setViewClass(JstlView.class);
+        resolver.setOrder(1);
+        resolver.setViewNames("*");
         return resolver;
     }
 

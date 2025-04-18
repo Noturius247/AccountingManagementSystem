@@ -9,6 +9,10 @@
     <title>Manager Dashboard - Accounting Management System</title>
     <link rel="stylesheet" href="../../css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="${pageContext.request.contextPath}/js/main.js"></script>
     <style>
         :root {
             --primary-color: #3498db;
@@ -429,6 +433,9 @@
             <div class="section-header">
                 <h2>Payment Approvals</h2>
                 <div class="action-buttons">
+                    <a href="${pageContext.request.contextPath}/manager/payments" class="btn btn-primary">
+                        <i class="fas fa-list"></i> View All Payments
+                    </a>
                     <button class="btn btn-info" onclick="refreshPayments()">
                         <i class="fas fa-sync-alt"></i> Refresh
                     </button>
@@ -471,11 +478,11 @@
                             <tr>
                                 <td>${payment.id}</td>
                                 <td>${payment.user.username}</td>
-                                <td>$<fmt:formatNumber value="${payment.amount}" type="number" minFractionDigits="2" maxFractionDigits="2"/></td>
+                                <td>$${payment.amount.toFixed(2)}</td>
                                 <td>${payment.type}</td>
                                 <td>
-                                    <span class="status-badge status-${payment.status.toLowerCase()}">
-                                        ${payment.status}
+                                    <span class="status-badge status-${payment.paymentStatus.toLowerCase()}">
+                                        ${payment.paymentStatus}
                                     </span>
                                 </td>
                                 <td><fmt:formatDate value="${payment.createdAt}" pattern="MMM dd, yyyy HH:mm"/></td>
@@ -716,15 +723,53 @@
             fetch(`${pageContext.request.contextPath}/manager/payments`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Accept': 'application/json'
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
-                updatePaymentTable(data);
+                const tableBody = document.getElementById('paymentTableBody');
+                tableBody.innerHTML = ''; // Clear existing rows
+                
+                data.payments.forEach(payment => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${payment.id}</td>
+                        <td>${payment.user.username}</td>
+                        <td>$${payment.amount.toFixed(2)}</td>
+                        <td>${payment.type}</td>
+                        <td>
+                            <span class="status-badge status-${payment.paymentStatus.toLowerCase()}">
+                                ${payment.paymentStatus}
+                            </span>
+                        </td>
+                        <td><fmt:formatDate value="${payment.createdAt}" pattern="MMM dd, yyyy HH:mm"/></td>
+                        <td>
+                            <button class="btn btn-success" onclick="approvePayment('${payment.id}')">
+                                <i class="fas fa-check"></i> Approve
+                            </button>
+                            <button class="btn btn-danger" onclick="rejectPayment('${payment.id}')">
+                                <i class="fas fa-times"></i> Reject
+                            </button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+                
+                // Update statistics
+                document.querySelector('.stat-card:nth-child(1) .value').textContent = data.statistics.totalPayments;
+                document.querySelector('.stat-card:nth-child(2) .value').textContent = data.statistics.pendingPayments;
+                document.querySelector('.stat-card:nth-child(3) .value').textContent = 
+                    `$${data.statistics.totalAmount.toFixed(2)}`;
             })
             .catch(error => {
-                showError('Failed to refresh payments');
+                console.error('Error refreshing payments:', error);
+                showError('Failed to refresh payments. Please try again.');
             })
             .finally(() => {
                 hideLoading();
@@ -742,11 +787,10 @@
             .then(response => response.json())
             .then(data => {
                 updateQueueTable(data);
+                hideLoading();
             })
             .catch(error => {
                 showError('Failed to refresh queue');
-            })
-            .finally(() => {
                 hideLoading();
             });
         }
@@ -845,12 +889,6 @@
                 hideLoading();
             });
         }
-
-        // Auto-refresh every 30 seconds
-        setInterval(() => {
-            refreshPayments();
-            refreshQueue();
-        }, 30000);
     </script>
 </body>
 </html> 

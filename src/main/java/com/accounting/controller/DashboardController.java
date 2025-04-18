@@ -26,33 +26,29 @@ public class DashboardController {
 
     @GetMapping
     public String dashboard(Model model, Authentication authentication) {
-        // Set page title
-        model.addAttribute("pageTitle", "Dashboard");
-        
-        // Add user information
-        if (authentication != null && authentication.isAuthenticated()) {
-            model.addAttribute("username", authentication.getName());
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return "redirect:/login";
         }
-        
-        // Add transaction statistics
-        model.addAttribute("activeQueueCount", transactionService.getActiveQueueCount());
-        model.addAttribute("lastUpdateTime", new Date());
-        model.addAttribute("todayTransactions", transactionService.getTodayTransactionCount());
-        model.addAttribute("todayTotal", transactionService.getTodayTotalAmount());
-        model.addAttribute("pendingApprovals", transactionService.getPendingApprovalCount());
-        model.addAttribute("highPriorityCount", transactionService.getHighPriorityCount());
-        model.addAttribute("activeUsers", transactionService.getActiveUserCount());
-        model.addAttribute("onlineUsers", transactionService.getOnlineUserCount());
-        
-        // Get recent transactions
-        List<Transaction> recentTransactions = transactionService.getRecentTransactions(10);
-        model.addAttribute("recentTransactions", recentTransactions);
-        
-        // Get system notifications
-        List<Notification> notifications = notificationService.getSystemNotifications();
-        model.addAttribute("notifications", notifications);
-        
-        return "dashboard";
+
+        // Check user role and redirect accordingly
+        for (GrantedAuthority authority : authentication.getAuthorities()) {
+            if (authority.getAuthority().equals("ROLE_ADMIN")) {
+                return "redirect:/admin/dashboard";
+            } else if (authority.getAuthority().equals("ROLE_MANAGER")) {
+                return "redirect:/manager/dashboard";
+            } else if (authority.getAuthority().equals("ROLE_USER")) {
+                return "redirect:/user/dashboard";
+            }
+        }
+
+        // If no role matches, redirect to login
+        return "redirect:/login";
+    }
+
+    @GetMapping("/transactions")
+    public String transactions(Model model) {
+        model.addAttribute("transactions", transactionService.getRecentTransactions(10));
+        return "user/transactions";
     }
 
     @GetMapping("/admin/dashboard")

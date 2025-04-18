@@ -18,10 +18,16 @@ import com.accounting.model.User;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
+    @Query("SELECT DISTINCT p FROM Payment p LEFT JOIN FETCH p.user u LEFT JOIN FETCH u.notificationSettings LEFT JOIN FETCH u.transactions")
+    List<Payment> findAllWithUser();
+
+    @Query("SELECT p FROM Payment p LEFT JOIN FETCH p.user u LEFT JOIN FETCH u.notificationSettings LEFT JOIN FETCH u.transactions WHERE p.id = :id")
+    Optional<Payment> findByIdWithUser(@Param("id") Long id);
+
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p")
     Optional<BigDecimal> sumAmount();
 
-    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.status = :status")
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.paymentStatus = :status")
     Optional<BigDecimal> sumAmountByStatus(@Param("status") PaymentStatus status);
 
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.type = :type")
@@ -33,7 +39,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.createdAt BETWEEN :startDate AND :endDate")
     BigDecimal sumTotalAmountByDateRange(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
 
-    @Query("SELECT COUNT(p) FROM Payment p WHERE p.status = :status")
+    @Query("SELECT COUNT(p) FROM Payment p WHERE p.paymentStatus = :status")
     long countByStatus(@Param("status") PaymentStatus status);
 
     @Query("SELECT COUNT(p) FROM Payment p WHERE p.type = :type")
@@ -47,7 +53,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("SELECT p FROM Payment p WHERE p.user = :user ORDER BY p.createdAt DESC")
     List<Payment> findByUserOrderByCreatedAtDesc(@Param("user") User user);
 
-    @Query("SELECT p FROM Payment p WHERE p.status = :status")
+    @Query("SELECT p FROM Payment p WHERE p.paymentStatus = :status")
     List<Payment> findByStatus(@Param("status") PaymentStatus status);
 
     @Query("SELECT p FROM Payment p WHERE p.type = :type ORDER BY p.createdAt DESC")
@@ -62,7 +68,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("SELECT p FROM Payment p WHERE p.amount BETWEEN :minAmount AND :maxAmount ORDER BY p.createdAt DESC")
     List<Payment> findByAmountBetweenOrderByCreatedAtDesc(@Param("minAmount") Double minAmount, @Param("maxAmount") Double maxAmount);
 
-    @Query("SELECT COUNT(p) FROM Payment p WHERE p.user.username = :username AND p.status = 'PENDING'")
+    @Query("SELECT COUNT(p) FROM Payment p WHERE p.user.username = :username AND p.paymentStatus = 'PENDING'")
     int countPendingByUserUsername(@Param("username") String username);
 
     @Query("SELECT p FROM Payment p WHERE p.user.username = :username ORDER BY p.createdAt DESC LIMIT 5")
@@ -71,10 +77,10 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("SELECT COUNT(p) FROM Payment p WHERE p.description LIKE %:description%")
     long countByDescriptionContaining(@Param("description") String description);
 
-    @Query("SELECT p.status, p.type, COUNT(p) FROM Payment p GROUP BY p.status, p.type")
+    @Query("SELECT p.paymentStatus, p.type, COUNT(p) FROM Payment p GROUP BY p.paymentStatus, p.type")
     List<Object[]> countByStatusAndType();
 
-    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.description LIKE %:query% OR p.status LIKE %:query%")
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.description LIKE %:query% OR p.paymentStatus LIKE %:query%")
     Optional<BigDecimal> sumAmountByDescriptionContainingOrStatusContaining(@Param("query") String query);
 
     @Query("SELECT p FROM Payment p ORDER BY p.createdAt DESC LIMIT 10")

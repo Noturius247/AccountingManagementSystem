@@ -12,7 +12,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.config.http.SessionCreationPolicy;
 
 import jakarta.servlet.ServletException;
@@ -23,8 +24,9 @@ import java.io.IOException;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@Slf4j
 public class SecurityConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -37,6 +39,7 @@ public class SecurityConfig {
                 .requestMatchers("/kiosk/**", "/accounting/kiosk/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/manager/**").hasRole("MANAGER")
+                .requestMatchers("/user/documents").hasAnyRole("USER", "MANAGER")
                 .requestMatchers("/user/**").hasRole("USER")
                 .anyRequest().authenticated()
             )
@@ -58,6 +61,9 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 .maximumSessions(1)
                 .expiredUrl("/login?expired=true")
+            )
+            .sessionManagement(session -> session
+                .sessionFixation().changeSessionId()
             );
 
         return http.build();
@@ -77,7 +83,7 @@ public class SecurityConfig {
                 clearAuthenticationAttributes(request);
                 String targetUrl = determineTargetUrl(authentication);
                 if (response.isCommitted()) {
-                    log.debug("Response has already been committed. Unable to redirect to " + targetUrl);
+                    log.debug("Response has already been committed. Unable to redirect to {}", targetUrl);
                     return;
                 }
                 getRedirectStrategy().sendRedirect(request, response, targetUrl);

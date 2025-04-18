@@ -138,7 +138,7 @@ public class UserDashboardServiceImpl implements UserDashboardService {
                         map.put("id", payment.getId());
                         map.put("description", payment.getDescription());
                         map.put("amount", payment.getAmount());
-                        map.put("status", payment.getStatus().toString());
+                        map.put("status", payment.getPaymentStatus().toString());
                         map.put("createdAt", payment.getCreatedAt());
                         return map;
                     })

@@ -33,4 +33,6 @@ public interface PaymentService {
     double getPaymentAmountByUser(String username);
     double getPaymentAmountByStatus(String status);
     double getPaymentAmountByType(String type);
+    Payment approvePayment(Long id);
+    Payment rejectPayment(Long id);
 } 
