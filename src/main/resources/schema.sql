@@ -10,6 +10,15 @@ DROP TABLE IF EXISTS user_roles;
 DROP TABLE IF EXISTS roles;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS system_settings;
+DROP TABLE IF EXISTS document;
+DROP TABLE IF EXISTS transaction;
+DROP TABLE IF EXISTS student;
+DROP TABLE IF EXISTS user_role;
+DROP TABLE IF EXISTS role;
+DROP TABLE IF EXISTS user;
+DROP TABLE IF EXISTS notification;
+DROP TABLE IF EXISTS payment;
+DROP TABLE IF EXISTS payment_queue;
 
 -- Create users table
 CREATE TABLE users (
@@ -219,4 +228,145 @@ INSERT INTO system_settings (setting_key, setting_value, description) VALUES
 ('system.currency', 'USD', 'Default system currency'),
 ('system.queue.max_wait_time', '30', 'Maximum wait time in minutes'),
 ('system.notification.enabled', 'true', 'Enable system notifications'),
-('system.payment.methods', 'CASH,CREDIT_CARD,BANK_TRANSFER', 'Available payment methods'); 
+('system.payment.methods', 'CASH,CREDIT_CARD,BANK_TRANSFER', 'Available payment methods');
+
+-- Create User table
+CREATE TABLE user (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Create Role table
+CREATE TABLE role (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+
+-- Create User_Role join table
+CREATE TABLE user_role (
+    user_id BIGINT NOT NULL,
+    role_id BIGINT NOT NULL,
+    PRIMARY KEY (user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES user(id),
+    FOREIGN KEY (role_id) REFERENCES role(id)
+);
+
+-- Create Student table
+CREATE TABLE student (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    student_id VARCHAR(20) NOT NULL UNIQUE,
+    program VARCHAR(100) NOT NULL,
+    year_level INTEGER NOT NULL,
+    academic_year VARCHAR(9) NOT NULL,
+    semester VARCHAR(20) NOT NULL,
+    registration_status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES user(id)
+);
+
+-- Create Transaction table
+CREATE TABLE transaction (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    transaction_number VARCHAR(50) NOT NULL UNIQUE,
+    receipt_id VARCHAR(50),
+    amount DECIMAL(19,2) NOT NULL,
+    status ENUM('PENDING', 'COMPLETED', 'FAILED', 'CANCELLED') NOT NULL DEFAULT 'PENDING',
+    type ENUM('PAYMENT', 'REFUND', 'ADJUSTMENT') NOT NULL,
+    priority ENUM('NORMAL', 'HIGH', 'URGENT') NOT NULL DEFAULT 'NORMAL',
+    category VARCHAR(100),
+    sub_category VARCHAR(100),
+    currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+    tax_amount DECIMAL(19,2) DEFAULT 0.00,
+    notes TEXT,
+    is_recurring BOOLEAN DEFAULT FALSE,
+    recurring_frequency VARCHAR(50),
+    next_due_date TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP,
+    created_by VARCHAR(50),
+    updated_by VARCHAR(50),
+    user_id BIGINT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user(id)
+);
+
+-- Create Document table
+CREATE TABLE document (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    file_name VARCHAR(255) NOT NULL,
+    content_type VARCHAR(100) NOT NULL,
+    size BIGINT NOT NULL,
+    content LONGBLOB,
+    type ENUM('RECEIPT', 'INVOICE', 'CONTRACT', 'OTHER') NOT NULL,
+    status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
+    priority ENUM('LOW', 'NORMAL', 'HIGH') NOT NULL DEFAULT 'NORMAL',
+    description TEXT,
+    uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    user_id BIGINT NOT NULL,
+    transaction_id BIGINT,
+    reference_id BIGINT,
+    FOREIGN KEY (user_id) REFERENCES user(id),
+    FOREIGN KEY (transaction_id) REFERENCES transaction(id)
+);
+
+-- Insert default roles
+INSERT INTO role (name) VALUES ('ROLE_USER');
+INSERT INTO role (name) VALUES ('ROLE_ADMIN');
+INSERT INTO role (name) VALUES ('ROLE_STUDENT');
+
+-- Create Notification table
+CREATE TABLE notification (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    message TEXT NOT NULL,
+    type ENUM('INFO', 'WARNING', 'ERROR', 'SUCCESS') NOT NULL,
+    status ENUM('UNREAD', 'READ') NOT NULL DEFAULT 'UNREAD',
+    priority ENUM('LOW', 'NORMAL', 'HIGH', 'URGENT') NOT NULL DEFAULT 'NORMAL',
+    is_system_notification BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    read_at TIMESTAMP,
+    user_id BIGINT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user(id)
+);
+
+-- Create Payment Queue table
+CREATE TABLE payment_queue (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    queue_number VARCHAR(20) NOT NULL UNIQUE,
+    status ENUM('WAITING', 'PROCESSING', 'COMPLETED', 'CANCELLED') NOT NULL DEFAULT 'WAITING',
+    priority ENUM('NORMAL', 'HIGH', 'URGENT') NOT NULL DEFAULT 'NORMAL',
+    position INT NOT NULL,
+    estimated_wait_time INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP,
+    user_id BIGINT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user(id)
+);
+
+-- Create Payment table
+CREATE TABLE payment (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    payment_number VARCHAR(50) NOT NULL UNIQUE,
+    amount DECIMAL(19,2) NOT NULL,
+    status ENUM('PENDING', 'COMPLETED', 'FAILED', 'REFUNDED') NOT NULL DEFAULT 'PENDING',
+    type ENUM('CASH', 'CREDIT_CARD', 'BANK_TRANSFER') NOT NULL,
+    currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP,
+    user_id BIGINT NOT NULL,
+    payment_queue_id BIGINT,
+    FOREIGN KEY (user_id) REFERENCES user(id),
+    FOREIGN KEY (payment_queue_id) REFERENCES payment_queue(id)
+); 
