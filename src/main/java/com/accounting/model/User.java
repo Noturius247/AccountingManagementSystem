@@ -67,6 +67,12 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Notification> notifications = new HashSet<>();
 
+    @Column(name = "online_status")
+    private boolean onlineStatus;
+
+    @Transient
+    private boolean student;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -156,6 +162,10 @@ public class User {
         return notifications;
     }
 
+    public boolean isStudent() {
+        return student;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -218,5 +228,9 @@ public class User {
 
     public void setNotifications(Set<Notification> notifications) {
         this.notifications = notifications;
+    }
+
+    public void setStudent(boolean student) {
+        this.student = student;
     }
 }

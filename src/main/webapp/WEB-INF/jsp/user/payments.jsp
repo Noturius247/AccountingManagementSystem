@@ -141,10 +141,10 @@
                                             <td>${payment.description}</td>
                                             <td><fmt:formatNumber value="${payment.amount}" type="currency"/></td>
                                             <td>
-                                                <span class="badge bg-${payment.status.name() == 'COMPLETED' ? 'success' : 
-                                                                        payment.status.name() == 'PENDING' ? 'warning' : 
+                                                <span class="badge bg-${payment.paymentStatus.name() == 'COMPLETED' ? 'success' : 
+                                                                        payment.paymentStatus.name() == 'PENDING' ? 'warning' : 
                                                                         'danger'}">
-                                                    ${payment.status}
+                                                    ${payment.paymentStatus}
                                                 </span>
                                             </td>
                                             <td>
@@ -152,7 +152,7 @@
                                                    class="btn btn-sm btn-outline-primary">
                                                     <i class="bi bi-eye"></i> View
                                                 </a>
-                                                <c:if test="${payment.status.name() == 'COMPLETED'}">
+                                                <c:if test="${payment.paymentStatus.name() == 'COMPLETED'}">
                                                     <a href="${pageContext.request.contextPath}/user/payments/${payment.id}/receipt" 
                                                        class="btn btn-sm btn-outline-secondary">
                                                         <i class="bi bi-receipt"></i> Receipt

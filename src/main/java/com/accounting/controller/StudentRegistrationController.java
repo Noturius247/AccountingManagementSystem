@@ -5,6 +5,7 @@ import com.accounting.model.User;
 import com.accounting.service.StudentService;
 import com.accounting.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,8 @@ public class StudentRegistrationController {
     private UserService userService;
 
     @GetMapping
-    public String showRegistrationForm(@RequestParam String username, Model model) {
+    public String showRegistrationForm(Authentication authentication, Model model) {
+        String username = authentication.getName();
         model.addAttribute("username", username);
         return "student/registration-form";
     }

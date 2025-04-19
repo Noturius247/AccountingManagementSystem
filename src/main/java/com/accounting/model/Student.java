@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import java.time.LocalDateTime;
 
 @Data
 @Entity
@@ -15,7 +16,13 @@ public class Student {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "student_id", unique = true, nullable = false)
+    @Column(nullable = false, unique = true)
+    private String username;
+
+    @Column(nullable = false)
+    private String fullName;
+
+    @Column(nullable = false, unique = true)
     private String studentId;
 
     @OneToOne(fetch = FetchType.LAZY)
@@ -25,15 +32,32 @@ public class Student {
     @Column(nullable = false)
     private String program;
 
-    @Column(name = "year_level")
+    @Column(nullable = false)
     private Integer yearLevel;
 
-    @Column
-    private String section;
-
-    @Column(name = "academic_year")
+    @Column(nullable = false)
     private String academicYear;
 
-    @Column
-    private Integer semester;
+    @Column(nullable = false)
+    private String semester;
+
+    @Column(nullable = false)
+    private String registrationStatus;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 } 

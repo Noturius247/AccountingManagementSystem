@@ -41,4 +41,10 @@ public interface DocumentService {
     long getDocumentSize(Long id);
     List<Document> getDocumentsByTransactionId(Long transactionId);
     long countDocumentsByUser(String username);
+    List<Document> getStudentDocuments(Long studentId);
+    List<Document> getRecentDocuments(Long studentId, int limit);
+    Document save(Document document);
+    List<Document> findAll();
+    Document findById(Long id);
+    void deleteById(Long id);
 } 

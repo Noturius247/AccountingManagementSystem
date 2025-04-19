@@ -89,6 +89,9 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.user = :user")
     Optional<BigDecimal> sumAmountByUser(@Param("user") User user);
 
+    @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.user.id = :userId")
+    Optional<BigDecimal> sumAmountByUserId(@Param("userId") Long userId);
+
     @Query("SELECT t FROM Transaction t WHERE t.user.username = :username AND t.status = :status")
     List<Transaction> findByUserUsernameAndStatus(@Param("username") String username, @Param("status") TransactionStatus status);
     
@@ -212,4 +215,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
            "GROUP BY DATE(t.createdAt) " +
            "ORDER BY date")
     List<Object[]> countByCreatedAtBetweenGroupByDate(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
+
+    @Query("SELECT t FROM Transaction t WHERE t.user.id = :userId ORDER BY t.createdAt DESC LIMIT 1")
+    Optional<Transaction> findTopByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId);
 } 

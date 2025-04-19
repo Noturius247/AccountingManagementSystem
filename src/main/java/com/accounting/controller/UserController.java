@@ -11,6 +11,8 @@ import com.accounting.service.UserDashboardService;
 import com.accounting.model.User;
 import com.accounting.service.UserService;
 import org.springframework.transaction.annotation.Transactional;
+import com.accounting.service.StudentService;
+import jakarta.persistence.EntityNotFoundException;
 
 @Controller
 @RequestMapping("/user")
@@ -23,6 +25,9 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private StudentService studentService;
+
     @GetMapping("/dashboard")
     @Transactional(readOnly = true)
     public String dashboard(Model model, Authentication authentication) {
@@ -30,6 +35,16 @@ public class UserController {
         
         // Get user with initialized collections
         User user = userService.findByUsernameWithCollections(username);
+        
+        // Check if user is a student
+        boolean isStudent = false;
+        try {
+            isStudent = studentService.findByUsername(username) != null;
+        } catch (EntityNotFoundException e) {
+            // User is not a student, which is fine
+            isStudent = false;
+        }
+        user.setStudent(isStudent);
         
         // Add user to model
         model.addAttribute("user", user);

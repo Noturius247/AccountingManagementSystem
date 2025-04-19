@@ -137,4 +137,6 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 
     List<Document> findTop5ByOrderByUploadedAtDesc();
     List<Document> findTop5ByUserUsernameOrderByUploadedAtDesc(String username);
+
+    List<Document> findByUserId(Long userId);
 } 

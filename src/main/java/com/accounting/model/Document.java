@@ -67,6 +67,24 @@ public class Document {
     @Column(name = "reference_id")
     private Long referenceId;
 
+    @Column(nullable = false)
+    private String title;
+
+    @Column(nullable = false)
+    private String filePath;
+
+    @Column(nullable = false)
+    private String fileType;
+
+    @Column(nullable = false)
+    private Long studentId;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
     @PrePersist
     protected void onCreate() {
         if (uploadedAt == null) {
@@ -81,6 +99,13 @@ public class Document {
         if (user != null) {
             userUsername = user.getUsername();
         }
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
     public String getSanitizedFileName() {
@@ -189,6 +214,30 @@ public class Document {
         return referenceId;
     }
 
+    public String getTitle() {
+        return title;
+    }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public String getFileType() {
+        return fileType;
+    }
+
+    public Long getStudentId() {
+        return studentId;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
     public void setFileName(String fileName) {
         this.fileName = fileName;
     }
@@ -235,5 +284,29 @@ public class Document {
 
     public void setReferenceId(Long referenceId) {
         this.referenceId = referenceId;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+
+    public void setFileType(String fileType) {
+        this.fileType = fileType;
+    }
+
+    public void setStudentId(Long studentId) {
+        this.studentId = studentId;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
     }
 } 

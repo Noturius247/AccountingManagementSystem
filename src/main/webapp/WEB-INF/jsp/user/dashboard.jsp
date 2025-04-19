@@ -106,6 +106,21 @@
                     </div>
                 </div>
 
+                <!-- Student Registration Section -->
+                <c:if test="${not user.student}">
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="alert-heading">Complete Your Student Registration</h4>
+                                <p class="mb-0">To access student services and features, please complete your student registration.</p>
+                            </div>
+                            <a href="${pageContext.request.contextPath}/student-registration" class="btn btn-primary">
+                                <i class="bi bi-person-plus me-1"></i> Register as Student
+                            </a>
+                        </div>
+                    </div>
+                </c:if>
+
                 <!-- Statistics Cards -->
                 <div class="row mb-4">
                     <div class="col-md-3">

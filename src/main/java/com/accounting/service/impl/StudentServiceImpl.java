@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
 
 @Service
 public class StudentServiceImpl implements StudentService {
@@ -34,7 +35,8 @@ public class StudentServiceImpl implements StudentService {
         student.setProgram(program);
         student.setYearLevel(yearLevel);
         student.setAcademicYear(getCurrentAcademicYear());
-        student.setSemester(getCurrentSemester());
+        student.setSemester(String.valueOf(getCurrentSemester()));
+        student.setRegistrationStatus("PENDING");
         
         return studentRepository.save(student);
     }
@@ -94,5 +96,37 @@ public class StudentServiceImpl implements StudentService {
         else if (month >= 11 || month <= 3) return 2;
         // Summer: April to May
         else return 3;
+    }
+
+    @Override
+    public Student findByUsername(String username) {
+        return studentRepository.findByUsername(username)
+            .orElseThrow(() -> new EntityNotFoundException("Student not found with username: " + username));
+    }
+
+    @Override
+    public Student save(Student student) {
+        return studentRepository.save(student);
+    }
+
+    @Override
+    public List<Student> findAll() {
+        return studentRepository.findAll();
+    }
+
+    @Override
+    public Student findById(Long id) {
+        return studentRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Student not found with id: " + id));
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        studentRepository.deleteById(id);
+    }
+
+    @Override
+    public List<Student> findByRegistrationStatus(String status) {
+        return studentRepository.findByRegistrationStatus(status);
     }
 } 

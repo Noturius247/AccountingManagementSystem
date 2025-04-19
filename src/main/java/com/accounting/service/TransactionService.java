@@ -98,4 +98,13 @@ public interface TransactionService {
     Map<String, Long> getTransactionCountByPriority();
     List<Object[]> getTransactionCountByTypeAndDateRange(LocalDateTime start, LocalDateTime end);
     List<Transaction> getTransactionsByNotes(String notes);
+
+    double getCurrentBalance(Long studentId);
+    double getLastPaymentAmount(Long studentId);
+    String getNextDueDate(Long studentId);
+    List<Transaction> getRecentTransactions(Long studentId, int limit);
+    Transaction save(Transaction transaction);
+    List<Transaction> findAll();
+    Transaction findById(Long id);
+    void deleteById(Long id);
 } 

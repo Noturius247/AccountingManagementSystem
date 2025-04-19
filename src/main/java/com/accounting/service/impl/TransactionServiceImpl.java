@@ -470,4 +470,56 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
     public List<Transaction> getTransactionsByDescription(String description) {
         return getTransactionsByNotes(description);
     }
+
+    @Override
+    public Transaction findById(Long id) {
+        return transactionRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Transaction not found with id: " + id));
+    }
+
+    @Override
+    public List<Transaction> getRecentTransactions(Long userId, int limit) {
+        return transactionRepository.findByUserUsernameOrderByCreatedAtDesc(userId.toString())
+            .stream()
+            .limit(limit)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Transaction> findAll() {
+        return transactionRepository.findAll();
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        transactionRepository.deleteById(id);
+    }
+
+    @Override
+    public String getNextDueDate(Long userId) {
+        return transactionRepository.findByUserId(userId)
+            .stream()
+            .filter(t -> t.getNextDueDate() != null)
+            .min(Comparator.comparing(Transaction::getNextDueDate))
+            .map(Transaction::getFormattedNextDueDate)
+            .orElse(null);
+    }
+
+    @Override
+    public double getCurrentBalance(Long userId) {
+        return transactionRepository.sumAmountByUserId(userId)
+            .orElse(BigDecimal.ZERO).doubleValue();
+    }
+
+    @Override
+    public double getLastPaymentAmount(Long userId) {
+        return transactionRepository.findTopByUserIdOrderByCreatedAtDesc(userId)
+            .map(Transaction::getAmount)
+            .orElse(BigDecimal.ZERO).doubleValue();
+    }
+
+    @Override
+    public Transaction save(Transaction transaction) {
+        return transactionRepository.save(transaction);
+    }
 } 

@@ -281,6 +281,40 @@ public class DocumentServiceImpl implements DocumentService {
         return saveDocument(document, file);
     }
 
+    @Override
+    public List<Document> getStudentDocuments(Long userId) {
+        return documentRepository.findByUserId(userId);
+    }
+
+    @Override
+    public List<Document> getRecentDocuments(Long userId, int limit) {
+        return documentRepository.findByUserId(userId)
+            .stream()
+            .limit(limit)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        documentRepository.deleteById(id);
+    }
+
+    @Override
+    public Document findById(Long id) {
+        return documentRepository.findById(id)
+            .orElseThrow(() -> new EntityNotFoundException("Document not found with id: " + id));
+    }
+
+    @Override
+    public List<Document> findAll() {
+        return documentRepository.findAll();
+    }
+
+    @Override
+    public Document save(Document document) {
+        return documentRepository.save(document);
+    }
+
     private void validateDocument(Document document) {
         if (document == null) {
             throw new IllegalArgumentException("Document cannot be null");
