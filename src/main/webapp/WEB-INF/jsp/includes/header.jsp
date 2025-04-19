@@ -87,8 +87,9 @@
                                 </a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <form action="${pageContext.request.contextPath}/logout" method="post" class="dropdown-item">
-                                        <button type="submit" class="btn btn-link text-danger p-0">
+                                    <form action="${pageContext.request.contextPath}/logout" method="post" class="dropdown-item p-0">
+                                        <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
+                                        <button type="submit" class="dropdown-item text-danger">
                                             <i class="bi bi-box-arrow-right me-2"></i> Logout
                                         </button>
                                     </form>

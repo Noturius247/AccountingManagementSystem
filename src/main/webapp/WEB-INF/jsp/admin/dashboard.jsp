@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <!-- @jsx-ignore -->
 <!DOCTYPE html>
 <html>
@@ -131,41 +132,6 @@
             border-radius: 3px;
         }
 
-        /* Sidebar styles */
-        .sidebar {
-            background: var(--primary-color);
-            color: white;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1000;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar .nav-link {
-            color: rgba(255, 255, 255, 0.8);
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
-            margin-bottom: 0.5rem;
-            transition: all 0.2s ease;
-        }
-
-        .sidebar .nav-link:hover {
-            color: white;
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar .nav-link.active {
-            color: white;
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .sidebar .nav-link i {
-            width: 1.5rem;
-            text-align: center;
-        }
-
         /* Main content area */
         .main-content {
             margin-left: 250px;
@@ -211,514 +177,179 @@
     </style>
 </head>
 <body>
-    <!-- Sidebar -->
-    <div class="sidebar col-md-3 col-lg-2">
-        <div class="d-flex flex-column p-3">
-            <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-                <span class="fs-4">Admin Panel</span>
-            </a>
-            <hr>
-            <ul class="nav nav-pills flex-column mb-auto">
-                <li class="nav-item">
-                    <a href="#" class="nav-link active">
-                        <i class="bi bi-speedometer2"></i>
-                        Dashboard
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav-link">
-                        <i class="bi bi-people"></i>
-                        Users
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav-link">
-                        <i class="bi bi-cash-stack"></i>
-                        Transactions
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav-link">
-                        <i class="bi bi-clock-history"></i>
-                        Queue
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav-link">
-                        <i class="bi bi-file-earmark-text"></i>
-                        Reports
-                    </a>
-                </li>
-                <li>
-                    <a href="#" class="nav-link">
-                        <i class="bi bi-gear"></i>
-                        Settings
-                    </a>
-                </li>
-                <li class="mt-auto">
-                    <form action="${pageContext.request.contextPath}/logout" method="post" class="nav-item">
-                        <button type="submit" class="nav-link text-danger w-100 border-0 bg-transparent">
-                            <i class="bi bi-box-arrow-right"></i>
-                            Logout
-                        </button>
-                    </form>
-                </li>
-            </ul>
-        </div>
-    </div>
+    <%@ include file="../includes/admin-sidebar.jsp" %>
 
     <!-- Main Content -->
     <div class="main-content">
-        <!-- Top Navigation -->
-        <nav class="top-nav">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h4 mb-0">Dashboard Overview</h1>
-                </div>
-                <div class="d-flex align-items-center">
-                    <div class="btn-group me-3">
-                        <button type="button" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-download"></i> Export
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-printer"></i> Print
-                        </button>
-                    </div>
-                    <div class="dropdown me-3">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-calendar"></i> This week
-                        </button>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#">Today</a></li>
-                            <li><a class="dropdown-item" href="#">This week</a></li>
-                            <li><a class="dropdown-item" href="#">This month</a></li>
-                            <li><a class="dropdown-item" href="#">This year</a></li>
-                        </ul>
-                    </div>
-                    <div class="dropdown">
-                        <a href="#" class="nav-link position-relative" data-bs-toggle="dropdown">
-                            <i class="bi bi-bell"></i>
-                            <span class="notification-badge">3</span>
-                        </a>
-                        <div class="dropdown-menu dropdown-menu-end">
-                            <h6 class="dropdown-header">Notifications</h6>
-                            <div class="notification-list">
-                                <a href="#" class="dropdown-item">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            <i class="bi bi-check-circle-fill text-success"></i>
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <p class="mb-0">New transaction completed</p>
-                                            <small class="text-muted">2 minutes ago</small>
-                                        </div>
-                                    </div>
-                                </a>
-                                <a href="#" class="dropdown-item">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            <i class="bi bi-exclamation-circle-fill text-warning"></i>
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <p class="mb-0">System maintenance scheduled</p>
-                                            <small class="text-muted">1 hour ago</small>
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="dropdown ms-3">
-                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle"></i>
-                            Admin
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Profile</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Settings</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <form action="${pageContext.request.contextPath}/logout" method="post">
-                                    <button type="submit" class="dropdown-item">
-                                        <i class="bi bi-box-arrow-right me-2"></i>Logout
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </nav>
-
-        <!-- Dashboard Content -->
-        <div class="admin-dashboard">
-            <!-- Top Navigation -->
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Dashboard Overview</h1>
-                <div class="btn-toolbar mb-2 mb-md-0">
-                    <div class="btn-group me-2">
-                        <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary">Print</button>
-                    </div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
-                        <i class="bi bi-calendar"></i>
-                        This week
-                    </button>
-                </div>
-            </div>
-
-            <!-- Statistics Cards -->
-            <div class="dashboard-stats">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="bi bi-people-fill"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>${totalUsers}</h3>
-                        <p>Total Users</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="bi bi-person-check-fill"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>${activeUsers}</h3>
-                        <p>Active Users</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="bi bi-cash-stack"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3><fmt:formatNumber value="${totalRevenue}" type="currency"/></h3>
-                        <p>Total Revenue</p>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="bi bi-clock-history"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>${pendingQueues}</h3>
-                        <p>Pending Queues</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Charts Row -->
-            <div class="row">
-                <!-- Transaction Chart -->
-                <div class="col-xl-8 col-lg-7">
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Transaction Overview</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="transactionChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Queue Status -->
-                <div class="col-xl-4 col-lg-5">
-                    <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Queue Status</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="chart-container">
-                                <canvas id="queueChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Transactions and Users -->
-            <div class="row">
-                <!-- Recent Transactions -->
-                <div class="col-lg-8 mb-4">
-                    <div class="card shadow">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Recent Transactions</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>User</th>
-                                            <th>Amount</th>
-                                            <th>Status</th>
-                                            <th>Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <c:forEach items="${recentTransactions}" var="transaction">
-                                            <tr>
-                                                <td>${transaction.id}</td>
-                                                <td>${transaction.user.username}</td>
-                                                <td><fmt:formatNumber value="${transaction.amount}" type="currency"/></td>
-                                                <td>
-                                                    <span class="badge bg-${transaction.status == 'COMPLETED' ? 'success' : 
-                                                                          transaction.status == 'PENDING' ? 'warning' : 'danger'}">
-                                                        ${transaction.status}
-                                                    </span>
-                                                </td>
-                                                <td><fmt:formatDate value="${transaction.createdAt}" pattern="yyyy-MM-dd HH:mm"/></td>
-                                            </tr>
-                                        </c:forEach>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Users -->
-                <div class="col-lg-4 mb-4">
-                    <div class="card shadow">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Recent Users</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-bordered">
-                                    <thead>
-                                        <tr>
-                                            <th>Username</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <c:forEach items="${users}" var="user">
-                                            <tr>
-                                                <td>${user.username}</td>
-                                                <td>
-                                                    <span class="badge bg-${user.enabled ? 'success' : 'danger'}">
-                                                        ${user.enabled ? 'Active' : 'Inactive'}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-primary">
-                                                        <i class="bi bi-eye"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-warning">
-                                                        <i class="bi bi-pencil"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        </c:forEach>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Documents and Payments Section -->
-            <div class="row mt-4">
-                <!-- Documents Overview -->
-                <div class="col-lg-6 mb-4">
-                    <div class="card shadow">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Documents Overview</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="dashboard-stats">
-                                <div class="stat-card">
-                                    <div class="stat-icon">
-                                        <i class="bi bi-file-earmark-text"></i>
-                                    </div>
-                                    <div class="stat-info">
-                                        <h3>${totalDocuments}</h3>
-                                        <p>Total Documents</p>
-                                    </div>
-                                </div>
-                                <div class="stat-card">
-                                    <div class="stat-icon">
-                                        <i class="bi bi-file-earmark-check"></i>
-                                    </div>
-                                    <div class="stat-info">
-                                        <h3>${verifiedDocuments}</h3>
-                                        <p>Verified</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="table-responsive mt-3">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Document</th>
-                                            <th>User</th>
-                                            <th>Status</th>
-                                            <th>Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <c:forEach items="${recentDocuments}" var="document">
-                                            <tr>
-                                                <td>${document.fileName}</td>
-                                                <td>${document.user.username}</td>
-                                                <td>
-                                                    <span class="badge bg-${document.status == 'VERIFIED' ? 'success' : 
-                                                                          document.status == 'PENDING' ? 'warning' : 'danger'}">
-                                                        ${document.status}
-                                                    </span>
-                                                </td>
-                                                <td><fmt:formatDate value="${document.uploadedAt}" pattern="yyyy-MM-dd"/></td>
-                                            </tr>
-                                        </c:forEach>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payments Overview -->
-                <div class="col-lg-6 mb-4">
-                    <div class="card shadow">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Payments Overview</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="dashboard-stats">
-                                <div class="stat-card">
-                                    <div class="stat-icon">
-                                        <i class="bi bi-cash-stack"></i>
-                                    </div>
-                                    <div class="stat-info">
-                                        <h3><fmt:formatNumber value="${totalPayments}" type="currency"/></h3>
-                                        <p>Total Payments</p>
-                                    </div>
-                                </div>
-                                <div class="stat-card">
-                                    <div class="stat-icon">
-                                        <i class="bi bi-clock-history"></i>
-                                    </div>
-                                    <div class="stat-info">
-                                        <h3>${pendingPayments}</h3>
-                                        <p>Pending</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="table-responsive mt-3">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Payment ID</th>
-                                            <th>User</th>
-                                            <th>Amount</th>
-                                            <th>Status</th>
-                                            <th>Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <c:forEach items="${recentPayments}" var="payment">
-                                            <tr>
-                                                <td>${payment.id}</td>
-                                                <td>${payment.user.username}</td>
-                                                <td><fmt:formatNumber value="${payment.amount}" type="currency"/></td>
-                                                <td>
-                                                    <span class="badge bg-${payment.status == 'COMPLETED' ? 'success' : 
-                                                                          payment.status == 'PENDING' ? 'warning' : 'danger'}">
-                                                        ${payment.status}
-                                                    </span>
-                                                </td>
-                                                <td><fmt:formatDate value="${payment.createdAt}" pattern="yyyy-MM-dd"/></td>
-                                            </tr>
-                                        </c:forEach>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <div class="content-header">
+            <h1 id="page-title">Dashboard</h1>
+            <div class="header-actions" id="dashboard-actions">
+                <button class="btn btn-primary" onclick="exportDashboardData()">
+                    <i class="fas fa-download"></i> Export
+                </button>
+                <button class="btn btn-secondary" onclick="refreshDashboard()">
+                    <i class="fas fa-sync"></i> Refresh
+                </button>
             </div>
         </div>
-    </div>
 
-    <!-- Edit User Modal -->
-    <div id="editUserModal" class="modal">
-        <div class="modal-content">
-            <h2>Edit User</h2>
-            <form id="editUserForm">
-                <input type="hidden" id="editUsername">
-                <div>
-                    <label>Email:</label>
-                    <input type="email" id="editEmail" required>
+        <!-- Content Sections -->
+        <div id="content-sections">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="content-section">
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <h3>Total Users</h3>
+                        <p>${not empty totalUsers ? totalUsers : 0}</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Users</h3>
+                        <p>${not empty activeUsers ? activeUsers : 0}</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Total Revenue</h3>
+                        <p>$${not empty totalRevenue ? totalRevenue : '0.00'}</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Pending Queues</h3>
+                        <p>${not empty pendingQueues ? pendingQueues : 0}</p>
+                    </div>
                 </div>
-                <div>
-                    <label>Role:</label>
-                    <select id="editRole" required>
-                        <option value="USER">User</option>
-                        <option value="MANAGER">Manager</option>
-                        <option value="ADMIN">Admin</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Status:</label>
-                    <select id="editStatus" required>
-                        <option value="true">Active</option>
-                        <option value="false">Inactive</option>
-                    </select>
-                </div>
-                <button type="submit">Save Changes</button>
-                <button type="button" onclick="closeModal()">Cancel</button>
-            </form>
-        </div>
-    </div>
 
-    <!-- Edit Transaction Modal -->
-    <div id="editTransactionModal" class="modal">
-        <div class="modal-content">
-            <h2>Edit Transaction</h2>
-            <form id="editTransactionForm">
-                <input type="hidden" id="editTransactionId">
-                <div>
-                    <label>Priority:</label>
-                    <select id="editPriority" required>
-                        <option value="LOW">Low</option>
-                        <option value="MEDIUM">Medium</option>
-                        <option value="HIGH">High</option>
-                        <option value="URGENT">Urgent</option>
-                    </select>
+                <div class="dashboard-charts">
+                    <div class="chart-container">
+                        <h3>Transaction Volume</h3>
+                        <canvas id="transactionVolumeChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Queue Status</h3>
+                        <canvas id="queueStatusChart"></canvas>
+                    </div>
                 </div>
-                <div>
-                    <label>Status:</label>
-                    <select id="editTransactionStatus" required>
-                        <option value="PENDING">Pending</option>
-                        <option value="COMPLETED">Completed</option>
-                        <option value="FAILED">Failed</option>
-                    </select>
-                </div>
-                <button type="submit">Save Changes</button>
-                <button type="button" onclick="closeTransactionModal()">Cancel</button>
-            </form>
+            </div>
+
+            <!-- Users Section -->
+            <div id="users-section" class="content-section" style="display: none;">
+                <%@ include file="users.jsp" %>
+            </div>
+
+            <!-- Transactions Section -->
+            <div id="transactions-section" class="content-section" style="display: none;">
+                <%@ include file="transactions.jsp" %>
+            </div>
+
+            <!-- Queue Section -->
+            <div id="queue-section" class="content-section" style="display: none;">
+                <%@ include file="queue.jsp" %>
+            </div>
+
+            <!-- Reports Section -->
+            <div id="reports-section" class="content-section" style="display: none;">
+                <%@ include file="reports.jsp" %>
+            </div>
+
+            <!-- Settings Section -->
+            <div id="settings-section" class="content-section" style="display: none;">
+                <%@ include file="settings.jsp" %>
+            </div>
         </div>
     </div>
 
     <!-- Add User Modal -->
-    <div id="addUserModal" class="modal">
-        <!-- Add user form structure -->
+    <div class="modal fade" id="addUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addUserForm">
+                        <div class="form-group">
+                            <label class="form-label">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <input type="text" class="form-control" name="username" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <input type="email" class="form-control" name="email" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                <input type="password" class="form-control" name="password" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Role</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user-tag"></i></span>
+                                <select class="form-select" name="role" required>
+                                    <option value="USER">User</option>
+                                    <option value="MANAGER">Manager</option>
+                                    <option value="ADMIN">Admin</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="enabled" checked>
+                                <label class="form-check-label">Active Account</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitAddUser()">Add User</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Process Queue Modal -->
-    <div id="processQueueModal" class="modal">
-        <!-- Process queue form structure -->
-    </div>
-
-    <!-- Export Options Modal -->
-    <div id="exportModal" class="modal">
-        <!-- Export options form structure -->
+    <!-- Upgrade User Role Modal -->
+    <div class="modal fade" id="upgradeUserModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Upgrade User Role</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="upgradeUserForm">
+                        <input type="hidden" id="upgradeUsername" name="username">
+                        <div class="form-group">
+                            <label class="form-label">Current Role</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user-tag"></i></span>
+                                <input type="text" class="form-control" id="currentRole" readonly>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">New Role</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-level-up-alt"></i></span>
+                                <select class="form-select" id="newRole" name="role" required>
+                                    <option value="STUDENT">Student</option>
+                                    <option value="MANAGER">Manager</option>
+                                    <option value="ADMIN">Admin</option>
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitUpgradeUser()">Upgrade Role</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <%@ include file="../includes/footer.jsp" %>
@@ -727,17 +358,180 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarLinks = document.querySelectorAll('.sidebar .nav-link');
+            const mainContent = document.querySelector('.main-content');
+            
+            // Handle section navigation (existing functionality)
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all links
+                    sidebarLinks.forEach(l => l.classList.remove('active'));
+                    
+                    // Add active class to clicked link
+                    this.classList.add('active');
+                    
+                    const sectionToShow = this.getAttribute('data-section');
+                    
+                    if (sectionToShow) {
+                        // Hide all sections
+                        const sections = document.querySelectorAll('.content-section');
+                        sections.forEach(section => {
+                            section.style.display = 'none';
+                        });
+                        
+                        // Show the selected section
+                        const targetSection = document.getElementById(sectionToShow + '-section');
+                        if (targetSection) {
+                            targetSection.style.display = 'block';
+                            document.getElementById('page-title').textContent = 
+                                sectionToShow.charAt(0).toUpperCase() + sectionToShow.slice(1) + ' Management';
+                        }
+                        
+                        // Update URL without page reload
+                        const newUrl = this.getAttribute('href');
+                        window.history.pushState({}, '', newUrl);
+                    }
+                });
+            });
+
+            // Function to load JSP content
+            function loadJspContent(page) {
+                // Show loading state
+                mainContent.innerHTML = '<div class="text-center p-5"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+                
+                // Fetch the JSP content
+                fetch(`${pageContext.request.contextPath}/admin/content/${page}`)
+                    .then(response => response.text())
+                    .then(html => {
+                        mainContent.innerHTML = html;
+                        // Initialize any scripts that the loaded content might need
+                        executeScripts(mainContent);
+                    })
+                    .catch(error => {
+                        mainContent.innerHTML = `
+                            <div class="alert alert-danger" role="alert">
+                                Failed to load content. Please try again.
+                            </div>
+                        `;
+                        console.error('Error loading content:', error);
+                    });
+            }
+
+            // Function to execute scripts in dynamically loaded content
+            function executeScripts(element) {
+                const scripts = element.getElementsByTagName("script");
+                for (let i = 0; i < scripts.length; i++) {
+                    const script = scripts[i];
+                    const scriptClone = document.createElement('script');
+                    scriptClone.text = script.innerHTML;
+                    for (let j = 0; j < script.attributes.length; j++) {
+                        const attr = script.attributes[j];
+                        scriptClone.setAttribute(attr.name, attr.value);
+                    }
+                    script.parentNode.replaceChild(scriptClone, script);
+                }
+            }
+
+            // Initialize charts with null-safe data
+            initializeCharts();
+            showCurrentSection();
+        });
+
+        function showAddUserModal() {
+            const modal = new bootstrap.Modal(document.getElementById('addUserModal'));
+            modal.show();
+        }
+
+        function submitAddUser() {
+            const form = document.getElementById('addUserForm');
+            const formData = new FormData(form);
+            const userData = {
+                username: formData.get('username'),
+                email: formData.get('email'),
+                password: formData.get('password'),
+                role: formData.get('role'),
+                enabled: formData.get('enabled') === 'on'
+            };
+
+            fetch(`${pageContext.request.contextPath}/admin/users`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(userData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    throw new Error('Failed to add user');
+                }
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        }
+
+        function showUpgradeModal(username, currentRole) {
+            document.getElementById('upgradeUsername').value = username;
+            document.getElementById('currentRole').value = currentRole;
+            
+            // Remove current role from options
+            const roleSelect = document.getElementById('newRole');
+            Array.from(roleSelect.options).forEach(option => {
+                if (option.value === currentRole) {
+                    option.disabled = true;
+                } else {
+                    option.disabled = false;
+                }
+            });
+            
+            const modal = new bootstrap.Modal(document.getElementById('upgradeUserModal'));
+            modal.show();
+        }
+
+        function submitUpgradeUser() {
+            const username = document.getElementById('upgradeUsername').value;
+            const newRole = document.getElementById('newRole').value;
+
+            fetch(`${pageContext.request.contextPath}/admin/users/${username}/upgrade`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ role: newRole })
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    throw new Error('Failed to upgrade user role');
+                }
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        }
+
         function searchUsers() {
             const searchText = document.getElementById('userSearch').value.toLowerCase();
+            const typeFilter = document.getElementById('roleFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            
             const rows = document.querySelectorAll('#userTableBody tr');
             rows.forEach(row => {
-                const username = row.cells[0].textContent.toLowerCase();
-                const email = row.cells[1].textContent.toLowerCase();
-                if (username.includes(searchText) || email.includes(searchText)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+                const text = row.textContent.toLowerCase();
+                const type = row.cells[2].textContent.trim();
+                const status = row.cells[3].textContent.trim();
+                
+                const matchesSearch = text.includes(searchText);
+                const matchesType = !typeFilter || type === typeFilter;
+                const matchesStatus = !statusFilter || status === statusFilter;
+                
+                row.style.display = matchesSearch && matchesType && matchesStatus ? '' : 'none';
             });
         }
 
@@ -874,75 +668,48 @@
             }
         }
 
-        // Chart data from server
-        const chartData = {
-            transaction: {
-                labels: JSON.parse('${transactionLabels}'),
-                data: JSON.parse('${transactionData}')
-            },
-            queue: {
-                labels: JSON.parse('${queueLabels}'),
-                data: JSON.parse('${queueData}')
-            }
-        };
-
+        // Initialize charts with null-safe data
         function initializeCharts() {
-            // Transaction Chart
-            const transactionCtx = document.getElementById('transactionChart').getContext('2d');
-            new Chart(transactionCtx, {
-                type: 'line',
-                data: {
-                    labels: chartData.transaction.labels,
-                    datasets: [{
-                        label: 'Transactions',
-                        data: chartData.transaction.data,
-                        borderColor: '#4e73df',
-                        backgroundColor: 'rgba(78, 115, 223, 0.05)',
-                        pointRadius: 3,
-                        pointBackgroundColor: '#4e73df',
-                        pointBorderColor: '#4e73df',
-                        pointHoverRadius: 3,
-                        pointHoverBackgroundColor: '#4e73df',
-                        pointHoverBorderColor: '#4e73df',
-                        pointHitRadius: 10,
-                        pointBorderWidth: 2,
-                        fill: true
-                    }]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
+            // Transaction Volume Chart
+            const transactionCtx = document.getElementById('transactionVolumeChart');
+            if (transactionCtx) {
+                new Chart(transactionCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ${not empty transactionLabels ? transactionLabels : '[]'},
+                        datasets: [{
+                            label: 'Transactions',
+                            data: ${not empty transactionData ? transactionData : '[]'},
+                            borderColor: '#4e73df',
+                            backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
                     }
-                }
-            });
+                });
+            }
 
-            // Queue Chart
-            const queueCtx = document.getElementById('queueChart').getContext('2d');
-            new Chart(queueCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: chartData.queue.labels,
-                    datasets: [{
-                        data: chartData.queue.data,
-                        backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
-                        hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf'],
-                        hoverBorderColor: "rgba(234, 236, 244, 1)",
-                    }]
-                },
-                options: {
-                    maintainAspectRatio: false,
-                    cutout: '80%',
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'bottom'
-                        }
+            // Queue Status Chart
+            const queueCtx = document.getElementById('queueStatusChart');
+            if (queueCtx) {
+                new Chart(queueCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ${not empty queueLabels ? queueLabels : '[]'},
+                        datasets: [{
+                            data: ${not empty queueData ? queueData : '[]'},
+                            backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
                     }
-                }
-            });
+                });
+            }
         }
 
         function switchTab(tabName) {
@@ -964,12 +731,6 @@
             window.location.href = `${pageContext.request.contextPath}/admin/transactions/export?format=${format}&startDate=${startDate}&endDate=${endDate}`;
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeCharts();
-            // Set up real-time updates
-            setInterval(updateDashboard, 30000); // Update every 30 seconds
-        });
-
         function updateDashboard() {
             fetch(`${pageContext.request.contextPath}/admin/dashboard/stats`)
                 .then(response => response.json())
@@ -981,6 +742,36 @@
                     // Update notifications
                     updateNotifications(data);
                 });
+        }
+
+        // Function to show the appropriate section based on the current URL
+        function showCurrentSection() {
+            const path = window.location.pathname;
+            const sections = document.querySelectorAll('.content-section');
+            
+            // Hide all sections first
+            sections.forEach(section => section.style.display = 'none');
+            
+            // Show the appropriate section based on the URL
+            if (path.includes('/admin/users')) {
+                document.getElementById('users-section').style.display = 'block';
+                document.getElementById('page-title').textContent = 'Users Management';
+            } else if (path.includes('/admin/transactions')) {
+                document.getElementById('transactions-section').style.display = 'block';
+                document.getElementById('page-title').textContent = 'Transactions Management';
+            } else if (path.includes('/admin/queue')) {
+                document.getElementById('queue-section').style.display = 'block';
+                document.getElementById('page-title').textContent = 'Queue Management';
+            } else if (path.includes('/admin/reports')) {
+                document.getElementById('reports-section').style.display = 'block';
+                document.getElementById('page-title').textContent = 'Reports Management';
+            } else if (path.includes('/admin/settings')) {
+                document.getElementById('settings-section').style.display = 'block';
+                document.getElementById('page-title').textContent = 'Settings Management';
+            } else {
+                document.getElementById('dashboard-section').style.display = 'block';
+                document.getElementById('page-title').textContent = 'Dashboard';
+            }
         }
     </script>
 </body>

@@ -14,7 +14,8 @@ DELETE FROM system_settings;
 MERGE INTO roles (name, description) KEY(name) VALUES 
 ('ROLE_ADMIN', 'Administrator with full system access'),
 ('ROLE_MANAGER', 'Manager with elevated privileges'),
-('ROLE_USER', 'Regular user with basic access');
+('ROLE_USER', 'Regular user with basic access'),
+('ROLE_STUDENT', 'Student with academic access');
 
 -- Insert admin user (if not exists)
 MERGE INTO users (username, password, email, first_name, last_name, enabled, created_at, updated_at) KEY(username)

@@ -37,7 +37,8 @@ public class DatabaseInitializer implements CommandLineRunner {
             Role adminRole = new Role("ADMIN", "Administrator with full system access");
             Role managerRole = new Role("MANAGER", "Manager with elevated privileges");
             Role userRole = new Role("USER", "Regular user with basic access");
-            roleRepository.saveAll(Arrays.asList(adminRole, managerRole, userRole));
+            Role studentRole = new Role("STUDENT", "Student with academic access");
+            roleRepository.saveAll(Arrays.asList(adminRole, managerRole, userRole, studentRole));
             logger.info("Initialized default roles");
         }
 

@@ -200,4 +200,16 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByUserUsernameAndStatusAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(String username, TransactionStatus status, String notes);
     List<Transaction> findByStatusAndTypeAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(TransactionStatus status, TransactionType type, String notes);
     List<Transaction> findByStatusAndPriorityAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(TransactionStatus status, String priority, String notes);
+
+    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.status = :status")
+    long countByStatus(String status);
+    
+    @Query("SELECT t.status, COUNT(t) FROM Transaction t GROUP BY t.status")
+    List<Object[]> countByStatusGroupByStatus();
+    
+    @Query("SELECT DATE(t.createdAt) as date, COUNT(t) FROM Transaction t " +
+           "WHERE t.createdAt BETWEEN :start AND :end " +
+           "GROUP BY DATE(t.createdAt) " +
+           "ORDER BY date")
+    List<Object[]> countByCreatedAtBetweenGroupByDate(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 } 

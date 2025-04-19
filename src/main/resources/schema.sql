@@ -207,7 +207,8 @@ CREATE INDEX idx_settings_key ON system_settings(setting_key);
 INSERT INTO roles (name, description) VALUES 
 ('ROLE_ADMIN', 'Administrator with full system access'),
 ('ROLE_MANAGER', 'Manager with elevated privileges'),
-('ROLE_USER', 'Regular user with basic access');
+('ROLE_USER', 'Regular user with basic access'),
+('ROLE_STUDENT', 'Student with academic access');
 
 -- Insert default system settings
 INSERT INTO system_settings (setting_key, setting_value, description) VALUES

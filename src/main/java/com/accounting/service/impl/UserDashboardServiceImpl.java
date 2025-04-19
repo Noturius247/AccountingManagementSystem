@@ -189,7 +189,7 @@ public class UserDashboardServiceImpl implements UserDashboardService {
             profile.put("username", username);
             profile.put("email", "user@example.com"); // This should come from User entity
             profile.put("phone", "1234567890"); // This should come from User entity
-            profile.put("lastLogin", LocalDateTime.now()); // This should come from User entity
+            profile.put("lastActivity", LocalDateTime.now()); // This should come from User entity
             return profile;
         } catch (Exception e) {
             logger.error("Error fetching user profile for user: " + username, e);

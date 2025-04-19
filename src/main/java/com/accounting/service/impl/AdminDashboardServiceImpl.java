@@ -32,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.accounting.model.enums.TransactionStatus;
 import java.util.Optional;
 import org.springframework.security.core.context.SecurityContextHolder;
+import java.time.ZoneOffset;
+import java.time.Duration;
 
 @Service
 @Transactional
@@ -116,18 +118,74 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         logger.info("Fetching dashboard statistics");
         Map<String, Object> stats = new HashMap<>();
         
-        // Transaction statistics
-        stats.put("totalTransactions", transactionRepository.count());
-        stats.put("totalTransactionAmount", 
-            transactionRepository.sumAmount().orElse(BigDecimal.ZERO));
-        
         // User statistics
         stats.put("totalUsers", userRepository.count());
         stats.put("activeUsers", userRepository.countByEnabled(true));
         
-        // Payment statistics
-        stats.put("totalPayments", paymentRepository.count());
-        stats.put("pendingPayments", paymentRepository.countByStatus(PaymentStatus.PENDING));
+        // Transaction statistics
+        stats.put("totalTransactions", transactionRepository.count());
+        stats.put("todayTransactions", transactionRepository.countToday());
+        
+        // Revenue statistics
+        BigDecimal totalRevenue = transactionRepository.sumAmount().orElse(BigDecimal.ZERO);
+        stats.put("totalRevenue", totalRevenue);
+        
+        // Queue statistics
+        stats.put("pendingQueues", queueRepository.countByStatus(QueueStatus.WAITING));
+        
+        // Calculate average wait time
+        List<Queue> completedQueues = queueRepository.findByStatus(QueueStatus.COMPLETED);
+        if (!completedQueues.isEmpty()) {
+            long totalWaitTime = completedQueues.stream()
+                .mapToLong(q -> Duration.between(q.getCreatedAt(), q.getProcessedAt()).getSeconds())
+                .sum();
+            long averageWaitTime = totalWaitTime / completedQueues.size();
+            stats.put("averageWaitTime", averageWaitTime);
+        } else {
+            stats.put("averageWaitTime", 0L);
+        }
+        
+        // Transaction chart data
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime weekAgo = now.minusDays(7);
+        List<Object[]> dailyTransactions = transactionRepository.countByCreatedAtBetweenGroupByDate(weekAgo, now);
+        
+        List<String> labels = new ArrayList<>();
+        List<Long> data = new ArrayList<>();
+        
+        for (int i = 0; i < 7; i++) {
+            LocalDateTime date = weekAgo.plusDays(i);
+            String label = date.format(DateTimeFormatter.ofPattern("MMM dd"));
+            labels.add(label);
+            
+            long count = dailyTransactions.stream()
+                .filter(arr -> ((LocalDateTime) arr[0]).toLocalDate().equals(date.toLocalDate()))
+                .mapToLong(arr -> (Long) arr[1])
+                .findFirst()
+                .orElse(0L);
+            data.add(count);
+        }
+        
+        stats.put("transactionLabels", labels);
+        stats.put("transactionData", data);
+        
+        // Queue chart data
+        List<Object[]> queueStatusCounts = queueRepository.countByStatusGroupByStatus();
+        List<String> queueLabels = new ArrayList<>();
+        List<Long> queueData = new ArrayList<>();
+        
+        for (QueueStatus status : QueueStatus.values()) {
+            queueLabels.add(status.name());
+            long count = queueStatusCounts.stream()
+                .filter(arr -> arr[0].equals(status))
+                .mapToLong(arr -> (Long) arr[1])
+                .findFirst()
+                .orElse(0L);
+            queueData.add(count);
+        }
+        
+        stats.put("queueLabels", queueLabels);
+        stats.put("queueData", queueData);
         
         logger.info("Successfully fetched dashboard statistics");
         return stats;
@@ -446,6 +504,33 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
 
     @Override
     public long getTransactionCountByStatus(String status) {
-        return transactionRepository.countByStatus(TransactionStatus.valueOf(status));
+        return transactionRepository.countByStatus(status);
+    }
+
+    @Override
+    public Map<String, Object> getReportStats() {
+        Map<String, Object> stats = new HashMap<>();
+        
+        // Get total transactions
+        stats.put("totalTransactions", transactionRepository.count());
+        
+        // Get total users
+        stats.put("totalUsers", userRepository.count());
+        
+        // Get total amount
+        Optional<BigDecimal> totalAmount = transactionRepository.sumAmount();
+        stats.put("totalAmount", totalAmount.map(BigDecimal::doubleValue).orElse(0.0));
+        
+        // Get transactions by status
+        List<Object[]> statusCounts = transactionRepository.countByStatusGroupByStatus();
+        Map<String, Long> transactionsByStatus = new HashMap<>();
+        for (Object[] statusCount : statusCounts) {
+            String status = (String) statusCount[0];
+            Long count = (Long) statusCount[1];
+            transactionsByStatus.put(status, count);
+        }
+        stats.put("transactionsByStatus", transactionsByStatus);
+        
+        return stats;
     }
 } 

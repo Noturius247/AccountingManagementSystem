@@ -3,8 +3,10 @@
     </div> <!-- End of main container -->
 
     <!-- Footer -->
-    <footer class="footer">
-        <p>&copy; 2024 Accounting Management System. All rights reserved.</p>
+    <footer class="footer text-center py-3">
+        <div class="container">
+            <p class="mb-0">&copy; 2024 Accounting Management System. All rights reserved.</p>
+        </div>
     </footer>
 
     <!-- Bootstrap Bundle with Popper -->

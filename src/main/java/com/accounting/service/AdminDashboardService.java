@@ -93,4 +93,9 @@ public interface AdminDashboardService {
      * Get transaction count by status
      */
     long getTransactionCountByStatus(String status);
+
+    /**
+     * Get report statistics
+     */
+    Map<String, Object> getReportStats();
 } 

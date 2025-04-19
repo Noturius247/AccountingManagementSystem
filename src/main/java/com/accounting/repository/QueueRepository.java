@@ -145,4 +145,7 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
 
     @Query("SELECT COUNT(q) FROM Queue q WHERE q.user.username = :username AND q.createdAt < (SELECT q2.createdAt FROM Queue q2 WHERE q2.user.username = :username AND q2.status = 'ACTIVE')")
     int getPositionByUsername(@Param("username") String username);
+
+    @Query("SELECT q.status, COUNT(q) FROM Queue q GROUP BY q.status")
+    List<Object[]> countByStatusGroupByStatus();
 } 

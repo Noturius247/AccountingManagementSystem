@@ -40,6 +40,8 @@ public class AuthController {
             return "redirect:/manager/dashboard";
         } else if (auth.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER"))) {
             return "redirect:/user/dashboard";
+        } else if (auth.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_STUDENT"))) {
+            return "redirect:/student/dashboard";
         }
 
         logger.warn("User has no recognized role, redirecting to login");

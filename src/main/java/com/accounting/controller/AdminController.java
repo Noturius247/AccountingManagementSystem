@@ -149,4 +149,63 @@ public class AdminController {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    @GetMapping("/users")
+    @Transactional(readOnly = true)
+    public String showUsers(Model model, 
+                          @RequestParam(defaultValue = "1") int page,
+                          @RequestParam(defaultValue = "10") int size) {
+        // Get paginated users and initialize their collections
+        Page<User> usersPage = userService.findAllUsers(PageRequest.of(page - 1, size));
+        List<User> users = usersPage.getContent();
+        for (User user : users) {
+            // Initialize all collections
+            if (user.getNotificationSettings() != null) {
+                user.getNotificationSettings().size();
+            }
+            if (user.getTransactions() != null) {
+                user.getTransactions().size();
+            }
+            if (user.getDocuments() != null) {
+                user.getDocuments().size();
+            }
+            if (user.getNotifications() != null) {
+                user.getNotifications().size();
+            }
+        }
+        model.addAttribute("users", users);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", usersPage.getTotalPages());
+        return "admin/users";
+    }
+
+    @GetMapping("/content/{page}")
+    public String getContent(@PathVariable String page, Model model) {
+        // Add any necessary data to the model based on the page being loaded
+        switch (page) {
+            case "admin/dashboard":
+                Map<String, Object> stats = adminDashboardService.getDashboardStatistics();
+                model.addAttribute("dashboardStats", stats);
+                break;
+            case "admin/queue":
+                model.addAttribute("queueStats", adminDashboardService.getQueueStats());
+                break;
+            case "admin/reports":
+                model.addAttribute("reportStats", adminDashboardService.getReportStats());
+                break;
+            case "admin/settings":
+                model.addAttribute("systemSettings", adminDashboardService.getSystemSettings());
+                break;
+            case "admin/transactions":
+                model.addAttribute("transactionStats", adminDashboardService.getTransactionStatistics(
+                    LocalDateTime.now().minusDays(7), LocalDateTime.now()));
+                break;
+            case "admin/users":
+                model.addAttribute("users", userService.findAllUsers(PageRequest.of(0, 10)));
+                break;
+        }
+        
+        // Return the corresponding JSP view
+        return page;
+    }
 } 

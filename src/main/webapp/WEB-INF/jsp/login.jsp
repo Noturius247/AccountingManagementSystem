@@ -407,6 +407,7 @@
         </c:if>
 
         <form action="${pageContext.request.contextPath}/login" method="post">
+            <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
             <div class="form-group">
                 <label for="username">Username</label>
                 <div class="input-group">

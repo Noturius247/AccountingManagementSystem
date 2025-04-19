@@ -15,6 +15,7 @@ import org.springframework.security.web.authentication.SimpleUrlAuthenticationSu
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,7 +32,10 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**", "/static/**")
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+            )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**", "/static/**").permitAll()
                 .requestMatchers("/login", "/register", "/forgot-password").permitAll()
@@ -52,9 +56,16 @@ public class SecurityConfig {
             )
             .logout(logout -> logout
                 .logoutUrl("/logout")
-                .logoutSuccessUrl("/login?logout=true")
+                .logoutSuccessUrl("/accounting/login?logout=true")
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID")
+                .addLogoutHandler((request, response, authentication) -> {
+                    log.info("Logout initiated for user: {}", authentication != null ? authentication.getName() : "unknown");
+                })
+                .logoutSuccessHandler((request, response, authentication) -> {
+                    log.info("Logout successful for user: {}", authentication != null ? authentication.getName() : "unknown");
+                    response.sendRedirect("/accounting/login?logout=true");
+                })
                 .permitAll()
             )
             .sessionManagement(session -> session
