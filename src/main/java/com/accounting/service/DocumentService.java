@@ -4,8 +4,11 @@ import com.accounting.model.Document;
 import com.accounting.model.enums.DocumentStatus;
 import com.accounting.model.enums.DocumentType;
 import com.accounting.model.enums.Priority;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface DocumentService {
@@ -47,4 +50,15 @@ public interface DocumentService {
     List<Document> findAll();
     Document findById(Long id);
     void deleteById(Long id);
+    Page<Document> findAll(Pageable pageable);
+    List<Document> findByUserUsername(String username);
+    List<Document> findByStatus(DocumentStatus status);
+    Page<Document> findByStatus(DocumentStatus status, Pageable pageable);
+    List<Document> findByType(DocumentType type);
+    Page<Document> findByType(DocumentType type, Pageable pageable);
+    Page<Document> findByStatusAndType(DocumentStatus status, DocumentType type, Pageable pageable);
+    Page<Document> searchDocuments(String searchTerm, Pageable pageable);
+    Document updateDocumentStatus(Long id, DocumentStatus status, String comment);
+    List<Map<String, Object>> getDocumentHistory(Long id);
+    void addComment(Long id, String comment);
 } 

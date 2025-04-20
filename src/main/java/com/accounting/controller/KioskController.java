@@ -158,17 +158,20 @@ public class KioskController {
         return response;
     }
 
+    @GetMapping("/payment/confirmation/{id}")
+    public String showPaymentConfirmation(@PathVariable Long id, Model model) {
+        Payment payment = paymentService.getPaymentById(id);
+        model.addAttribute("payment", payment);
+        return "features/payment-confirmation";
+    }
+
     @PostMapping("/payment/tuition/process")
     public String processTuitionPayment(
             @RequestParam String studentId,
-            @RequestParam String studentName,
-            @RequestParam String program,
-            @RequestParam int yearLevel,
-            @RequestParam int semester,
             @RequestParam String academicYear,
-            @RequestParam(defaultValue = "25000.00") String amount,
+            @RequestParam String semester,
+            @RequestParam String amount,
             Model model) {
-        
         try {
             // First check if student exists
             Student student = studentRepository.findByStudentId(studentId)
@@ -186,9 +189,7 @@ public class KioskController {
             payment.setAmount(amount);
             payment.setPaymentStatus(PaymentStatus.PENDING);
             payment.setType(PaymentType.CASH);
-            
             payment.setUser(student.getUser());
-            
             payment.setPaymentMethod("KIOSK");
             payment.setTransactionReference("TUI-" + System.currentTimeMillis());
             
@@ -199,16 +200,17 @@ public class KioskController {
             String queueNumber = queueService.generateQueueNumber();
             queueService.createQueueEntry(queueNumber, processedPayment.getId());
             
-            return "redirect:/kiosk/queue/status?number=" + queueNumber;
+            // Add payment details to model for confirmation
+            model.addAttribute("payment", processedPayment);
+            model.addAttribute("queueNumber", queueNumber);
+            model.addAttribute("student", student);
+            
+            return "features/payment-confirmation";
         } catch (Exception e) {
             model.addAttribute("error", "Failed to process payment: " + e.getMessage());
-            // Return the form data so user doesn't have to re-enter everything
             model.addAttribute("studentId", studentId);
-            model.addAttribute("studentName", studentName);
-            model.addAttribute("program", program);
-            model.addAttribute("yearLevel", yearLevel);
-            model.addAttribute("semester", semester);
             model.addAttribute("academicYear", academicYear);
+            model.addAttribute("semester", semester);
             model.addAttribute("amount", amount);
             return "features/tuition-payment";
         }
@@ -428,5 +430,26 @@ public class KioskController {
             model.addAttribute("amount", amount);
             return "features/transcript-payment";
         }
+    }
+
+    @PostMapping("/payment/cancel/{id}")
+    @ResponseBody
+    public Map<String, Object> cancelPayment(@PathVariable Long id) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            Payment payment = paymentService.getPaymentById(id);
+            if (payment.getPaymentStatus() == PaymentStatus.PENDING) {
+                paymentService.cancelPayment(id);
+                response.put("success", true);
+                response.put("message", "Payment cancelled successfully");
+            } else {
+                response.put("success", false);
+                response.put("error", "Only pending payments can be cancelled");
+            }
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("error", e.getMessage());
+        }
+        return response;
     }
 } 

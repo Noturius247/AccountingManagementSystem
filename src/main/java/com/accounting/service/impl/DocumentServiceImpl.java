@@ -1,9 +1,11 @@
 package com.accounting.service.impl;
 
 import com.accounting.model.Document;
+import com.accounting.model.DocumentHistory;
 import com.accounting.model.enums.DocumentStatus;
 import com.accounting.model.enums.DocumentType;
 import com.accounting.model.enums.Priority;
+import com.accounting.repository.DocumentHistoryRepository;
 import com.accounting.repository.DocumentRepository;
 import com.accounting.service.DocumentService;
 import jakarta.persistence.EntityNotFoundException;
@@ -41,9 +43,11 @@ import java.nio.file.Paths;
 public class DocumentServiceImpl implements DocumentService {
     private static final Logger logger = LoggerFactory.getLogger(DocumentServiceImpl.class);
     private final DocumentRepository documentRepository;
+    private final DocumentHistoryRepository documentHistoryRepository;
 
-    public DocumentServiceImpl(DocumentRepository documentRepository) {
+    public DocumentServiceImpl(DocumentRepository documentRepository, DocumentHistoryRepository documentHistoryRepository) {
         this.documentRepository = documentRepository;
+        this.documentHistoryRepository = documentHistoryRepository;
     }
 
     @Override
@@ -313,6 +317,91 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public Document save(Document document) {
         return documentRepository.save(document);
+    }
+
+    @Override
+    public Page<Document> findAll(Pageable pageable) {
+        return documentRepository.findAll(pageable);
+    }
+
+    @Override
+    public List<Document> findByUserUsername(String username) {
+        return documentRepository.findByUserUsername(username);
+    }
+
+    @Override
+    public List<Document> findByStatus(DocumentStatus status) {
+        return documentRepository.findByStatus(status);
+    }
+
+    @Override
+    public Page<Document> findByStatus(DocumentStatus status, Pageable pageable) {
+        return documentRepository.findByStatus(status, pageable);
+    }
+
+    @Override
+    public List<Document> findByType(DocumentType type) {
+        return documentRepository.findByType(type);
+    }
+
+    @Override
+    public Page<Document> findByType(DocumentType type, Pageable pageable) {
+        return documentRepository.findByType(type, pageable);
+    }
+
+    @Override
+    public Page<Document> findByStatusAndType(DocumentStatus status, DocumentType type, Pageable pageable) {
+        return documentRepository.findByStatusAndType(status, type, pageable);
+    }
+
+    @Override
+    public Page<Document> searchDocuments(String searchTerm, Pageable pageable) {
+        return documentRepository.searchDocuments(searchTerm, pageable);
+    }
+
+    @Override
+    @Transactional
+    public Document updateDocumentStatus(Long id, DocumentStatus status, String comment) {
+        Document document = getDocumentById(id);
+        if (document != null) {
+            DocumentStatus oldStatus = document.getStatus();
+            document.setStatus(status);
+            document.setUpdatedAt(LocalDateTime.now());
+            document = saveDocument(document, null);
+
+            // Record history
+            DocumentHistory history = new DocumentHistory(document, oldStatus, status, comment, document.getUser());
+            documentHistoryRepository.save(history);
+
+            return document;
+        }
+        return null;
+    }
+
+    @Override
+    public List<Map<String, Object>> getDocumentHistory(Long id) {
+        return documentHistoryRepository.findByDocumentIdOrderByCreatedAtDesc(id)
+                .stream()
+                .map(history -> {
+                    Map<String, Object> historyMap = new HashMap<>();
+                    historyMap.put("id", history.getId());
+                    historyMap.put("oldStatus", history.getOldStatus());
+                    historyMap.put("newStatus", history.getNewStatus());
+                    historyMap.put("comment", history.getComment());
+                    historyMap.put("createdAt", history.getCreatedAt());
+                    return historyMap;
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void addComment(Long id, String comment) {
+        Document document = getDocumentById(id);
+        if (document != null) {
+            DocumentHistory history = new DocumentHistory(document, document.getStatus(), document.getStatus(), comment, document.getUser());
+            documentHistoryRepository.save(history);
+        }
     }
 
     private void validateDocument(Document document) {

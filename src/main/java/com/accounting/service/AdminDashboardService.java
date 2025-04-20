@@ -98,4 +98,9 @@ public interface AdminDashboardService {
      * Get report statistics
      */
     Map<String, Object> getReportStats();
+
+    /**
+     * Get pending students count
+     */
+    long getPendingStudentsCount();
 } 

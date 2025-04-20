@@ -1,6 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -385,17 +387,199 @@
             margin-bottom: 20px;
             display: none;
         }
+
+        .progress {
+            height: 20px;
+            background-color: #f3f3f3;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: #4CAF50;
+            transition: width 0.3s;
+        }
+
+        .progress-bar.bg-success {
+            background-color: #2ecc71;
+        }
+
+        .progress-bar.bg-warning {
+            background-color: #f39c12;
+        }
+
+        .progress-bar.bg-danger {
+            background-color: #e74c3c;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1rem;
+        }
+
+        .task-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .task-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.3s;
+        }
+
+        .task-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .task-item.completed {
+            background-color: #f8f9fa;
+            opacity: 0.7;
+        }
+
+        .task-priority {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .priority-high {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .priority-medium {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .priority-low {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .team-member {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .team-member:last-child {
+            border-bottom: none;
+        }
+
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .member-info {
+            flex: 1;
+        }
+
+        .member-name {
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+
+        .member-role {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        .member-status {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+
+        .status-online {
+            background-color: #28a745;
+        }
+
+        .status-offline {
+            background-color: #dc3545;
+        }
+
+        .status-away {
+            background-color: #ffc107;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .quick-action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+            color: var(--dark-color);
+        }
+
+        .quick-action-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            color: var(--primary-color);
+        }
+
+        .quick-action-btn i {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .quick-action-btn span {
+            font-size: 14px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-    <%@ include file="../includes/header.jsp" %>
+    <%@ include file="../includes/manager-header.jsp" %>
     
     <div class="manager-dashboard">
-        <div class="dashboard-header">
-            <h1>Manager Dashboard</h1>
-            <div class="notification-bell" onclick="toggleNotifications()">
-                <i class="fas fa-bell"></i>
-                <span class="notification-count" id="notificationCount">${unreadNotifications}</span>
+        <div class="content-header">
+            <h1 class="h2">Manager Dashboard</h1>
+            <div class="header-actions">
+                <button class="btn btn-primary" onclick="refreshDashboard()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+                <button class="btn btn-success" onclick="exportReport()">
+                    <i class="bi bi-download"></i> Export Report
+                </button>
             </div>
         </div>
 
@@ -404,153 +588,200 @@
         
         <div class="stats-grid">
             <div class="stat-card">
+                <h3>Total Revenue</h3>
+                <div class="value">
+                    <fmt:formatNumber value="${totalRevenue}" type="currency"/>
+                </div>
+                <div class="trend ${revenueTrend != null && revenueTrend >= 0 ? '' : 'down'}">
+                    <i class="bi bi-arrow-${revenueTrend != null && revenueTrend >= 0 ? 'up' : 'down'}"></i>
+                    <span>${revenueTrend != null ? Math.abs(revenueTrend) : 0}%</span>
+                </div>
+            </div>
+            <div class="stat-card">
                 <h3>Pending Approvals</h3>
-                <div class="value">${pendingApprovals}</div>
+                <div class="value">${pendingApprovals != null ? pendingApprovals : 0}</div>
                 <div class="trend">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>5% from last week</span>
+                    <i class="bi bi-clock"></i>
+                    <span>${pendingApprovals != null ? pendingApprovals : 0} items</span>
                 </div>
             </div>
             <div class="stat-card">
-                <h3>Today's Revenue</h3>
-                <div class="value">$<fmt:formatNumber value="${todayRevenue}" type="number" minFractionDigits="2" maxFractionDigits="2"/></div>
-                <div class="trend">
-                    <i class="fas fa-arrow-up"></i>
-                    <span>12% from yesterday</span>
+                <h3>Active Users</h3>
+                <div class="value">${activeUsers != null ? activeUsers : 0}</div>
+                <div class="trend ${userTrend != null && userTrend >= 0 ? '' : 'down'}">
+                    <i class="bi bi-arrow-${userTrend != null && userTrend >= 0 ? 'up' : 'down'}"></i>
+                    <span>${userTrend != null ? Math.abs(userTrend) : 0}%</span>
                 </div>
             </div>
             <div class="stat-card">
-                <h3>Active Queues</h3>
-                <div class="value">${activeQueues}</div>
-                <div class="trend down">
-                    <i class="fas fa-arrow-down"></i>
-                    <span>3% from last hour</span>
+                <h3>System Health</h3>
+                <div class="value">${systemHealth != null ? systemHealth : 0}%</div>
+                <div class="progress">
+                    <div class="progress-bar ${systemHealth != null && systemHealth >= 80 ? 'bg-success' : systemHealth != null && systemHealth >= 50 ? 'bg-warning' : 'bg-danger'}" 
+                         role="progressbar" 
+                         data-width="${systemHealth != null ? systemHealth : 0}">
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="manager-section">
-            <div class="section-header">
-                <h2>Payment Approvals</h2>
-                <div class="action-buttons">
-                    <a href="${pageContext.request.contextPath}/manager/payments" class="btn btn-primary">
-                        <i class="fas fa-list"></i> View All Payments
-                    </a>
-                    <button class="btn btn-info" onclick="refreshPayments()">
-                        <i class="fas fa-sync-alt"></i> Refresh
-                    </button>
-                    <button class="btn btn-primary" onclick="exportPayments()">
-                        <i class="fas fa-download"></i> Export
-                    </button>
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Revenue Trend</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="revenueChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="search-section">
-                <input type="text" id="paymentSearch" placeholder="Search payments..." onkeyup="searchPayments()">
-                <select id="paymentTypeFilter" onchange="filterPayments()">
-                    <option value="">All Types</option>
-                    <option value="TUITION">Tuition</option>
-                    <option value="MISCELLANEOUS">Miscellaneous</option>
-                    <option value="LIBRARY">Library</option>
-                    <option value="LABORATORY">Laboratory</option>
-                </select>
-                <select id="paymentStatusFilter" onchange="filterPayments()">
-                    <option value="">All Statuses</option>
-                    <option value="PENDING">Pending</option>
-                    <option value="APPROVED">Approved</option>
-                    <option value="REJECTED">Rejected</option>
-                </select>
-            </div>
-            <div class="table-container">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>User</th>
-                            <th>Amount</th>
-                            <th>Type</th>
-                            <th>Status</th>
-                            <th>Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="paymentTableBody">
-                        <c:forEach items="${pendingPayments}" var="payment">
-                            <tr>
-                                <td>${payment.id}</td>
-                                <td>${payment.user.username}</td>
-                                <td>$${payment.amount.toFixed(2)}</td>
-                                <td>${payment.type}</td>
-                                <td>
-                                    <span class="status-badge status-${payment.paymentStatus.toLowerCase()}">
-                                        ${payment.paymentStatus}
-                                    </span>
-                                </td>
-                                <td><fmt:formatDate value="${payment.createdAt}" pattern="MMM dd, yyyy HH:mm"/></td>
-                                <td>
-                                    <button class="btn btn-success" onclick="approvePayment('${payment.id}')">
-                                        <i class="fas fa-check"></i> Approve
-                                    </button>
-                                    <button class="btn btn-danger" onclick="rejectPayment('${payment.id}')">
-                                        <i class="fas fa-times"></i> Reject
-                                    </button>
-                                </td>
-                            </tr>
-                        </c:forEach>
-                    </tbody>
-                </table>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>User Activity</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="activityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="manager-section">
-            <div class="section-header">
-                <h2>Queue Management</h2>
-                <div class="action-buttons">
-                    <button class="btn btn-info" onclick="refreshQueue()">
-                        <i class="fas fa-sync-alt"></i> Refresh
-                    </button>
-                    <button class="btn btn-warning" onclick="resetQueue()">
-                        <i class="fas fa-redo"></i> Reset
-                    </button>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Recent Tasks</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="task-list">
+                            <c:forEach items="${recentTasks}" var="task">
+                                <div class="task-item ${task.completed ? 'completed' : ''}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">${task.title}</h6>
+                                            <p class="mb-0 text-muted">${task.description}</p>
+                                        </div>
+                                        <div>
+                                            <span class="task-priority priority-${task.priority.toLowerCase()}">
+                                                ${task.priority}
+                                            </span>
+                                            <c:if test="${!task.completed}">
+                                                <button class="btn btn-sm btn-success ms-2" onclick="completeTask('${task.id}')">
+                                                    <i class="bi bi-check"></i>
+                                                </button>
+                                            </c:if>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">
+                                        Due: <fmt:formatDate value="${task.dueDate}" pattern="MMM dd, yyyy"/>
+                                    </small>
+                                </div>
+                            </c:forEach>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="queue-section">
-                <div class="queue-card">
-                    <h3>Current Queue</h3>
-                    <div class="queue-number">#${currentQueue}</div>
-                    <button class="btn btn-success" style="width: 100%;" onclick="nextQueue()">
-                        <i class="fas fa-forward"></i> Next
-                    </button>
-                    <div class="queue-info">
-                        <p><i class="fas fa-clock"></i> Average Wait Time: 15 minutes</p>
-                        <p><i class="fas fa-users"></i> Total in Queue: ${totalInQueue}</p>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Team Members</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="team-list">
+                            <c:forEach items="${teamMembers}" var="member">
+                                <div class="team-member">
+                                    <div class="member-avatar">
+                                        ${member.name.charAt(0)}
+                                    </div>
+                                    <div class="member-info">
+                                        <div class="member-name">${member.name}</div>
+                                        <div class="member-role">${member.role}</div>
+                                    </div>
+                                    <div class="member-status status-${member.status.toLowerCase()}"></div>
+                                </div>
+                            </c:forEach>
+                        </div>
                     </div>
                 </div>
-                <div class="queue-card">
-                    <h3>Waiting List</h3>
-                    <div class="search-section">
-                        <input type="text" id="queueSearch" placeholder="Search users..." onkeyup="searchQueue()">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Recent Transactions</h5>
                     </div>
-                    <div class="table-container">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Position</th>
-                                    <th>User</th>
-                                    <th>Type</th>
-                                    <th>Time</th>
-                                </tr>
-                            </thead>
-                            <tbody id="queueTableBody">
-                                <c:forEach items="${waitingList}" var="queue">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
                                     <tr>
-                                        <td>#${queue.position}</td>
-                                        <td>${queue.user.username}</td>
-                                        <td>${queue.type}</td>
-                                        <td><fmt:formatDate value="${queue.createdAt}" pattern="HH:mm"/></td>
+                                        <th>ID</th>
+                                        <th>Date</th>
+                                        <th>Type</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
                                     </tr>
-                                </c:forEach>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    <c:forEach items="${recentTransactions}" var="transaction">
+                                        <tr>
+                                            <td>${transaction.id}</td>
+                                            <td><fmt:formatDate value="${transaction.date}" pattern="MMM dd, yyyy HH:mm"/></td>
+                                            <td>${transaction.type}</td>
+                                            <td><fmt:formatNumber value="${transaction.amount}" type="currency"/></td>
+                                            <td>
+                                                <span class="badge ${transaction.status == 'COMPLETED' ? 'bg-success' : 
+                                                                          transaction.status == 'PENDING' ? 'bg-warning' : 'bg-danger'}">
+                                                    ${transaction.status}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-info" onclick="viewTransaction('${transaction.id}')">
+                                                    <i class="bi bi-eye"></i>
+                                                </button>
+                                                <c:if test="${transaction.status == 'PENDING'}">
+                                                    <button class="btn btn-sm btn-success" onclick="approveTransaction('${transaction.id}')">
+                                                        <i class="bi bi-check"></i>
+                                                    </button>
+                                                </c:if>
+                                            </td>
+                                        </tr>
+                                    </c:forEach>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>System Alerts</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert-list">
+                            <c:forEach items="${systemAlerts}" var="alert">
+                                <div class="alert ${alert.type == 'ERROR' ? 'alert-danger' : 
+                                                alert.type == 'WARNING' ? 'alert-warning' : 'alert-info'}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>${alert.title}</strong>
+                                            <p class="mb-0">${alert.message}</p>
+                                        </div>
+                                        <small><fmt:formatDate value="${alert.timestamp}" pattern="MMM dd, HH:mm"/></small>
+                                    </div>
+                                </div>
+                            </c:forEach>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -888,6 +1119,135 @@
             .finally(() => {
                 hideLoading();
             });
+        }
+
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: JSON.parse('${revenueLabels}'),
+                    datasets: [{
+                        label: 'Revenue',
+                        data: JSON.parse('${revenueData}'),
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Activity Chart
+            const activityCtx = document.getElementById('activityChart').getContext('2d');
+            new Chart(activityCtx, {
+                type: 'bar',
+                data: {
+                    labels: JSON.parse('${activityLabels}'),
+                    datasets: [{
+                        label: 'Activity',
+                        data: JSON.parse('${activityData}'),
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgb(54, 162, 235)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            const progressBar = document.querySelector('.progress-bar');
+            if (progressBar) {
+                progressBar.style.width = progressBar.dataset.width + '%';
+            }
+        });
+
+        function refreshDashboard() {
+            location.reload();
+        }
+
+        function exportReport() {
+            window.location.href = `${pageContext.request.contextPath}/manager/reports/export`;
+        }
+
+        function addNewTask() {
+            const modal = new bootstrap.Modal(document.getElementById('addTaskModal'));
+            modal.show();
+        }
+
+        function saveTask() {
+            const form = document.getElementById('taskForm');
+            const formData = new FormData(form);
+
+            fetch(`${pageContext.request.contextPath}/manager/tasks`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(Object.fromEntries(formData))
+            })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    throw new Error('Failed to save task');
+                }
+            })
+            .catch(error => {
+                alert(error.message);
+            });
+        }
+
+        function completeTask(taskId) {
+            if (confirm('Are you sure you want to mark this task as completed?')) {
+                fetch(`${pageContext.request.contextPath}/manager/tasks/${taskId}/complete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        throw new Error('Failed to complete task');
+                    }
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
+        }
+
+        function viewTransaction(transactionId) {
+            window.location.href = `${pageContext.request.contextPath}/manager/transactions/${transactionId}`;
+        }
+
+        function approveTransaction(transactionId) {
+            if (confirm('Are you sure you want to approve this transaction?')) {
+                fetch(`${pageContext.request.contextPath}/manager/transactions/${transactionId}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        throw new Error('Failed to approve transaction');
+                    }
+                })
+                .catch(error => {
+                    alert(error.message);
+                });
+            }
         }
     </script>
 </body>

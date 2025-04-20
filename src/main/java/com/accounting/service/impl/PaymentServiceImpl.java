@@ -230,9 +230,10 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Payment getPaymentById(Long id) {
         return paymentRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Payment not found with id: " + id));
+            .orElseThrow(() -> new RuntimeException("Payment not found"));
     }
 
     @Override

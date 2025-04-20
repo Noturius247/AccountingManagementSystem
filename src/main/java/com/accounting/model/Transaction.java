@@ -92,7 +92,7 @@ public class Transaction {
     @Column(name = "updated_by")
     private String updatedBy;
     
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
     @JsonIgnore
     private User user;

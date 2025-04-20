@@ -19,7 +19,7 @@
     <link href="${pageContext.request.contextPath}/static/css/main.css" rel="stylesheet">
 </head>
 <body>
-    <%@ include file="/WEB-INF/jsp/includes/header.jsp" %>
+    <%@ include file="../includes/user-header.jsp" %>
 
     <div class="container-fluid">
         <div class="row">

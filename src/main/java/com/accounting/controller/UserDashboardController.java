@@ -18,19 +18,5 @@ public class UserDashboardController {
         this.userDashboardService = userDashboardService;
     }
 
-    @GetMapping("/user/profile")
-    @Transactional(readOnly = true)
-    public String showProfile(Model model, Authentication authentication) {
-        String username = authentication.getName();
-        
-        // Get user profile
-        Map<String, Object> profile = userDashboardService.getUserProfile(username);
-        model.addAttribute("profile", profile);
-        
-        // Get total amount spent
-        double totalSpent = userDashboardService.getCurrentBalance(username);
-        model.addAttribute("totalSpent", totalSpent);
-        
-        return "user/profile";
-    }
+    // Remove the conflicting profile endpoint since it's handled by UserController
 } 

@@ -5,49 +5,72 @@ import com.accounting.model.User;
 import com.accounting.repository.StudentRepository;
 import com.accounting.service.StudentService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class StudentServiceImpl implements StudentService {
 
     private final StudentRepository studentRepository;
+    private final Validator validator;
     private final AtomicInteger sequence = new AtomicInteger(1);
 
     @Autowired
-    public StudentServiceImpl(StudentRepository studentRepository) {
+    public StudentServiceImpl(StudentRepository studentRepository, Validator validator) {
         this.studentRepository = studentRepository;
+        this.validator = validator;
     }
 
     @Override
     @Transactional
-    public Student registerStudent(User user, String program, Integer yearLevel) {
+    public Student registerStudent(User user, String program, Integer yearLevel, String academicYear, String semester, String fullName) {
+        // Check if user already has a student record
+        if (studentRepository.existsByUserId(user.getId())) {
+            throw new IllegalStateException("User already has a student record");
+        }
+
         String studentId = generateStudentId(program, yearLevel);
         
         Student student = new Student();
         student.setUser(user);
+        student.setUsername(user.getUsername());
         student.setStudentId(studentId);
         student.setProgram(program);
         student.setYearLevel(yearLevel);
-        student.setAcademicYear(getCurrentAcademicYear());
-        student.setSemester(String.valueOf(getCurrentSemester()));
-        student.setRegistrationStatus("PENDING");
+        student.setAcademicYear(academicYear);
+        student.setSemester(semester);
+        student.setFullName(fullName);
+        student.setRegistrationStatus(Student.RegistrationStatus.PENDING);
+        
+        // Validate the student entity
+        Set<ConstraintViolation<Student>> violations = validator.validate(student);
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
         
         return studentRepository.save(student);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Student getStudentByStudentId(String studentId) {
         return studentRepository.findByStudentId(studentId)
             .orElseThrow(() -> new EntityNotFoundException("Student not found with ID: " + studentId));
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Student getStudentByUser(User user) {
         return studentRepository.findByUserId(user.getId())
             .orElseThrow(() -> new EntityNotFoundException("Student not found for user: " + user.getUsername()));
@@ -127,6 +150,62 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public List<Student> findByRegistrationStatus(String status) {
-        return studentRepository.findByRegistrationStatus(status);
+        return studentRepository.findByRegistrationStatus(Student.RegistrationStatus.valueOf(status));
+    }
+
+    @Override
+    public Page<Student> searchStudents(String search, String status, String program, Pageable pageable) {
+        if (search != null && !search.isEmpty()) {
+            return studentRepository.findByFullNameContainingOrStudentIdContainingAndRegistrationStatusAndProgram(
+                search, search, Student.RegistrationStatus.valueOf(status), program, pageable);
+        }
+        return getStudentsByStatusAndProgram(status, program, pageable);
+    }
+
+    @Override
+    public Page<Student> getStudentsByStatusAndProgram(String status, String program, Pageable pageable) {
+        if (status != null && program != null) {
+            return studentRepository.findByRegistrationStatusAndProgram(
+                Student.RegistrationStatus.valueOf(status), program, pageable);
+        } else if (status != null) {
+            return studentRepository.findByRegistrationStatus(
+                Student.RegistrationStatus.valueOf(status), pageable);
+        } else if (program != null) {
+            return studentRepository.findByProgram(program, pageable);
+        }
+        return studentRepository.findAll(pageable);
+    }
+
+    @Override
+    public Student getStudentById(Long id) {
+        return studentRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Student not found with id: " + id));
+    }
+
+    @Override
+    @Transactional
+    public void approveStudent(Long id) {
+        Student student = getStudentById(id);
+        if (student.getRegistrationStatus() != Student.RegistrationStatus.PENDING) {
+            throw new IllegalStateException("Only pending registrations can be approved");
+        }
+        student.setRegistrationStatus(Student.RegistrationStatus.APPROVED);
+        studentRepository.save(student);
+    }
+
+    @Override
+    @Transactional
+    public void rejectStudent(Long id) {
+        Student student = getStudentById(id);
+        if (student.getRegistrationStatus() != Student.RegistrationStatus.PENDING) {
+            throw new IllegalStateException("Only pending registrations can be rejected");
+        }
+        student.setRegistrationStatus(Student.RegistrationStatus.REJECTED);
+        studentRepository.save(student);
+    }
+
+    @Override
+    public long countByRegistrationStatus(String status) {
+        return studentRepository.countByRegistrationStatus(Student.RegistrationStatus.valueOf(status));
     }
 } 

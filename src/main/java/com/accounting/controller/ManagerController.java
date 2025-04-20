@@ -4,14 +4,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import com.accounting.service.ManagerDashboardService;
 import com.accounting.service.QueueService;
+import com.accounting.service.TransactionService;
 import com.accounting.model.Queue;
+import com.accounting.model.Transaction;
 import org.springframework.transaction.annotation.Transactional;
 import com.accounting.model.User;
 import org.hibernate.Hibernate;
+import java.util.Map;
+import java.util.HashMap;
 
 @Controller
 @RequestMapping("/manager")
@@ -23,6 +26,9 @@ public class ManagerController {
 
     @Autowired
     private QueueService queueService;
+
+    @Autowired
+    private TransactionService transactionService;
 
     @GetMapping("/dashboard")
     @Transactional(readOnly = true)
@@ -49,8 +55,43 @@ public class ManagerController {
 
     @GetMapping("/transactions")
     public String viewTransactions(Model model) {
-        model.addAttribute("transactions", managerDashboardService.getRecentTransactions());
+        model.addAttribute("transactions", transactionService.getAllTransactions());
         return "manager/transactions";
+    }
+
+    @GetMapping("/transactions/{id}")
+    @ResponseBody
+    public Transaction getTransaction(@PathVariable Long id) {
+        return transactionService.getTransactionByIdWithUser(id);
+    }
+
+    @PostMapping("/transactions/{id}/approve")
+    @ResponseBody
+    public Map<String, Object> approveTransaction(@PathVariable Long id) {
+        Transaction transaction = transactionService.updateTransactionStatus(id, "COMPLETED");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Transaction approved successfully");
+        response.put("transaction", transaction);
+        return response;
+    }
+
+    @PostMapping("/transactions/{id}/reject")
+    @ResponseBody
+    public Map<String, Object> rejectTransaction(@PathVariable Long id) {
+        Transaction transaction = transactionService.updateTransactionStatus(id, "FAILED");
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Transaction rejected successfully");
+        response.put("transaction", transaction);
+        return response;
+    }
+
+    @GetMapping("/transactions/export")
+    public void exportTransactions(@RequestParam String format,
+                                 @RequestParam(required = false) String startDate,
+                                 @RequestParam(required = false) String endDate) {
+        // Implementation for exporting transactions
     }
 
     @GetMapping("/reports")

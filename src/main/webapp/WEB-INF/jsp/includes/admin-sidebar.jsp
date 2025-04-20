@@ -4,139 +4,103 @@
 <%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 <!-- Sidebar -->
-<div class="sidebar col-md-3 col-lg-2">
-    <div class="d-flex flex-column p-3">
-        <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-            <span class="fs-4">Admin Panel</span>
-        </a>
-        <hr>
-        <ul class="nav nav-pills flex-column mb-auto">
+<div class="sidebar col-md-3 col-lg-2 d-md-block bg-light collapse">
+    <div class="position-sticky pt-3">
+        <ul class="nav flex-column">
             <li class="nav-item">
-                <a href="${pageContext.request.contextPath}/admin/dashboard" class="nav-link active" data-section="dashboard">
-                    <i class="bi bi-speedometer2"></i>
+                <a class="nav-link ${pageContext.request.requestURI.endsWith('/admin/dashboard') ? 'active' : ''}" 
+                   href="${pageContext.request.contextPath}/admin/dashboard" data-dynamic>
+                    <i class="bi bi-speedometer2 me-2"></i>
                     Dashboard
                 </a>
             </li>
-            <li>
-                <a href="${pageContext.request.contextPath}/admin/users" class="nav-link" data-section="users">
-                    <i class="bi bi-people"></i>
+            <li class="nav-item">
+                <a class="nav-link ${pageContext.request.requestURI.endsWith('/admin/users') ? 'active' : ''}" 
+                   href="${pageContext.request.contextPath}/admin/users" data-dynamic>
+                    <i class="bi bi-people me-2"></i>
                     Users
                 </a>
             </li>
-            <li>
-                <a href="${pageContext.request.contextPath}/admin/transactions" class="nav-link" data-section="transactions">
-                    <i class="bi bi-cash-stack"></i>
+            <li class="nav-item">
+                <a class="nav-link ${pageContext.request.requestURI.endsWith('/admin/student-management') ? 'active' : ''}" 
+                   href="${pageContext.request.contextPath}/admin/student-management" data-dynamic>
+                    <i class="bi bi-mortarboard me-2"></i>
+                    Students
+                    <c:if test="${not empty pendingStudentsCount}">
+                        <span class="badge bg-danger rounded-pill ms-2">${pendingStudentsCount}</span>
+                    </c:if>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link ${pageContext.request.requestURI.endsWith('/admin/transactions') ? 'active' : ''}" 
+                   href="${pageContext.request.contextPath}/admin/transactions" data-dynamic>
+                    <i class="bi bi-cash-stack me-2"></i>
                     Transactions
                 </a>
             </li>
-            <li>
-                <a href="${pageContext.request.contextPath}/admin/queue" class="nav-link" data-section="queue">
-                    <i class="bi bi-clock-history"></i>
+            <li class="nav-item">
+                <a class="nav-link ${pageContext.request.requestURI.endsWith('/admin/queue') ? 'active' : ''}" 
+                   href="${pageContext.request.contextPath}/admin/queue" data-dynamic>
+                    <i class="bi bi-list-ul me-2"></i>
                     Queue
                 </a>
             </li>
-            <li>
-                <a href="${pageContext.request.contextPath}/admin/reports" class="nav-link" data-section="reports">
-                    <i class="bi bi-file-earmark-text"></i>
+            <li class="nav-item">
+                <a class="nav-link ${pageContext.request.requestURI.endsWith('/admin/reports') ? 'active' : ''}" 
+                   href="${pageContext.request.contextPath}/admin/reports" data-dynamic>
+                    <i class="bi bi-file-earmark-text me-2"></i>
                     Reports
                 </a>
             </li>
-            <li>
-                <a href="${pageContext.request.contextPath}/admin/settings" class="nav-link" data-section="settings">
-                    <i class="bi bi-gear"></i>
+            <li class="nav-item">
+                <a class="nav-link ${pageContext.request.requestURI.endsWith('/admin/settings') ? 'active' : ''}" 
+                   href="${pageContext.request.contextPath}/admin/settings" data-dynamic>
+                    <i class="bi bi-gear me-2"></i>
                     Settings
                 </a>
-            </li>
-            <li class="mt-auto">
-                <form action="${pageContext.request.contextPath}/logout" method="post" class="nav-item" id="logoutForm">
-                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
-                    <button type="submit" class="nav-link text-danger w-100 border-0 bg-transparent" id="logoutButton">
-                        <i class="bi bi-box-arrow-right"></i>
-                        Logout
-                    </button>
-                </form>
             </li>
         </ul>
     </div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const logoutForm = document.getElementById('logoutForm');
-        const logoutButton = document.getElementById('logoutButton');
-        
-        if (logoutButton) {
-            logoutButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                if (confirm('Are you sure you want to logout?')) {
-                    logoutForm.submit();
-                }
-            });
-        }
-    });
-</script>
-
 <style>
-    /* Sidebar styles */
     .sidebar {
-        background: var(--primary-color);
-        color: white;
-        height: 100vh;
         position: fixed;
         top: 0;
+        bottom: 0;
         left: 0;
-        z-index: 1000;
-        transition: all 0.3s ease;
-        width: 250px;
-        padding-top: 56px; /* Height of the header */
-    }
-
-    .main-content {
-        margin-left: 250px;
-        padding: 20px;
-        min-height: calc(100vh - 56px);
-        margin-top: 56px; /* Height of the header */
+        z-index: 100;
+        padding: 48px 0 0;
+        box-shadow: var(--shadow-sm);
     }
 
     .sidebar .nav-link {
-        color: rgba(255, 255, 255, 0.8);
+        font-weight: 500;
+        color: var(--text-color);
         padding: 0.75rem 1rem;
-        border-radius: 0.5rem;
-        margin-bottom: 0.5rem;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+        border-radius: 0.25rem;
+        margin: 0.25rem 0;
     }
 
     .sidebar .nav-link:hover {
-        color: white;
-        background: rgba(255, 255, 255, 0.1);
+        color: var(--primary-color);
+        background-color: rgba(0, 0, 0, 0.05);
     }
 
     .sidebar .nav-link.active {
-        color: white;
-        background: rgba(255, 255, 255, 0.2);
+        color: var(--primary-color);
+        background-color: rgba(0, 0, 0, 0.05);
     }
 
     .sidebar .nav-link i {
-        width: 1.5rem;
-        text-align: center;
+        margin-right: 0.5rem;
     }
 
-    /* Ensure the sidebar doesn't overlap with the header */
-    @media (max-width: 768px) {
+    @media (max-width: 767.98px) {
         .sidebar {
-            width: 100%;
-            transform: translateX(-100%);
-        }
-        
-        .sidebar.active {
-            transform: translateX(0);
-        }
-        
-        .main-content {
-            margin-left: 0;
+            position: static;
+            height: auto;
+            padding: 0;
         }
     }
 </style> 

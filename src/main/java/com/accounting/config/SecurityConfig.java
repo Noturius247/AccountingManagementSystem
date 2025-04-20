@@ -43,7 +43,6 @@ public class SecurityConfig {
                 .requestMatchers("/kiosk/**", "/accounting/kiosk/**").permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .requestMatchers("/manager/**").hasRole("MANAGER")
-                .requestMatchers("/user/documents").hasAnyRole("USER", "MANAGER")
                 .requestMatchers("/user/**").hasRole("USER")
                 .anyRequest().authenticated()
             )
@@ -56,7 +55,7 @@ public class SecurityConfig {
             )
             .logout(logout -> logout
                 .logoutUrl("/logout")
-                .logoutSuccessUrl("/accounting/login?logout=true")
+                .logoutSuccessUrl("/login?logout=true")
                 .invalidateHttpSession(true)
                 .deleteCookies("JSESSIONID")
                 .addLogoutHandler((request, response, authentication) -> {
@@ -64,7 +63,7 @@ public class SecurityConfig {
                 })
                 .logoutSuccessHandler((request, response, authentication) -> {
                     log.info("Logout successful for user: {}", authentication != null ? authentication.getName() : "unknown");
-                    response.sendRedirect("/accounting/login?logout=true");
+                    response.sendRedirect(request.getContextPath() + "/login?logout=true");
                 })
                 .permitAll()
             )

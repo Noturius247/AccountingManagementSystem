@@ -522,4 +522,10 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
     public Transaction save(Transaction transaction) {
         return transactionRepository.save(transaction);
     }
+
+    @Override
+    public Transaction getTransactionByIdWithUser(Long id) {
+        return transactionRepository.findByIdWithUser(id)
+                .orElseThrow(() -> new EntityNotFoundException("Transaction not found with id: " + id));
+    }
 } 

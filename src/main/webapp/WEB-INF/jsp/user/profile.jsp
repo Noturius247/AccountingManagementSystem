@@ -1,13 +1,14 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Profile</title>
+    <title>My Profile - Accounting System</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -19,54 +20,95 @@
     <link href="${pageContext.request.contextPath}/static/css/main.css" rel="stylesheet">
 </head>
 <body>
-    <%@ include file="/WEB-INF/jsp/includes/header.jsp" %>
+    <%@ include file="../includes/user-header.jsp" %>
 
     <div class="container-fluid">
         <div class="row">
             <main class="col-md-12 ms-sm-auto px-md-4">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">User Profile</h1>
+                    <h1 class="h2">My Profile</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <a href="${pageContext.request.contextPath}/user/settings" class="btn btn-primary">
+                            <i class="bi bi-gear me-1"></i> Settings
+                        </a>
+                    </div>
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
+                        <!-- Profile Card -->
                         <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Profile Information</h5>
-                            </div>
-                            <div class="card-body">
-                                <c:if test="${not empty success}">
-                                    <div class="alert alert-success">${success}</div>
-                                </c:if>
-                                
-                                <form action="${pageContext.request.contextPath}/profile" method="post">
-                                    <div class="mb-3">
-                                        <label for="firstName" class="form-label">First Name</label>
-                                        <input type="text" class="form-control" id="firstName" name="firstName" 
-                                               value="${profile.firstName}" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="lastName" class="form-label">Last Name</label>
-                                        <input type="text" class="form-control" id="lastName" name="lastName" 
-                                               value="${profile.lastName}" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="email" class="form-label">Email</label>
-                                        <input type="email" class="form-control" id="email" name="email" 
-                                               value="${profile.email}" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Role</label>
-                                        <input type="text" class="form-control" value="${profile.role}" readonly>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Member Since</label>
-                                        <input type="text" class="form-control" value="${profile.createdAt}" readonly>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary">Update Profile</button>
-                                </form>
+                            <div class="card-body text-center">
+                                <div class="mb-3">
+                                    <i class="bi bi-person-circle" style="font-size: 4rem; color: var(--primary-color);"></i>
+                                </div>
+                                <h4 class="card-title">${user.firstName} ${user.lastName}</h4>
+                                <p class="text-muted">${user.username}</p>
+                                <p class="text-muted">${user.email}</p>
+                                <p class="text-muted">
+                                    ${fn:substring(user.createdAt.toString(), 0, 10)}
+                                </p>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="col-md-8">
+                        <!-- Account Information -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Account Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Username:</strong> ${user.username}</p>
+                                        <p><strong>Email:</strong> ${user.email}</p>
+                                        <p><strong>Role:</strong> ${user.role}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Account Created:</strong> 
+                                            ${fn:substring(user.createdAt.toString(), 0, 10)}
+                                        </p>
+                                        <p><strong>Last Updated:</strong> 
+                                            ${fn:substring(user.updatedAt.toString(), 0, 10)}
+                                        </p>
+                                        <p><strong>Status:</strong> 
+                                            <span class="badge bg-${user.enabled ? 'success' : 'danger'}">
+                                                ${user.enabled ? 'Active' : 'Inactive'}
+                                            </span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Student Information -->
+                        <c:if test="${user.student}">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Student Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p><strong>Student ID:</strong> ${user.studentId}</p>
+                                            <p><strong>Program:</strong> ${user.program}</p>
+                                            <p><strong>Year Level:</strong> ${user.yearLevel}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Academic Year:</strong> ${user.academicYear}</p>
+                                            <p><strong>Semester:</strong> ${user.semester}</p>
+                                            <p><strong>Registration Status:</strong> 
+                                                <span class="badge bg-${user.registrationStatus == 'APPROVED' ? 'success' : 
+                                                                        user.registrationStatus == 'PENDING' ? 'warning' : 'danger'}">
+                                                    ${user.registrationStatus}
+                                                </span>
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </c:if>
                     </div>
                 </div>
             </main>

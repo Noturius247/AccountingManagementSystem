@@ -139,4 +139,17 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
     List<Document> findTop5ByUserUsernameOrderByUploadedAtDesc(String username);
 
     List<Document> findByUserId(Long userId);
+
+    @Query("SELECT d FROM Document d WHERE " +
+           "LOWER(d.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+           "LOWER(d.description) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
+    Page<Document> searchDocuments(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    Page<Document> findByStatusAndType(DocumentStatus status, DocumentType type, Pageable pageable);
+
+    List<Document> findByType(DocumentType type);
+    Page<Document> findByType(DocumentType type, Pageable pageable);
+
+    List<Document> findByStatus(DocumentStatus status);
+    Page<Document> findByStatus(DocumentStatus status, Pageable pageable);
 } 

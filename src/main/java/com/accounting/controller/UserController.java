@@ -6,6 +6,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import com.accounting.service.UserDashboardService;
 import com.accounting.model.User;
@@ -13,6 +14,9 @@ import com.accounting.service.UserService;
 import org.springframework.transaction.annotation.Transactional;
 import com.accounting.service.StudentService;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
+import com.accounting.model.Transaction;
+import com.accounting.service.TransactionService;
 
 @Controller
 @RequestMapping("/user")
@@ -27,6 +31,9 @@ public class UserController {
 
     @Autowired
     private StudentService studentService;
+
+    @Autowired
+    private TransactionService transactionService;
 
     @GetMapping("/dashboard")
     @Transactional(readOnly = true)
@@ -86,5 +93,21 @@ public class UserController {
     public String transactions(Model model) {
         model.addAttribute("transactions", userDashboardService.getRecentTransactions());
         return "user/transactions";
+    }
+
+    @GetMapping("/transactions/{id}")
+    @Transactional(readOnly = true)
+    public String viewTransaction(@PathVariable Long id, Model model, Authentication authentication) {
+        String username = authentication.getName();
+        Transaction transaction = transactionService.getTransactionByIdWithUser(id);
+        
+        // Verify the transaction belongs to the current user
+        if (!transaction.getUser().getUsername().equals(username)) {
+            model.addAttribute("error", "You do not have permission to view this transaction");
+            return "redirect:/user/transactions";
+        }
+        
+        model.addAttribute("transaction", transaction);
+        return "user/transaction-details";
     }
 } 

@@ -58,6 +58,8 @@ public interface TransactionService {
      */
     Transaction getTransactionById(Long id);
     
+    Transaction getTransactionByIdWithUser(Long id);
+    
     /**
      * Update transaction status
      */

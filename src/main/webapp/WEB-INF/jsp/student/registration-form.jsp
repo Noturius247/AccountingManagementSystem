@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -225,6 +227,7 @@
 
         <form action="${pageContext.request.contextPath}/student-registration" method="post">
             <input type="hidden" name="username" value="${username}">
+            <sec:csrfInput />
             
             <div class="form-section">
                 <h3>Select Your Program</h3>
@@ -271,11 +274,21 @@
                 <h3>Current Academic Information</h3>
                 <div class="form-group">
                     <label class="form-label">Academic Year</label>
-                    <input type="text" class="form-control" value="${currentAcademicYear}" readonly>
+                    <select class="form-control" name="academicYear" required>
+                        <option value="">Select Academic Year</option>
+                        <c:forEach var="year" begin="2020" end="2030">
+                            <option value="${year}-${year+1}" ${currentAcademicYear == year.toString().concat('-').concat((year+1).toString()) ? 'selected' : ''}>${year}-${year+1}</option>
+                        </c:forEach>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Semester</label>
-                    <input type="text" class="form-control" value="${currentSemester}" readonly>
+                    <select class="form-control" name="semester" required>
+                        <option value="">Select Semester</option>
+                        <option value="1ST" ${currentSemester == '1ST' ? 'selected' : ''}>First Semester</option>
+                        <option value="2ND" ${currentSemester == '2ND' ? 'selected' : ''}>Second Semester</option>
+                        <option value="SUMMER" ${currentSemester == 'SUMMER' ? 'selected' : ''}>Summer</option>
+                    </select>
                 </div>
             </div>
 

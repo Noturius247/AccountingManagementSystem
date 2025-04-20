@@ -8,7 +8,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Transactions</title>
+    <title>My Transactions - Accounting System</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -17,7 +17,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     
     <!-- Custom CSS -->
-    <link href="${pageContext.request.contextPath}/css/main.css" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/static/css/main.css" rel="stylesheet">
 </head>
 <body>
     <%@ include file="/WEB-INF/jsp/includes/header.jsp" %>
@@ -84,6 +84,12 @@
                 <!-- Transactions Table -->
                 <div class="card">
                     <div class="card-body">
+                        <c:if test="${not empty error}">
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                ${error}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        </c:if>
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
@@ -137,8 +143,8 @@
                                     <a class="page-link" href="?page=${currentPage - 1}">Previous</a>
                                 </li>
                                 <c:forEach begin="1" end="${totalPages}" var="i">
-                                    <li class="page-item ${currentPage == i ? 'active' : ''}">
-                                        <a class="page-link" href="?page=${i}">${i}</a>
+                                    <li class="page-item ${i == currentPage ? 'active' : ''}">
+                                        <a class="page-link" href="${pageContext.request.contextPath}/user/transactions?page=${i}">${i}</a>
                                     </li>
                                 </c:forEach>
                                 <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">

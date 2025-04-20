@@ -191,7 +191,7 @@
     </style>
 </head>
 <body>
-    <%@ include file="../includes/header.jsp" %>
+    <%@ include file="../includes/manager-header.jsp" %>
     
     <div class="manager-payments">
         <div class="payments-header">

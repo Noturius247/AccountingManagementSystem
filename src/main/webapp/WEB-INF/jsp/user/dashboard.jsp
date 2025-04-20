@@ -2,6 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 
 <!DOCTYPE html>
 <html>
@@ -89,172 +90,162 @@
     </style>
 </head>
 <body>
-    <%@ include file="../includes/header.jsp" %>
+    <%@ include file="../includes/user-header.jsp" %>
 
     <div class="container-fluid">
         <div class="row">
             <!-- Main Content -->
             <main class="col-md-12 ms-sm-auto px-md-4">
-                <!-- Welcome Section -->
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Welcome, ${user.firstName}!</h1>
-                    <div class="btn-toolbar mb-2 mb-md-0">
-                        <div class="btn-group me-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
-                            <button type="button" class="btn btn-sm btn-outline-secondary">Print</button>
+                <!-- Main Content Section -->
+                <div id="dashboard-content">
+                    <!-- Welcome Section -->
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Welcome, ${user.firstName}!</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="btn-group me-2">
+                                <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary">Print</button>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Student Registration Section -->
-                <c:if test="${not user.student}">
-                    <div class="alert alert-info mb-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h4 class="alert-heading">Complete Your Student Registration</h4>
-                                <p class="mb-0">To access student services and features, please complete your student registration.</p>
+                    <!-- Student Registration Section -->
+                    <c:if test="${not user.student}">
+                        <div class="alert alert-info mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h4 class="alert-heading">Complete Your Student Registration</h4>
+                                    <p class="mb-0">To access student services and features, please complete your student registration.</p>
+                                </div>
+                                <a href="${pageContext.request.contextPath}/student-registration" class="btn btn-primary" data-dynamic>
+                                    <i class="bi bi-person-plus me-1"></i> Register as Student
+                                </a>
                             </div>
-                            <a href="${pageContext.request.contextPath}/student-registration" class="btn btn-primary">
-                                <i class="bi bi-person-plus me-1"></i> Register as Student
-                            </a>
                         </div>
-                    </div>
-                </c:if>
+                    </c:if>
 
-                <!-- Statistics Cards -->
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="bi bi-receipt text-primary"></i>
+                    <!-- Statistics Cards -->
+                    <div class="row row-cols-1 row-cols-md-4 g-4 mb-4">
+                        <div class="col">
+                            <div class="card h-100 border-primary">
+                                <div class="card-body">
+                                    <h5 class="card-title text-primary">Current Balance</h5>
+                                    <p class="card-text display-6">$${currentBalance}</p>
+                                </div>
                             </div>
-                            <div class="stat-info">
-                                <h5 class="text-muted mb-2">Total Transactions</h5>
-                                <h2 class="mb-0">${statistics.totalTransactions}</h2>
-                                <p class="text-muted mb-0">This month</p>
+                        </div>
+                        <div class="col">
+                            <div class="card h-100 border-warning">
+                                <div class="card-body">
+                                    <h5 class="card-title text-warning">Pending Payments</h5>
+                                    <p class="card-text display-6">${pendingPaymentsCount}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card h-100 border-success">
+                                <div class="card-body">
+                                    <h5 class="card-title text-success">Documents</h5>
+                                    <p class="card-text display-6">${fn:length(documents)}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="card h-100 border-info">
+                                <div class="card-body">
+                                    <h5 class="card-title text-info">Notifications</h5>
+                                    <p class="card-text display-6">${fn:length(notifications)}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="bi bi-clock-history text-warning"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h5 class="text-muted mb-2">Pending Payments</h5>
-                                <h2 class="mb-0">${statistics.pendingPayments}</h2>
-                                <p class="text-muted mb-0">Require attention</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="bi bi-cash-stack text-success"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h5 class="text-muted mb-2">Total Amount</h5>
-                                <h2 class="mb-0"><fmt:formatNumber value="${statistics.totalAmount}" type="currency"/></h2>
-                                <p class="text-muted mb-0">This month</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <div class="stat-icon">
-                                <i class="bi bi-file-earmark-text text-info"></i>
-                            </div>
-                            <div class="stat-info">
-                                <h5 class="text-muted mb-2">Documents</h5>
-                                <h2 class="mb-0">${statistics.totalDocuments}</h2>
-                                <p class="text-muted mb-0">Uploaded files</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Recent Transactions -->
-                <div class="card shadow mb-4">
-                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                        <h6 class="m-0 font-weight-bold text-primary">Recent Transactions</h6>
-                        <a href="${pageContext.request.contextPath}/user/transactions" class="btn btn-sm btn-primary">
-                            View All
-                        </a>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Type</th>
-                                        <th>Amount</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <c:forEach items="${recentTransactions}" var="transaction">
+                    <!-- Recent Transactions -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="bi bi-clock-history me-1"></i> Recent Transactions
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead>
                                         <tr>
-                                            <td>
-                                                <c:set var="dateStr" value="${transaction.createdAt}" />
-                                                <c:choose>
-                                                    <c:when test="${not empty dateStr}">
-                                                        ${fn:substring(dateStr, 0, 10)}
-                                                    </c:when>
-                                                    <c:otherwise>
-                                                        N/A
-                                                    </c:otherwise>
-                                                </c:choose>
-                                            </td>
-                                            <td>${transaction.type}</td>
-                                            <td><fmt:formatNumber value="${transaction.amount}" type="currency"/></td>
-                                            <td>
-                                                <span class="status-badge status-${fn:toLowerCase(transaction.status)}">
-                                                    ${transaction.status}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <a href="${pageContext.request.contextPath}/user/transactions/${transaction.id}" 
-                                                   class="btn btn-sm btn-outline-primary">
-                                                    <i class="bi bi-eye"></i> View
-                                                </a>
-                                            </td>
+                                            <th>Date</th>
+                                            <th>Transaction ID</th>
+                                            <th>Description</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
                                         </tr>
-                                    </c:forEach>
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        <c:forEach items="${recentTransactions}" var="transaction">
+                                            <tr>
+                                                <td>${fn:substring(transaction.createdAt, 0, 10)}</td>
+                                                <td>${transaction.id}</td>
+                                                <td>${transaction.notes}</td>
+                                                <td>$${transaction.amount}</td>
+                                                <td>
+                                                    <span class="badge bg-${transaction.status == 'COMPLETED' ? 'success' : 'warning'}">
+                                                        ${transaction.status}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="text-end">
+                                <a href="${pageContext.request.contextPath}/user/transactions" class="btn btn-primary btn-sm" data-dynamic>
+                                    View All Transactions
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Quick Actions -->
-                <div class="row mb-4">
-                    <div class="col-md-4">
-                        <div class="action-card">
-                            <h5 class="card-title">Make a Payment</h5>
-                            <p class="card-text text-muted">Pay your pending bills and invoices</p>
-                            <a href="${pageContext.request.contextPath}/user/payments/new" class="btn btn-primary">
-                                <i class="bi bi-credit-card"></i> Pay Now
-                            </a>
+                    <!-- Recent Documents -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <i class="bi bi-file-earmark-text me-1"></i> Recent Documents
                         </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="action-card">
-                            <h5 class="card-title">Upload Document</h5>
-                            <p class="card-text text-muted">Submit required documents and receipts</p>
-                            <a href="${pageContext.request.contextPath}/user/documents/upload" class="btn btn-primary">
-                                <i class="bi bi-upload"></i> Upload
-                            </a>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="action-card">
-                            <h5 class="card-title">View Reports</h5>
-                            <p class="card-text text-muted">Access your transaction history and reports</p>
-                            <a href="${pageContext.request.contextPath}/user/reports" class="btn btn-primary">
-                                <i class="bi bi-file-earmark-text"></i> View Reports
-                            </a>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Document Name</th>
+                                            <th>Type</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <c:forEach items="${documents}" var="document" end="4">
+                                            <tr>
+                                                <td>${fn:substring(document.uploadDate, 0, 10)}</td>
+                                                <td>${document.name}</td>
+                                                <td>${document.type}</td>
+                                                <td>
+                                                    <span class="badge bg-${document.status == 'APPROVED' ? 'success' : 'warning'}">
+                                                        ${document.status}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <a href="${pageContext.request.contextPath}/user/documents/${document.id}" 
+                                                       class="btn btn-primary btn-sm" data-dynamic>
+                                                        <i class="bi bi-eye"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="text-end">
+                                <a href="${pageContext.request.contextPath}/user/documents" class="btn btn-primary btn-sm" data-dynamic>
+                                    View All Documents
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
