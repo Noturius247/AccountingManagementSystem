@@ -658,10 +658,36 @@ If you encounter any issues:
 - Test system scalability
 
 ### Testing Schedule
-1. Week 1-2: Individual component testing
-2. Week 3: Integration testing
-3. Week 4: System testing and bug fixes
-4. Week 5: Final testing and documentation
+1. Monday:
+   - Joshua: Complete user dashboard functional testing
+   - Steben: Complete admin dashboard functional testing
+   - Felix: Complete manager dashboard financial features testing
+   - Frank: Complete manager dashboard task management testing
+   - Benz: Set up system-wide testing environment
+
+2. Tuesday:
+   - Joshua: Complete user dashboard security testing
+   - Steben: Complete admin dashboard security testing
+   - Felix: Complete performance testing
+   - Frank: Complete integration testing
+   - Benz: Begin cross-role testing
+
+3. Wednesday:
+   - Joshua: Document user dashboard test results
+   - Steben: Document admin dashboard test results
+   - Felix: Document performance test results
+   - Frank: Document integration test results
+   - Benz: Complete system-wide testing
+
+4. Thursday:
+   - All team members: Bug fixing and retesting
+   - Benz: Compile final test report
+   - Team review of all test results
+
+5. Friday:
+   - Final system verification
+   - Documentation completion
+   - Presentation preparation
 
 ### Testing Tools
 - JUnit for unit testing
