@@ -601,7 +601,7 @@ If you encounter any issues:
 - Test audit logging
 - Validate security configurations
 
-### Felix: Manager Dashboard Testing (Part 1)
+### Felix: admin Dashboard Testing (Part 1)
 #### Functional Testing
 - Test manager login and authentication
 - Verify financial overview:
