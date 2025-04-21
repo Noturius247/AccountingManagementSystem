@@ -1,6 +1,7 @@
 package com.accounting.repository;
 
 import com.accounting.model.Payment;
+import com.accounting.model.User;
 import com.accounting.model.enums.PaymentStatus;
 import com.accounting.model.enums.PaymentType;
 import org.springframework.data.domain.Page;
@@ -14,7 +15,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Date;
-import com.accounting.model.User;
 
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
@@ -94,4 +94,19 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     @Query("SELECT COUNT(p) FROM Payment p WHERE DATE(p.createdAt) = CURRENT_DATE")
     long countToday();
+
+    Optional<Payment> findByTransactionId(String transactionId);
+    Optional<Payment> findByScheduleId(String scheduleId);
+    List<Payment> findByUserAndPaymentStatus(User user, PaymentStatus status);
+    List<Payment> findByUserAndCreatedAtBetween(User user, LocalDateTime start, LocalDateTime end);
+    List<Payment> findByPaymentStatusAndProcessedAtBefore(PaymentStatus status, LocalDateTime date);
+    
+    @Query("SELECT p FROM Payment p WHERE p.user = :user AND p.paymentStatus = :status ORDER BY p.createdAt DESC")
+    List<Payment> findRecentPaymentsByUserAndStatus(@Param("user") User user, @Param("status") PaymentStatus status);
+    
+    @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.user = :user AND p.paymentStatus = :status")
+    BigDecimal getTotalAmountByUserAndStatus(@Param("user") User user, @Param("status") PaymentStatus status);
+    
+    @Query("SELECT p FROM Payment p WHERE p.user = :user AND p.schedule IS NOT NULL")
+    List<Payment> findScheduledPaymentsByUser(@Param("user") User user);
 } 

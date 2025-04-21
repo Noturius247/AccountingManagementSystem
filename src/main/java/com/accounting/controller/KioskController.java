@@ -27,6 +27,11 @@ import com.accounting.service.PaymentService;
 import com.accounting.repository.UserRepository;
 import com.accounting.repository.StudentRepository;
 import com.accounting.model.Student;
+import com.accounting.service.UserService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import com.accounting.model.QueuePosition;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Controller
 @RequestMapping("/kiosk")
@@ -49,6 +54,9 @@ public class KioskController {
 
     @Autowired
     private StudentRepository studentRepository;
+
+    @Autowired
+    private UserService userService;
 
     @GetMapping("")
     public String showKiosk() {
@@ -83,8 +91,19 @@ public class KioskController {
     }
 
     @GetMapping("/queue/status")
-    public String showQueueStatus() {
-        return "features/queue-status";
+    public String showQueueStatus(Model model) {
+        // Get the current processing number (the queue number being served)
+        Queue currentQueue = queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PROCESSING)
+            .orElse(queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.WAITING)
+                .orElse(null));
+            
+        if (currentQueue != null) {
+            model.addAttribute("currentProcessingNumber", currentQueue.getQueueNumber());
+        } else {
+            model.addAttribute("currentProcessingNumber", "No queue being processed");
+        }
+        
+        return "features/kiosk-status";
     }
 
     @GetMapping("/help")
@@ -125,22 +144,11 @@ public class KioskController {
 
     @GetMapping("/queue-status")
     @ResponseBody
-    public Map<String, Object> getQueueStatus(@RequestParam String number) {
-        Map<String, Object> response = new HashMap<>();
-        try {
-            Optional<Queue> queueOpt = queueService.findByQueueNumber(number);
-            if (queueOpt.isPresent()) {
-                Queue queue = queueOpt.get();
-                response.put("status", queue.getStatus().name());
-                response.put("position", queueService.getQueuePosition(number));
-                response.put("estimatedWaitTime", queueService.calculateEstimatedWaitTime(number));
-            } else {
-                response.put("error", "Queue not found");
-            }
-        } catch (Exception e) {
-            response.put("error", e.getMessage());
-        }
-        return response;
+    public ResponseEntity<QueuePosition> getQueueStatus(Authentication authentication) {
+        User user = userService.findByUsername(authentication.getName())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        QueuePosition status = queueService.getQueueStatus(user);
+        return ResponseEntity.ok(status);
     }
 
     @PostMapping("/cancel-queue")

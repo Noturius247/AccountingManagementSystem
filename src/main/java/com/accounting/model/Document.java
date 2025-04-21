@@ -79,7 +79,14 @@ public class Document {
     @Column(nullable = false)
     private Long studentId;
 
-    @Column(nullable = false)
+    @Column(name = "document_type", nullable = false)
+    private String documentType;
+
+    @Column(name = "reference_number", nullable = false)
+    private String referenceNumber;
+
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     @Column(nullable = false)
@@ -230,6 +237,14 @@ public class Document {
         return studentId;
     }
 
+    public String getDocumentType() {
+        return documentType;
+    }
+
+    public String getReferenceNumber() {
+        return referenceNumber;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -302,11 +317,23 @@ public class Document {
         this.studentId = studentId;
     }
 
+    public void setDocumentType(String documentType) {
+        this.documentType = documentType;
+    }
+
+    public void setReferenceNumber(String referenceNumber) {
+        this.referenceNumber = referenceNumber;
+    }
+
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 } 

@@ -7,7 +7,7 @@
 <!-- Bootstrap Icons -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
 <!-- Custom CSS -->
-<link href="${pageContext.request.contextPath}/css/main.css" rel="stylesheet">
+<link href="${pageContext.request.contextPath}/static/css/main.css" rel="stylesheet">
 
 <header class="header">
     <!-- Top Navigation Bar -->
@@ -24,7 +24,7 @@
                 <ul class="navbar-nav me-auto">
                     <sec:authorize access="isAuthenticated()">
                         <li class="nav-item">
-                            <a class="nav-link" href="${pageContext.request.contextPath}/dashboard" data-dynamic>
+                            <a class="nav-link" href="${pageContext.request.contextPath}/">
                                 <i class="bi bi-speedometer2 me-1"></i> Dashboard
                             </a>
                         </li>
@@ -163,6 +163,18 @@
 <script>
     // Simple dropdown initialization
     document.addEventListener('DOMContentLoaded', function() {
+        // Handle dashboard link specifically
+        const dashboardLink = document.getElementById('dashboardLink');
+        if (dashboardLink) {
+            dashboardLink.addEventListener('click', function(e) {
+                // If we're already on the dashboard, just prevent the default action
+                if (window.location.pathname.includes('/user/dashboard')) {
+                    e.preventDefault();
+                    return;
+                }
+            });
+        }
+
         // Initialize all dropdowns
         var dropdowns = document.querySelectorAll('.dropdown-toggle');
         dropdowns.forEach(function(dropdown) {
@@ -186,8 +198,22 @@
         // Handle dynamic content loading
         document.querySelectorAll('a[data-dynamic]').forEach(link => {
             link.addEventListener('click', function(e) {
-                e.preventDefault();
                 const url = this.getAttribute('href');
+                
+                // If this is the dashboard link and we're already on the dashboard, do nothing
+                if (url.includes('/user/dashboard') && window.location.pathname.includes('/user/dashboard')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                
+                // If we're already on this page, just prevent the default action
+                if (window.location.pathname === url) {
+                    e.preventDefault();
+                    return;
+                }
+                
+                e.preventDefault();
                 
                 // Show loading state
                 const mainContent = document.querySelector('#main-content');

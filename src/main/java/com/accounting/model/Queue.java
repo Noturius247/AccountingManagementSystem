@@ -3,6 +3,7 @@ package com.accounting.model;
 import com.accounting.model.enums.QueueStatus;
 import com.accounting.model.enums.QueueType;
 import com.accounting.model.enums.Priority;
+import com.accounting.model.enums.ReceiptPreference;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,8 +31,17 @@ public class Queue {
     @Column(name = "queue_number", nullable = false, unique = true)
     private String queueNumber;
 
-    @Column(name = "user_username", nullable = false)
+    @Column(name = "user_username", nullable = true)
     private String userUsername;
+
+    @Column(name = "kiosk_session_id", unique = true)
+    private String kioskSessionId;
+
+    @Column(name = "public_identifier")
+    private String publicIdentifier;
+
+    @Column(name = "kiosk_terminal_id")
+    private String kioskTerminalId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -71,6 +81,16 @@ public class Queue {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "receipt_preference")
+    private ReceiptPreference receiptPreference = ReceiptPreference.DIGITAL;
+
+    @Column(name = "email_address")
+    private String emailAddress;
+
+    @Column(name = "phone_number")
+    private String phoneNumber;
 
     @PrePersist
     protected void onCreate() {

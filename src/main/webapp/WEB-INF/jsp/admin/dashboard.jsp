@@ -50,10 +50,10 @@
             font-weight: 500;
         }
 
-        .status-pending { background: #fef3c7; color: #92400e; }
-        .status-completed { background: #dcfce7; color: #166534; }
-        .status-failed { background: #fee2e2; color: #b91c1c; }
-        .status-processing { background: #dbeafe; color: #1e40af; }
+        .status-pending { background: var(--warning-color); color: var(--dark-color); }
+        .status-completed { background: var(--success-color); color: white; }
+        .status-failed { background: var(--danger-color); color: white; }
+        .status-processing { background: var(--info-color); color: white; }
 
         .dashboard-grid {
             display: grid;
@@ -92,12 +92,12 @@
         .tab-button {
             padding: 0.75rem 1.5rem;
             border: none;
-            border-radius: 8px;
+            border-radius: var(--border-radius-md);
             background: var(--light-color);
-            color: var(--text-color);
+            color: var(--dark-color);
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: var(--transition-base);
         }
 
         .tab-button.active {
@@ -138,7 +138,7 @@
             padding: 2rem;
             transition: margin-left 0.3s ease;
             min-height: 100vh;
-            background: #fff;
+            background: white;
             position: relative;
         }
 
@@ -172,7 +172,7 @@
                 left: 0;
                 height: 100vh;
                 z-index: 1040;
-                box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+                box-shadow: var(--shadow-md);
             }
             
             .sidebar.show {
@@ -207,13 +207,13 @@
         .table td {
             padding: 0.75rem;
             vertical-align: middle;
-            border-top: 1px solid #dee2e6;
+            border-top: 1px solid var(--border-color);
         }
 
         .table thead th {
             vertical-align: bottom;
-            border-bottom: 2px solid #dee2e6;
-            background-color: #f8f9fa;
+            border-bottom: 2px solid var(--border-color);
+            background-color: var(--light-color);
         }
 
         .table tbody tr:hover {
@@ -222,17 +222,17 @@
 
         /* Card styles */
         .card {
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: white;
+            border-radius: var(--border-radius-md);
+            box-shadow: var(--shadow-sm);
             margin-bottom: 1.5rem;
         }
 
         .card-header {
             padding: 1rem 1.5rem;
-            background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
-            border-radius: 8px 8px 0 0;
+            background: var(--light-color);
+            border-bottom: 1px solid var(--border-color);
+            border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
         }
 
         .card-body {
@@ -241,14 +241,14 @@
 
         /* Form controls */
         .form-control {
-            border-radius: 4px;
-            border: 1px solid #ced4da;
+            border-radius: var(--border-radius-sm);
+            border: 1px solid var(--border-color);
             padding: 0.375rem 0.75rem;
         }
 
         .form-control:focus {
-            border-color: #80bdff;
-            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(128, 0, 0, 0.25);
         }
 
         /* Button styles */
@@ -448,15 +448,10 @@
     </style>
 </head>
 <body>
-    <%@ include file="../includes/admin-sidebar.jsp" %>
+    <%@ include file="partials/sidebar.jsp" %>
 
     <!-- Main Content -->
     <div class="main-content">
-        <!-- Add Sidebar Toggle Button -->
-        <button id="sidebarToggle" class="btn btn-link d-md-none position-fixed" style="top: 10px; left: 10px; z-index: 1050;">
-            <i class="bi bi-list fs-4"></i>
-        </button>
-        
         <div class="content-header">
             <h1 id="page-title">Dashboard</h1>
             <div class="header-actions" id="dashboard-actions">
@@ -838,7 +833,7 @@
         // Page state management
         const pageState = {
             currentSection: 'dashboard',
-            sidebarVisible: true,
+            sidebarVisible: localStorage.getItem('adminSidebarVisible') !== 'false',
             loadedSections: new Set(['dashboard'])
         };
 
@@ -846,6 +841,20 @@
         document.addEventListener('DOMContentLoaded', function() {
             initializePage();
             showCurrentSection();
+            
+            // Apply saved sidebar state
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            
+            if (!pageState.sidebarVisible) {
+                sidebar.classList.remove('show');
+                document.body.classList.remove('sidebar-visible');
+                mainContent.style.marginLeft = '0';
+            } else {
+                sidebar.classList.add('show');
+                document.body.classList.add('sidebar-visible');
+                mainContent.style.marginLeft = window.innerWidth > 768 ? '250px' : '0';
+            }
         });
 
         function initializePage() {
@@ -883,10 +892,19 @@
 
             // Handle window resize
             window.addEventListener('resize', function() {
+                const sidebar = document.querySelector('.sidebar');
+                const mainContent = document.querySelector('.main-content');
+                
                 if (window.innerWidth > 768) {
-                    const sidebar = document.querySelector('.sidebar');
-                    sidebar.classList.remove('show');
-                    document.body.classList.remove('sidebar-visible');
+                    if (pageState.sidebarVisible) {
+                        mainContent.style.marginLeft = '250px';
+                    }
+                } else {
+                    mainContent.style.marginLeft = '0';
+                    if (!pageState.sidebarVisible) {
+                        sidebar.classList.remove('show');
+                        document.body.classList.remove('sidebar-visible');
+                    }
                 }
             });
         }
@@ -934,7 +952,11 @@
             document.body.classList.toggle('sidebar-visible');
             
             pageState.sidebarVisible = sidebar.classList.contains('show');
-            mainContent.style.marginLeft = pageState.sidebarVisible ? '250px' : '0';
+            localStorage.setItem('adminSidebarVisible', pageState.sidebarVisible);
+            
+            if (window.innerWidth > 768) {
+                mainContent.style.marginLeft = pageState.sidebarVisible ? '250px' : '0';
+            }
         }
 
         function showCurrentSection() {

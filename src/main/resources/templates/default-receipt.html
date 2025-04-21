@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            width: 300px;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .company-name {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .receipt-details {
+            margin: 15px 0;
+        }
+        .receipt-line {
+            margin: 5px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+        .divider {
+            border-top: 1px dashed #000;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="company-name">[[${companyName}]]</div>
+        <div>[[${companyAddress}]]</div>
+        <div>Tel: [[${companyPhone}]]</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="receipt-details">
+        <div class="receipt-line">Receipt #: [[${receiptNumber}]]</div>
+        <div class="receipt-line">Date: [[${#temporals.format(currentDateTime, 'yyyy-MM-dd HH:mm:ss')}]]</div>
+        <div class="receipt-line">Queue #: [[${queueNumber}]]</div>
+        <div class="receipt-line">Terminal: [[${terminalId}]]</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="receipt-details">
+        <div class="receipt-line">Service: [[${serviceName}]]</div>
+        <div class="receipt-line">Amount: [[${#numbers.formatDecimal(amount, 1, 'COMMA', 2, 'POINT')}]]</div>
+        <div class="receipt-line">Status: [[${status}]]</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="footer">
+        <div>Thank you for your business!</div>
+        <div>[[${footerMessage}]]</div>
+    </div>
+</body>
+</html> 

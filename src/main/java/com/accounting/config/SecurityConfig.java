@@ -30,14 +30,21 @@ public class SecurityConfig {
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                .invalidSessionUrl("/login?invalid")
+                .maximumSessions(1)
+                .maxSessionsPreventsLogin(false)
+                .expiredUrl("/login?expired")
+            )
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**", "/static/**")
+                .ignoringRequestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**", "/static/**", "/resources/**")
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**", "/static/**").permitAll()
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**", "/static/**", "/resources/**").permitAll()
                 .requestMatchers("/login", "/register", "/forgot-password").permitAll()
                 .requestMatchers("/WEB-INF/jsp/**").permitAll()
                 .requestMatchers("/kiosk/**", "/accounting/kiosk/**").permitAll()
@@ -66,11 +73,6 @@ public class SecurityConfig {
                     response.sendRedirect(request.getContextPath() + "/login?logout=true");
                 })
                 .permitAll()
-            )
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                .maximumSessions(1)
-                .expiredUrl("/login?expired=true")
             )
             .sessionManagement(session -> session
                 .sessionFixation().changeSessionId()

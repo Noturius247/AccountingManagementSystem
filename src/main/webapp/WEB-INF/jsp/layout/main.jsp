@@ -178,7 +178,7 @@
     <script>
         $(document).ready(function() {
             // Handle all navigation links with data-dynamic attribute
-            $('a[data-dynamic]').on('click', function(e) {
+            $(document).on('click', 'a[data-dynamic]', function(e) {
                 e.preventDefault();
                 const url = $(this).attr('href');
                 loadContent(url);
@@ -191,13 +191,30 @@
                 // Load content
                 $.get(url, function(response) {
                     $('#main-content').html(response);
+                    
                     // Update URL without page reload
                     history.pushState(null, '', url);
+                    
+                    // Update active state in sidebar
+                    $('.sidebar .nav-link').removeClass('active');
+                    $('.sidebar .nav-link[href="' + url + '"]').addClass('active');
+                    
+                    // Reinitialize Bootstrap components
+                    initializeBootstrapComponents();
+                    
+                    // Trigger a custom event for page-specific initialization
+                    $(document).trigger('contentLoaded');
                 })
                 .fail(function(jqXHR, textStatus, errorThrown) {
                     console.error('Error loading content:', errorThrown);
-                    // Show error message to user
-                    $('#main-content').html('<div class="alert alert-danger">Error loading content. Please try again.</div>');
+                    $('#main-content').html(`
+                        <div class="alert alert-danger">
+                            <h4 class="alert-heading">Error Loading Content</h4>
+                            <p>There was an error loading the requested content. Please try again or refresh the page.</p>
+                            <hr>
+                            <p class="mb-0">Error details: ${errorThrown}</p>
+                        </div>
+                    `);
                 })
                 .always(function() {
                     // Remove loading state
@@ -205,10 +222,37 @@
                 });
             }
 
+            function initializeBootstrapComponents() {
+                // Initialize tooltips
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+
+                // Initialize popovers
+                var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+                popoverTriggerList.map(function (popoverTriggerEl) {
+                    return new bootstrap.Popover(popoverTriggerEl);
+                });
+
+                // Initialize dropdowns
+                var dropdownTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'));
+                dropdownTriggerList.map(function (dropdownTriggerEl) {
+                    return new bootstrap.Dropdown(dropdownTriggerEl);
+                });
+            }
+
             // Handle browser back/forward buttons
-            $(window).on('popstate', function() {
-                loadContent(window.location.pathname);
+            $(window).on('popstate', function(e) {
+                if (e.originalEvent.state !== null) {
+                    loadContent(window.location.pathname);
+                }
             });
+
+            // Initialize page on first load if URL is not homepage
+            if (window.location.pathname !== '/' && window.location.pathname !== '') {
+                loadContent(window.location.pathname);
+            }
         });
     </script>
 </body>

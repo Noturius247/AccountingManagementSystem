@@ -1,6 +1,6 @@
 package com.accounting.controller;
 
-import com.accounting.model.Queue;
+import com.accounting.model.QueuePosition;
 import com.accounting.service.QueueService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,24 +17,24 @@ public class QueueController {
     private QueueService queueService;
 
     @PostMapping
-    public ResponseEntity<Queue> createQueue(@RequestParam String username) {
+    public ResponseEntity<QueuePosition> createQueue(@RequestParam String username) {
         return ResponseEntity.ok(queueService.createQueue(username));
     }
 
     @GetMapping("/user/{username}")
-    public ResponseEntity<Queue> getQueueByUsername(@PathVariable String username) {
-        Queue queue = queueService.getQueueByUsername(username);
+    public ResponseEntity<QueuePosition> getQueueByUsername(@PathVariable String username) {
+        QueuePosition queue = queueService.getQueueByUsername(username);
         return queue != null ? ResponseEntity.ok(queue) : ResponseEntity.notFound().build();
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<Queue>> getQueuesByStatus(@PathVariable String status) {
+    public ResponseEntity<List<QueuePosition>> getQueuesByStatus(@PathVariable String status) {
         return ResponseEntity.ok(queueService.getQueuesByStatus(status));
     }
 
     @PutMapping("/{queueId}/status")
-    public ResponseEntity<Queue> updateQueueStatus(@PathVariable Long queueId, @RequestParam String status) {
-        Queue queue = queueService.updateQueueStatus(queueId, status);
+    public ResponseEntity<QueuePosition> updateQueueStatus(@PathVariable Long queueId, @RequestParam String status) {
+        QueuePosition queue = queueService.updateQueueStatus(queueId, status);
         return queue != null ? ResponseEntity.ok(queue) : ResponseEntity.notFound().build();
     }
 
@@ -45,8 +45,8 @@ public class QueueController {
     }
 
     @GetMapping("/next")
-    public ResponseEntity<Queue> getNextInQueue() {
-        Queue queue = queueService.getNextInQueue();
+    public ResponseEntity<QueuePosition> getNextInQueue() {
+        QueuePosition queue = queueService.getNextInQueue();
         return queue != null ? ResponseEntity.ok(queue) : ResponseEntity.notFound().build();
     }
 

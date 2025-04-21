@@ -150,7 +150,14 @@
 <body>
     <!-- Header with Search -->
     <div class="kiosk-header">
-        <h1>School Payment Kiosk</h1>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="mb-0">School Payment Kiosk</h1>
+            <c:if test="${not empty pageContext.request.userPrincipal}">
+                <a href="${pageContext.request.contextPath}/user/dashboard" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-left me-1"></i> Return to Dashboard
+                </a>
+            </c:if>
+        </div>
         <p>Select a service to proceed</p>
         <!-- Debug info - hidden in production -->
         <div style="display: none;" id="debugInfo">

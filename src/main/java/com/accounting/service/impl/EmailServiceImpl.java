@@ -1,9 +1,13 @@
 package com.accounting.service.impl;
 
 import com.accounting.service.EmailService;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -67,5 +71,25 @@ public class EmailServiceImpl implements EmailService {
             studentName, studentId, reason
         ));
         mailSender.send(message);
+    }
+
+    @Override
+    public void sendReceipt(String emailAddress, String receiptContent) {
+        String subject = "Your Receipt";
+        sendEmail(emailAddress, subject, receiptContent);
+    }
+
+    @Override
+    public void sendEmail(String to, String subject, String content) {
+        MimeMessage message = mailSender.createMimeMessage();
+        try {
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(content, true); // true indicates HTML content
+            mailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Failed to send email", e);
+        }
     }
 } 

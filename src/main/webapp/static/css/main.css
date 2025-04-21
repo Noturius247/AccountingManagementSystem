@@ -88,6 +88,67 @@ a:hover {
     padding: 0 var(--spacing-md);
 }
 
+/* Main Content Area */
+.main-content {
+    margin-left: 250px;
+    padding: 2rem;
+    min-height: 100vh;
+    background: #f5f5f5;
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+
+/* Dashboard Specific Styles */
+.dashboard-header {
+    position: relative;
+    margin: -2rem -2rem 2rem -2rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 2;
+}
+
+.dashboard-header h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.dashboard-stats {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 0;
+        padding: 1rem;
+        padding-top: 4rem;
+    }
+
+    .dashboard-header {
+        margin: -1rem -1rem 1rem -1rem;
+        padding: 1.5rem;
+        border-radius: 0;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .dashboard-stats {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+}
+
 /* ==========================================================================
    Card Components
    ========================================================================== */
@@ -242,58 +303,6 @@ a:hover {
     .table-responsive {
         overflow-x: auto;
     }
-}
-
-/* ==========================================================================
-   Dashboard Specific Styles
-   ========================================================================== */
-.dashboard-header {
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
-    border-radius: 1rem;
-    color: white;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.dashboard-header h1 {
-    font-size: 2rem;
-    font-weight: 600;
-    margin: 0;
-}
-
-.dashboard-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.stat-card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-}
-
-.stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: var(--primary-color);
-    margin-bottom: 0.5rem;
-}
-
-.stat-label {
-    font-size: 1rem;
-    color: var(--text-light);
-    margin-bottom: 0.5rem;
 }
 
 /* ==========================================================================

@@ -1,6 +1,7 @@
 package com.accounting.controller;
 
 import com.accounting.model.User;
+import com.accounting.model.RegistrationStatus;
 import com.accounting.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -97,6 +98,9 @@ public class AuthController {
             
             // Enable the user by default
             user.setEnabled(true);
+            
+            // Set initial registration status
+            user.setRegistrationStatus(RegistrationStatus.PENDING);
             
             // Encode the password before saving
             user.setPassword(passwordEncoder.encode(user.getPassword()));

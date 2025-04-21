@@ -17,6 +17,11 @@ import java.util.Optional;
 public interface QueueRepository extends JpaRepository<Queue, Long> {
     Optional<Queue> findByQueueNumber(String queueNumber);
     
+    // Public queue methods
+    Optional<Queue> findByPublicIdentifierAndKioskSessionId(String publicIdentifier, String kioskSessionId);
+    boolean existsByPublicIdentifierAndKioskSessionId(String publicIdentifier, String kioskSessionId);
+    List<Queue> findByKioskTerminalId(String kioskTerminalId);
+    
     @Query("SELECT q FROM Queue q WHERE q.status = 'WAITING' ORDER BY q.createdAt ASC")
     List<Queue> findWaitingQueuesOrderByCreatedAtAsc();
     

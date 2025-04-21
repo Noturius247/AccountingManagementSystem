@@ -17,6 +17,9 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.security.access.AccessDeniedException;
 import com.accounting.model.Transaction;
 import com.accounting.service.TransactionService;
+import com.accounting.model.Student;
+import com.accounting.model.RegistrationStatus;
+import jakarta.servlet.http.HttpServletRequest;
 
 @Controller
 @RequestMapping("/user")
@@ -37,7 +40,7 @@ public class UserController {
 
     @GetMapping("/dashboard")
     @Transactional(readOnly = true)
-    public String dashboard(Model model, Authentication authentication) {
+    public String dashboard(Model model, Authentication authentication, HttpServletRequest request) {
         String username = authentication.getName();
         
         // Get user with initialized collections
@@ -45,13 +48,23 @@ public class UserController {
         
         // Check if user is a student
         boolean isStudent = false;
+        Student student = null;
         try {
-            isStudent = studentService.findByUsername(username) != null;
+            student = studentService.findByUsername(username);
+            isStudent = student != null;
+            if (isStudent) {
+                user.setStudent(true);
+                // Convert Student.RegistrationStatus to User.RegistrationStatus using the string value
+                RegistrationStatus status = RegistrationStatus.valueOf(student.getRegistrationStatus().toString());
+                user.setRegistrationStatus(status);
+                // Add student object to model
+                model.addAttribute("student", student);
+            }
         } catch (EntityNotFoundException e) {
             // User is not a student, which is fine
             isStudent = false;
+            user.setStudent(false);
         }
-        user.setStudent(isStudent);
         
         // Add user to model
         model.addAttribute("user", user);
@@ -85,8 +98,18 @@ public class UserController {
         
         // Add recent documents
         model.addAttribute("recentDocuments", userDashboardService.getRecentDocuments(username));
+
+        // Check if this is an AJAX request
+        String requestedWith = request.getHeader("X-Requested-With");
+        boolean isAjax = "XMLHttpRequest".equals(requestedWith);
         
-        return "user/dashboard";
+        if (isAjax) {
+            // Return only the dashboard content for AJAX requests
+            return "user/dashboard :: #dashboard-content";
+        } else {
+            // Return the full page for normal requests
+            return "user/dashboard";
+        }
     }
 
     @GetMapping("/transactions")

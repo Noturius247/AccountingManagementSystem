@@ -12,23 +12,12 @@
     <div class="queue-status-container">
         <h1>Queue Status</h1>
         <div class="status-info">
-            <h2>Your Queue Number</h2>
-            <div class="queue-number">${queueInfo.queueNumber}</div>
-            <div class="queue-details">
-                <p>Position: ${queueInfo.position}</p>
-                <p>Estimated Wait Time: ${estimatedWaitTime} minutes</p>
-                <p>Status: ${queueInfo.status}</p>
-            </div>
+            <h2>Currently Serving</h2>
+            <div class="current-number">${currentProcessingNumber}</div>
         </div>
         <div class="actions">
             <a href="${pageContext.request.contextPath}/kiosk" class="btn btn-primary">Back to Kiosk</a>
-            <button onclick="printTicket()" class="btn btn-secondary">Print Ticket</button>
         </div>
     </div>
-    <script>
-        function printTicket() {
-            window.print();
-        }
-    </script>
 </body>
 </html> 

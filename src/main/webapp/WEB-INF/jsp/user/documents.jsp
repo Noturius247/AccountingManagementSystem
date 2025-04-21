@@ -9,19 +9,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Documents</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    
-    <!-- Custom CSS -->
-    <link href="${pageContext.request.contextPath}/css/main.css" rel="stylesheet">
 </head>
 <body>
-    <%@ include file="../includes/user-header.jsp" %>
-
     <div class="container-fluid">
         <div class="row">
             <main class="col-md-12 ms-sm-auto px-md-4">
@@ -148,26 +137,10 @@
                                                 <input class="form-check-input" type="checkbox" id="selectAll">
                                             </div>
                                         </th>
-                                        <th>
-                                            <a href="#" class="text-decoration-none" data-sort="fileName">
-                                                File Name <i class="bi bi-arrow-down-up"></i>
-                                            </a>
-                                        </th>
-                                        <th>
-                                            <a href="#" class="text-decoration-none" data-sort="type">
-                                                Type <i class="bi bi-arrow-down-up"></i>
-                                            </a>
-                                        </th>
-                                        <th>
-                                            <a href="#" class="text-decoration-none" data-sort="size">
-                                                Size <i class="bi bi-arrow-down-up"></i>
-                                            </a>
-                                        </th>
-                                        <th>
-                                            <a href="#" class="text-decoration-none" data-sort="status">
-                                                Status <i class="bi bi-arrow-down-up"></i>
-                                            </a>
-                                        </th>
+                                        <th>Document</th>
+                                        <th>Type</th>
+                                        <th>Size</th>
+                                        <th>Status</th>
                                         <th>
                                             <a href="#" class="text-decoration-none" data-sort="uploadedAt">
                                                 Upload Date <i class="bi bi-arrow-down-up"></i>
@@ -201,16 +174,14 @@
                                             <td>${document.uploadedAt}</td>
                                             <td>
                                                 <div class="btn-group">
-                                                    <button type="button" class="btn btn-sm btn-outline-primary" 
-                                                            onclick="viewDocument(${document.id})">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="viewDocument('${document.id}')">
                                                         <i class="bi bi-eye"></i>
                                                     </button>
                                                     <button type="button" class="btn btn-sm btn-outline-success"
                                                             onclick="window.location.href='${pageContext.request.contextPath}/user/documents/${document.id}/download'">
                                                         <i class="bi bi-download"></i>
                                                     </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger"
-                                                            onclick="deleteDocument(${document.id})">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteDocument('${document.id}')">
                                                         <i class="bi bi-trash"></i>
                                                     </button>
                                                 </div>
@@ -234,9 +205,9 @@
                                     <li class="page-item"><a class="page-link" href="#">3</a></li>
                                     <li class="page-item">
                                         <a class="page-link" href="#">Next</a>
-                                </li>
-                            </ul>
-                        </nav>
+                                    </li>
+                                </ul>
+                            </nav>
                         </div>
                     </div>
                 </div>
@@ -249,20 +220,15 @@
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="uploadModalLabel">Upload New Document</h5>
+                    <h5 class="modal-title" id="uploadModalLabel">Upload Document</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="uploadForm" enctype="multipart/form-data">
-                        <div class="mb-3">
-                            <label for="documentFile" class="form-label">Select File</label>
-                            <input type="file" class="form-control" id="documentFile" name="file" required>
-                            <div class="form-text">Maximum file size: 10MB</div>
-                        </div>
+                    <form id="uploadForm">
                         <div class="mb-3">
                             <label for="documentType" class="form-label">Document Type</label>
                             <select class="form-select" id="documentType" name="type" required>
-                                <option value="">Select type</option>
+                                <option value="">Select Type</option>
                                 <option value="RECEIPT">Receipt</option>
                                 <option value="INVOICE">Invoice</option>
                                 <option value="CERTIFICATE">Certificate</option>
@@ -270,8 +236,12 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="documentDescription" class="form-label">Description</label>
-                            <textarea class="form-control" id="documentDescription" name="description" rows="3"></textarea>
+                            <label for="file" class="form-label">File</label>
+                            <input type="file" class="form-control" id="file" name="file" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
                         </div>
                         <div class="progress mb-3 d-none" id="uploadProgress">
                             <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
@@ -492,118 +462,17 @@
             Array.from(documentCheckboxes).forEach(checkbox => {
                 checkbox.checked = this.checked;
             });
-            updateBulkDeleteButton();
+            updateBulkButtons();
         });
 
         Array.from(documentCheckboxes).forEach(checkbox => {
-            checkbox.addEventListener('change', updateBulkDeleteButton);
+            checkbox.addEventListener('change', updateBulkButtons);
         });
 
-        function updateBulkDeleteButton() {
-            const checkedCount = Array.from(documentCheckboxes).filter(cb => cb.checked).length;
-            bulkDeleteButton.disabled = checkedCount === 0;
+        function updateBulkButtons() {
+            const hasSelected = Array.from(documentCheckboxes).some(checkbox => checkbox.checked);
+            bulkDeleteButton.disabled = !hasSelected;
         }
-
-        // Sort functionality
-        const sortLinks = document.querySelectorAll('th a[data-sort]');
-        let currentSort = { column: null, direction: 'asc' };
-
-        sortLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const column = this.dataset.sort;
-                const direction = currentSort.column === column && currentSort.direction === 'asc' ? 'desc' : 'asc';
-                
-                // Update sort indicators
-                sortLinks.forEach(l => l.querySelector('i').className = 'bi bi-arrow-down-up');
-                this.querySelector('i').className = `bi bi-arrow-${direction == 'asc' ? 'up' : 'down'}`;
-                
-                currentSort = { column, direction };
-                sortTable();
-            });
-        });
-
-        function sortTable() {
-            const rows = Array.from(documentsTableBody.getElementsByTagName('tr'));
-            const columnIndex = Array.from(document.querySelectorAll('th a[data-sort]'))
-                .findIndex(th => th.dataset.sort === currentSort.column);
-            
-            rows.sort((a, b) => {
-                const aValue = a.cells[columnIndex + 1].textContent.trim();
-                const bValue = b.cells[columnIndex + 1].textContent.trim();
-                
-                if (currentSort.column === 'size') {
-                    return currentSort.direction === 'asc' 
-                        ? parseFileSize(aValue) - parseFileSize(bValue)
-                        : parseFileSize(bValue) - parseFileSize(aValue);
-                } else if (currentSort.column === 'uploadedAt') {
-                    return currentSort.direction === 'asc'
-                        ? new Date(aValue) - new Date(bValue)
-                        : new Date(bValue) - new Date(aValue);
-                } else {
-                    return currentSort.direction === 'asc'
-                        ? aValue.localeCompare(bValue)
-                        : bValue.localeCompare(aValue);
-                }
-            });
-
-            rows.forEach(row => documentsTableBody.appendChild(row));
-        }
-
-        function parseFileSize(size) {
-            const units = { 'B': 1, 'KB': 1024, 'MB': 1024 * 1024, 'GB': 1024 * 1024 * 1024 };
-            const match = size.match(/^(\d+(?:\.\d+)?)\s*(B|KB|MB|GB)$/i);
-            return match ? parseFloat(match[1]) * units[match[2].toUpperCase()] : 0;
-        }
-
-        // Export functionality
-        document.getElementById('exportButton').addEventListener('click', function() {
-            const rows = Array.from(documentsTableBody.getElementsByTagName('tr'))
-                .filter(row => row.style.display !== 'none');
-            
-            const csv = [
-                ['File Name', 'Type', 'Size', 'Status', 'Upload Date'],
-                ...rows.map(row => [
-                    row.cells[1].textContent.trim(),
-                    row.cells[2].textContent.trim(),
-                    row.cells[3].textContent.trim(),
-                    row.cells[4].textContent.trim(),
-                    row.cells[5].textContent.trim()
-                ])
-            ].map(row => row.join(',')).join('\n');
-
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'documents.csv';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        });
-
-        // Bulk delete functionality
-        document.getElementById('bulkDeleteButton').addEventListener('click', function() {
-            const selectedIds = Array.from(documentCheckboxes)
-                .filter(cb => cb.checked)
-                .map(cb => cb.value);
-
-            if (confirm(`Are you sure you want to delete ${selectedIds.length} selected documents?`)) {
-                Promise.all(selectedIds.map(id => 
-                    fetch(`\${pageContext.request.contextPath}/user/documents/\${id}`, {
-                        method: 'DELETE'
-                    })
-                )).then(() => location.reload());
-            }
-        });
-
-        // Initialize counts
-        document.getElementById('showingCount').textContent = rows.length;
-        document.getElementById('totalCount').textContent = rows.length;
     </script>
-
-    <!-- Add Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html> 

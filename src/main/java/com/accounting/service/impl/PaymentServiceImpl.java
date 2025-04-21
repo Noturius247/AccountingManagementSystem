@@ -58,7 +58,7 @@ public class PaymentServiceImpl implements PaymentService {
     public Payment completePayment(Long paymentId) {
         Payment payment = paymentRepository.findById(paymentId)
             .orElseThrow(() -> new RuntimeException("Payment not found"));
-        payment.setPaymentStatus(PaymentStatus.PROCESSED);
+        payment.setPaymentStatus(PaymentStatus.COMPLETED);
         payment.setUpdatedAt(LocalDateTime.now());
         return paymentRepository.save(payment);
     }
@@ -129,7 +129,7 @@ public class PaymentServiceImpl implements PaymentService {
         stats.put("totalPayments", paymentRepository.count());
         stats.put("totalAmount", paymentRepository.sumAmount());
         stats.put("pendingPayments", paymentRepository.countByStatus(PaymentStatus.PENDING));
-        stats.put("processedPayments", paymentRepository.countByStatus(PaymentStatus.PROCESSED));
+        stats.put("processedPayments", paymentRepository.countByStatus(PaymentStatus.COMPLETED));
         stats.put("failedPayments", paymentRepository.countByStatus(PaymentStatus.FAILED));
         return stats;
     }
@@ -241,7 +241,7 @@ public class PaymentServiceImpl implements PaymentService {
     public Payment approvePayment(Long id) {
         Payment payment = paymentRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Payment not found"));
-        payment.setPaymentStatus(PaymentStatus.PROCESSED);
+        payment.setPaymentStatus(PaymentStatus.COMPLETED);
         payment.setUpdatedAt(LocalDateTime.now());
         return paymentRepository.save(payment);
     }

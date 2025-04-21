@@ -1,0 +1,12 @@
+CREATE TABLE managers (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    department VARCHAR(100),
+    employee_id VARCHAR(20) UNIQUE,
+    profile_image VARCHAR(255),
+    status VARCHAR(20) DEFAULT 'ACTIVE',
+    last_active_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+); 

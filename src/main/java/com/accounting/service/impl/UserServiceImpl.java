@@ -1,6 +1,7 @@
 package com.accounting.service.impl;
 
 import com.accounting.model.User;
+import com.accounting.model.RegistrationStatus;
 import com.accounting.repository.UserRepository;
 import com.accounting.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,6 +113,7 @@ public class UserServiceImpl implements UserService {
         if (userRepository.findByUsername(user.getUsername()).isPresent()) {
             throw new RuntimeException("Username already exists");
         }
+        user.setRegistrationStatus(RegistrationStatus.PENDING);
         userRepository.save(user);
     }
 

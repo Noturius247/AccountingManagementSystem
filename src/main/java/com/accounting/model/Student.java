@@ -37,6 +37,10 @@ public class Student {
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "manager_id")
+    private Manager manager;
+
     @NotBlank(message = "Program is required")
     @Column(nullable = false)
     private String program;

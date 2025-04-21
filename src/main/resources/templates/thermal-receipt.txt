@@ -1,0 +1,21 @@
+[[${companyName}]]
+[[${companyAddress}]]
+Tel: [[${companyPhone}]]
+
+------------------------
+
+Receipt #: [[${receiptNumber}]]
+Date: [[${#temporals.format(currentDateTime, 'yyyy-MM-dd HH:mm:ss')}]]
+Queue #: [[${queueNumber}]]
+Terminal: [[${terminalId}]]
+
+------------------------
+
+Service: [[${serviceName}]]
+Amount: [[${#numbers.formatDecimal(amount, 1, 'COMMA', 2, 'POINT')}]]
+Status: [[${status}]]
+
+------------------------
+
+Thank you for your business!
+[[${footerMessage}]] 

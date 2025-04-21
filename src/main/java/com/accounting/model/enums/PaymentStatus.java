@@ -2,7 +2,12 @@ package com.accounting.model.enums;
 
 public enum PaymentStatus {
     PENDING,
-    PROCESSED,
+    PROCESSING,
+    COMPLETED,
     FAILED,
-    REFUNDED
+    REFUNDED,
+    PARTIALLY_REFUNDED,
+    SCHEDULED,
+    CANCELLED,
+    DISPUTED
 } 

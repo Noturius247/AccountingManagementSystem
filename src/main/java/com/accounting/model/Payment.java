@@ -33,8 +33,55 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, precision = 19, scale = 2)
+    @Column(nullable = false)
+    private String transactionId;
+
+    @Column(nullable = false)
+    private String description;
+
+    @Column(nullable = false)
     private BigDecimal amount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentStatus paymentStatus;
+
+    @Column(nullable = false)
+    private String paymentMethod;
+
+    @Column
+    private String schedule;
+
+    @Column
+    private String scheduleId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
+    private User user;
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
+
+    @Column
+    private LocalDateTime processedAt;
+
+    @Column
+    private String errorMessage;
+
+    @Column
+    private String receiptUrl;
+
+    @Column
+    private String referenceNumber;
+
+    @Column
+    private String paymentGatewayResponse;
 
     @Column(name = "payment_number", nullable = false, unique = true)
     private String paymentNumber;
@@ -42,42 +89,18 @@ public class Payment {
     @Column(name = "transaction_reference")
     private String transactionReference;
 
-    @Column(name = "payment_method")
-    private String paymentMethod;
-
-    @Column(nullable = false)
-    private String description;
-
-    @Column(name = "tax_amount", precision = 19, scale = 2)
-    private BigDecimal taxAmount;
-
     @Column(length = 3)
     private String currency;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    @JsonIgnore
-    private User user;
 
     @Column(name = "queue_number")
     private String queueNumber;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private PaymentType type;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @Column(name = "processed_at")
-    private LocalDateTime processedAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
+    @Column(name = "tax_amount", precision = 19, scale = 2)
+    private BigDecimal taxAmount;
 
     @PrePersist
     protected void onCreate() {

@@ -93,167 +93,218 @@
     <%@ include file="../includes/user-header.jsp" %>
 
     <div class="container-fluid">
-        <div class="row">
-            <!-- Main Content -->
-            <main class="col-md-12 ms-sm-auto px-md-4">
-                <!-- Main Content Section -->
-                <div id="dashboard-content">
-                    <!-- Welcome Section -->
-                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                        <h1 class="h2">Welcome, ${user.firstName}!</h1>
-                        <div class="btn-toolbar mb-2 mb-md-0">
-                            <div class="btn-group me-2">
-                                <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary">Print</button>
+        <div id="main-content">
+            <!-- Main Content Section -->
+            <div id="dashboard-content">
+                <!-- Welcome Section -->
+                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Welcome, ${user.firstName}!</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <a href="${pageContext.request.contextPath}/kiosk" class="btn btn-primary" target="_blank">
+                                <i class="bi bi-display me-1"></i> Access Kiosk
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary">Print</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Debug Info -->
+                <div class="d-none">
+                    <p>Debug Info:</p>
+                    <p>user.student: ${user.student}</p>
+                    <p>user.registrationStatus: ${user.registrationStatus}</p>
+                    <p>user.registrationStatus type: ${user.registrationStatus.getClass().getName()}</p>
+                </div>
+
+                <!-- Student Registration Status Section -->
+                <div class="mb-4">
+                    <c:choose>
+                        <c:when test="${not user.student}">
+                            <div class="alert alert-info">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h4 class="alert-heading">Complete Your Student Registration</h4>
+                                        <p class="mb-0">To access student services and features, please complete your student registration.</p>
+                                    </div>
+                                    <a href="${pageContext.request.contextPath}/student-registration" class="btn btn-primary" data-dynamic>
+                                        <i class="bi bi-person-plus me-1"></i> Register as Student
+                                    </a>
+                                </div>
+                            </div>
+                        </c:when>
+                        <c:when test="${user.student and user.registrationStatus.name() eq 'PENDING'}">
+                            <div class="alert alert-warning alert-dismissible fade show">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h4 class="alert-heading">Registration Pending</h4>
+                                        <p class="mb-0">Your student registration is currently pending admin approval. Please wait for confirmation.</p>
+                                        <small class="text-muted">Student ID: ${student.studentId}</small>
+                                    </div>
+                                    <span class="badge bg-warning text-dark px-3 py-2">
+                                        <i class="bi bi-clock me-1"></i> Pending Approval
+                                    </span>
+                                </div>
+                            </div>
+                        </c:when>
+                        <c:when test="${user.student and user.registrationStatus.name() eq 'REJECTED'}">
+                            <div class="alert alert-danger alert-dismissible fade show">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h4 class="alert-heading">Registration Rejected</h4>
+                                        <p class="mb-0">Your student registration has been rejected. Please contact the admin for more information.</p>
+                                        <small class="text-muted">Student ID: ${student.studentId}</small>
+                                    </div>
+                                    <span class="badge bg-danger px-3 py-2">
+                                        <i class="bi bi-x-circle me-1"></i> Rejected
+                                    </span>
+                                </div>
+                            </div>
+                        </c:when>
+                    </c:choose>
+                </div>
+
+                <!-- Queue Status Section -->
+                <c:set var="showQueueStatus" value="${not empty queuePosition}" />
+                <div id="queueStatusSection" class="mb-4 ${showQueueStatus ? 'd-block' : 'd-none'}">
+                    <div class="alert alert-info">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h4 class="alert-heading">Queue Status</h4>
+                                <p class="mb-0">You are currently in queue.</p>
+                                <div class="mt-2">
+                                    <span class="badge bg-primary me-2" id="queuePosition">Position: ${showQueueStatus ? queuePosition : 0}</span>
+                                    <span class="badge bg-info" id="estimatedWaitTime">Estimated Wait: ${showQueueStatus ? estimatedWaitTime : 0} min</span>
+                                </div>
+                            </div>
+                            <a href="${pageContext.request.contextPath}/kiosk/queue/status" class="btn btn-outline-primary" target="_blank">
+                                <i class="bi bi-eye me-1"></i> View Queue Status
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="row row-cols-1 row-cols-md-4 g-4 mb-4">
+                    <div class="col">
+                        <div class="card h-100 border-primary">
+                            <div class="card-body">
+                                <h5 class="card-title text-primary">Current Balance</h5>
+                                <p class="card-text display-6">$${currentBalance}</p>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Student Registration Section -->
-                    <c:if test="${not user.student}">
-                        <div class="alert alert-info mb-4">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <h4 class="alert-heading">Complete Your Student Registration</h4>
-                                    <p class="mb-0">To access student services and features, please complete your student registration.</p>
-                                </div>
-                                <a href="${pageContext.request.contextPath}/student-registration" class="btn btn-primary" data-dynamic>
-                                    <i class="bi bi-person-plus me-1"></i> Register as Student
-                                </a>
-                            </div>
-                        </div>
-                    </c:if>
-
-                    <!-- Statistics Cards -->
-                    <div class="row row-cols-1 row-cols-md-4 g-4 mb-4">
-                        <div class="col">
-                            <div class="card h-100 border-primary">
-                                <div class="card-body">
-                                    <h5 class="card-title text-primary">Current Balance</h5>
-                                    <p class="card-text display-6">$${currentBalance}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="card h-100 border-warning">
-                                <div class="card-body">
-                                    <h5 class="card-title text-warning">Pending Payments</h5>
-                                    <p class="card-text display-6">${pendingPaymentsCount}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="card h-100 border-success">
-                                <div class="card-body">
-                                    <h5 class="card-title text-success">Documents</h5>
-                                    <p class="card-text display-6">${fn:length(documents)}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col">
-                            <div class="card h-100 border-info">
-                                <div class="card-body">
-                                    <h5 class="card-title text-info">Notifications</h5>
-                                    <p class="card-text display-6">${fn:length(notifications)}</p>
-                                </div>
+                    <div class="col">
+                        <div class="card h-100 border-warning">
+                            <div class="card-body">
+                                <h5 class="card-title text-warning">Pending Payments</h5>
+                                <p class="card-text display-6">${pendingPaymentsCount}</p>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Recent Transactions -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <i class="bi bi-clock-history me-1"></i> Recent Transactions
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Transaction ID</th>
-                                            <th>Description</th>
-                                            <th>Amount</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <c:forEach items="${recentTransactions}" var="transaction">
-                                            <tr>
-                                                <td>${fn:substring(transaction.createdAt, 0, 10)}</td>
-                                                <td>${transaction.id}</td>
-                                                <td>${transaction.notes}</td>
-                                                <td>$${transaction.amount}</td>
-                                                <td>
-                                                    <span class="badge bg-${transaction.status == 'COMPLETED' ? 'success' : 'warning'}">
-                                                        ${transaction.status}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        </c:forEach>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="text-end">
-                                <a href="${pageContext.request.contextPath}/user/transactions" class="btn btn-primary btn-sm" data-dynamic>
-                                    View All Transactions
-                                </a>
+                    <div class="col">
+                        <div class="card h-100 border-success">
+                            <div class="card-body">
+                                <h5 class="card-title text-success">Documents</h5>
+                                <p class="card-text display-6">${documents.size()}</p>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Recent Documents -->
-                    <div class="card mb-4">
-                        <div class="card-header">
-                            <i class="bi bi-file-earmark-text me-1"></i> Recent Documents
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-striped table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Document Name</th>
-                                            <th>Type</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <c:forEach items="${documents}" var="document" end="4">
-                                            <tr>
-                                                <td>${fn:substring(document.uploadDate, 0, 10)}</td>
-                                                <td>${document.name}</td>
-                                                <td>${document.type}</td>
-                                                <td>
-                                                    <span class="badge bg-${document.status == 'APPROVED' ? 'success' : 'warning'}">
-                                                        ${document.status}
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <a href="${pageContext.request.contextPath}/user/documents/${document.id}" 
-                                                       class="btn btn-primary btn-sm" data-dynamic>
-                                                        <i class="bi bi-eye"></i>
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        </c:forEach>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="text-end">
-                                <a href="${pageContext.request.contextPath}/user/documents" class="btn btn-primary btn-sm" data-dynamic>
-                                    View All Documents
-                                </a>
+                    <div class="col">
+                        <div class="card h-100 border-info">
+                            <div class="card-body">
+                                <h5 class="card-title text-info">Recent Transactions</h5>
+                                <p class="card-text display-6">${recentTransactions.size()}</p>
                             </div>
                         </div>
                     </div>
                 </div>
-            </main>
+
+                <!-- Recent Transactions Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Recent Transactions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Description</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <c:forEach items="${recentTransactions}" var="transaction">
+                                        <tr>
+                                            <td>${transaction.id}</td>
+                                            <td>${transaction.notes}</td>
+                                            <td>$${transaction.amount}</td>
+                                            <td>
+                                                <span class="badge bg-${transaction.status == 'COMPLETED' ? 'success' : 'warning'}">
+                                                    ${transaction.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    </c:forEach>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-end">
+                            <a href="${pageContext.request.contextPath}/user/transactions" class="btn btn-primary btn-sm" data-dynamic>
+                                View All Transactions
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom Dashboard JavaScript -->
+    <script src="${pageContext.request.contextPath}/static/js/dashboard.js"></script>
+
+    <script>
+        // Function to update queue status
+        function updateQueueStatus() {
+            fetch('${pageContext.request.contextPath}/kiosk/queue-status')
+                .then(response => response.json())
+                .then(data => {
+                    const queueStatusSection = document.getElementById('queueStatusSection');
+                    if (data.position > 0) {
+                        // Update queue position and estimated wait time
+                        document.getElementById('queuePosition').textContent = `Position: ${data.position}`;
+                        document.getElementById('estimatedWaitTime').textContent = `Estimated Wait: ${data.estimatedWaitTime} min`;
+                        // Show the queue status section
+                        queueStatusSection.style.display = 'block';
+                    } else {
+                        // Hide the queue status section if not in queue
+                        queueStatusSection.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating queue status:', error);
+                    // Don't hide the queue status section on error if it was initially visible
+                    if (!'${showQueueStatus}') {
+                        document.getElementById('queueStatusSection').style.display = 'none';
+                    }
+                });
+        }
+
+        // Update queue status every 30 seconds
+        setInterval(updateQueueStatus, 30000);
+
+        // Initial update
+        document.addEventListener('DOMContentLoaded', updateQueueStatus);
+
+        // Update when returning from kiosk
+        window.addEventListener('focus', updateQueueStatus);
+    </script>
 </body>
 </html> 

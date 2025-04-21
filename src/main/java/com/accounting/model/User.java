@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashMap;
+import com.accounting.model.RegistrationStatus;
 
 @Entity
 @Table(name = "users")
@@ -72,6 +73,10 @@ public class User {
 
     @Transient
     private boolean student;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "registration_status")
+    private RegistrationStatus registrationStatus = RegistrationStatus.PENDING;
 
     @PrePersist
     protected void onCreate() {
@@ -166,6 +171,10 @@ public class User {
         return student;
     }
 
+    public RegistrationStatus getRegistrationStatus() {
+        return registrationStatus;
+    }
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -232,5 +241,9 @@ public class User {
 
     public void setStudent(boolean student) {
         this.student = student;
+    }
+
+    public void setRegistrationStatus(RegistrationStatus registrationStatus) {
+        this.registrationStatus = registrationStatus;
     }
 }

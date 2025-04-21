@@ -9,26 +9,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Payments</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
-    
-    <!-- Custom CSS -->
-    <link href="${pageContext.request.contextPath}/css/main.css" rel="stylesheet">
 </head>
 <body>
-    <%@ include file="../includes/user-header.jsp" %>
-
     <div class="container-fluid">
         <div class="row">
             <main class="col-md-12 ms-sm-auto px-md-4">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">My Payments</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
-                        <a href="${pageContext.request.contextPath}/user/payments/new" class="btn btn-primary">
+                        <a href="${pageContext.request.contextPath}/kiosk" class="btn btn-primary">
                             <i class="bi bi-plus-circle"></i> New Payment
                         </a>
                     </div>
@@ -96,21 +85,8 @@
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label for="type" class="form-label">Payment Type</label>
-                                <select class="form-select" id="type" name="type">
-                                    <option value="">All</option>
-                                    <option value="TUITION">Tuition</option>
-                                    <option value="FEES">Fees</option>
-                                    <option value="OTHER">Other</option>
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-filter"></i> Apply Filters
-                                </button>
-                                <button type="reset" class="btn btn-secondary">
-                                    <i class="bi bi-x-circle"></i> Clear
-                                </button>
+                                <label class="form-label">&nbsp;</label>
+                                <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
                             </div>
                         </form>
                     </div>
@@ -141,9 +117,9 @@
                                             <td>${payment.description}</td>
                                             <td><fmt:formatNumber value="${payment.amount}" type="currency"/></td>
                                             <td>
-                                                <span class="badge bg-${payment.paymentStatus.name() == 'COMPLETED' ? 'success' : 
-                                                                        payment.paymentStatus.name() == 'PENDING' ? 'warning' : 
-                                                                        'danger'}">
+                                                <span class="badge ${payment.paymentStatus.name() == 'COMPLETED' ? 'bg-success' : 
+                                                                        payment.paymentStatus.name() == 'PENDING' ? 'bg-warning' : 
+                                                                        'bg-danger'}">
                                                     ${payment.paymentStatus}
                                                 </span>
                                             </td>
@@ -164,30 +140,10 @@
                                 </tbody>
                             </table>
                         </div>
-
-                        <!-- Pagination -->
-                        <nav aria-label="Payment pagination" class="mt-4">
-                            <ul class="pagination justify-content-center">
-                                <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
-                                    <a class="page-link" href="?page=${currentPage - 1}">Previous</a>
-                                </li>
-                                <c:forEach begin="1" end="${totalPages}" var="i">
-                                    <li class="page-item ${currentPage == i ? 'active' : ''}">
-                                        <a class="page-link" href="?page=${i}">${i}</a>
-                                    </li>
-                                </c:forEach>
-                                <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
-                                    <a class="page-link" href="?page=${currentPage + 1}">Next</a>
-                                </li>
-                            </ul>
-                        </nav>
                     </div>
                 </div>
             </main>
         </div>
     </div>
-
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html> 
