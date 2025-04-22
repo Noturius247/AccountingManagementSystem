@@ -1,6 +1,7 @@
 package com.accounting.service;
 
 import com.accounting.model.Transaction;
+import com.accounting.model.User;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -109,4 +110,14 @@ public interface TransactionService {
     List<Transaction> findAll();
     Transaction findById(Long id);
     void deleteById(Long id);
+
+    /**
+     * Get total number of transactions for a user
+     */
+    long getTotalTransactionsByUser(User user);
+
+    /**
+     * Get total number of payments for a user
+     */
+    long getTotalPaymentsByUser(User user);
 } 

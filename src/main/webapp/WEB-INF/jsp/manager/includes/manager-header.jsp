@@ -7,7 +7,7 @@
 <!-- Bootstrap Icons -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
 <!-- Custom CSS -->
-<link href="${pageContext.request.contextPath}/static/css/main.css" rel="stylesheet">
+<link href="${pageContext.request.contextPath}/css/main.css" rel="stylesheet">
 
 <header class="header">
     <!-- Top Navigation Bar -->
@@ -24,18 +24,23 @@
                 <ul class="navbar-nav me-auto">
                     <sec:authorize access="isAuthenticated()">
                         <li class="nav-item">
-                            <a class="nav-link" href="${pageContext.request.contextPath}/">
+                            <a class="nav-link" href="${pageContext.request.contextPath}/dashboard" data-dynamic>
                                 <i class="bi bi-speedometer2 me-1"></i> Dashboard
                             </a>
                         </li>
-                        <sec:authorize access="hasRole('USER')">
+                        <sec:authorize access="hasRole('MANAGER')">
                             <li class="nav-item">
-                                <a class="nav-link" href="${pageContext.request.contextPath}/user/payments" data-dynamic>
+                                <a class="nav-link" href="${pageContext.request.contextPath}/manager/transactions" data-dynamic>
+                                    <i class="bi bi-credit-card me-1"></i> Transactions
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="${pageContext.request.contextPath}/manager/payments" data-dynamic>
                                     <i class="bi bi-cash-stack me-1"></i> Payments
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="${pageContext.request.contextPath}/user/documents" data-dynamic>
+                                <a class="nav-link" href="${pageContext.request.contextPath}/manager/documents" data-dynamic>
                                     <i class="bi bi-file-earmark-text me-1"></i> Documents
                                 </a>
                             </li>
@@ -54,8 +59,8 @@
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown">
                                 <li><h6 class="dropdown-header">Notifications</h6></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" data-dynamic>Payment reminder</a></li>
-                                <li><a class="dropdown-item" href="#" data-dynamic>Document status update</a></li>
+                                <li><a class="dropdown-item" href="#" data-dynamic>New payment received</a></li>
+                                <li><a class="dropdown-item" href="#" data-dynamic>Document approved</a></li>
                                 <li><a class="dropdown-item" href="#" data-dynamic>System update</a></li>
                             </ul>
                         </li>
@@ -67,12 +72,12 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                                 <li>
-                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/user/profile" data-dynamic>
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/manager/profile" data-dynamic>
                                         <i class="bi bi-person me-2"></i>Profile
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/user/settings" data-dynamic>
+                                    <a class="dropdown-item" href="${pageContext.request.contextPath}/manager/settings" data-dynamic>
                                         <i class="bi bi-gear me-2"></i>Settings
                                     </a>
                                 </li>
@@ -102,7 +107,6 @@
 </header>
 
 <style>
-    /* Only keep essential styles that are specific to this header */
     .navbar {
         background-color: var(--primary-color);
         box-shadow: var(--shadow-sm);
@@ -127,29 +131,36 @@
         font-weight: 500;
     }
 
-    /* Loading state styles */
-    #main-content.loading {
-        opacity: 0.6;
-        pointer-events: none;
-    }
-
-    #main-content.loading::after {
-        content: '';
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 40px;
-        height: 40px;
-        border: 4px solid #f3f3f3;
-        border-top: 4px solid var(--primary-color);
+    .notification-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: var(--danger-color);
+        color: white;
         border-radius: 50%;
-        animation: spin 1s linear infinite;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
     }
 
-    @keyframes spin {
-        0% { transform: translate(-50%, -50%) rotate(0deg); }
-        100% { transform: translate(-50%, -50%) rotate(360deg); }
+    .dropdown-menu {
+        border: 1px solid var(--border-color);
+        box-shadow: var(--shadow-md);
+    }
+
+    .dropdown-item {
+        color: var(--text-color);
+        transition: all 0.2s ease;
+    }
+
+    .dropdown-item:hover {
+        background-color: var(--hover-bg);
+        color: var(--primary-color);
+    }
+
+    .dropdown-item.text-danger:hover {
+        background-color: var(--danger-color);
+        color: white;
     }
 </style>
 
@@ -163,18 +174,6 @@
 <script>
     // Simple dropdown initialization
     document.addEventListener('DOMContentLoaded', function() {
-        // Handle dashboard link specifically
-        const dashboardLink = document.getElementById('dashboardLink');
-        if (dashboardLink) {
-            dashboardLink.addEventListener('click', function(e) {
-                // If we're already on the dashboard, just prevent the default action
-                if (window.location.pathname.includes('/accounting/user/dashboard')) {
-                    e.preventDefault();
-                    return;
-                }
-            });
-        }
-
         // Initialize all dropdowns
         var dropdowns = document.querySelectorAll('.dropdown-toggle');
         dropdowns.forEach(function(dropdown) {
@@ -193,51 +192,6 @@
                     dropdown.classList.remove('show');
                 });
             }
-        });
-
-        // Handle dynamic content loading
-        document.querySelectorAll('a[data-dynamic]').forEach(link => {
-            link.addEventListener('click', function(e) {
-                const url = this.getAttribute('href');
-                
-                // If this is the dashboard link and we're already on the dashboard, do nothing
-                if (url.includes('/accounting/user/dashboard') && window.location.pathname.includes('/accounting/user/dashboard')) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return false;
-                }
-                
-                // If we're already on this page, just prevent the default action
-                if (window.location.pathname === url) {
-                    e.preventDefault();
-                    return;
-                }
-                
-                e.preventDefault();
-                
-                // Show loading state
-                const mainContent = document.querySelector('#main-content');
-                if (mainContent) {
-                    mainContent.classList.add('loading');
-                }
-
-                // Load content
-                fetch(url)
-                    .then(response => response.text())
-                    .then(html => {
-                        if (mainContent) {
-                            mainContent.innerHTML = html;
-                            mainContent.classList.remove('loading');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error loading content:', error);
-                        if (mainContent) {
-                            mainContent.innerHTML = '<div class="alert alert-danger">Failed to load content. Please try again.</div>';
-                            mainContent.classList.remove('loading');
-                        }
-                    });
-            });
         });
     });
 

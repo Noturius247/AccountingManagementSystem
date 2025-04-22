@@ -70,4 +70,14 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @Query("UPDATE User u SET u.lastActivity = CURRENT_TIMESTAMP WHERE u.username = :username")
     void updateLastActivity(@Param("username") String username);
+
+    @EntityGraph(attributePaths = {
+        "notificationSettings",
+        "documents",
+        "transactions",
+        "notifications",
+        "queues"
+    })
+    @Query("SELECT u FROM User u WHERE u.username = :username")
+    Optional<User> findByUsernameWithCollections(@Param("username") String username);
 } 

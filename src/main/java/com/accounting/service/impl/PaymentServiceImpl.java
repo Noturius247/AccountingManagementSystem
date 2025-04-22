@@ -255,4 +255,9 @@ public class PaymentServiceImpl implements PaymentService {
         payment.setUpdatedAt(LocalDateTime.now());
         return paymentRepository.save(payment);
     }
+
+    @Override
+    public long getPendingPaymentsCount() {
+        return paymentRepository.countByStatus(PaymentStatus.PENDING);
+    }
 }

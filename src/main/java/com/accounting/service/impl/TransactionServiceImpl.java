@@ -528,4 +528,16 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
         return transactionRepository.findByIdWithUser(id)
                 .orElseThrow(() -> new EntityNotFoundException("Transaction not found with id: " + id));
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getTotalTransactionsByUser(User user) {
+        return transactionRepository.countByUserUsername(user.getUsername());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getTotalPaymentsByUser(User user) {
+        return transactionRepository.countByUserUsernameAndStatus(user.getUsername(), TransactionStatus.COMPLETED);
+    }
 } 

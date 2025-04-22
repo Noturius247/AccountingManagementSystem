@@ -68,6 +68,9 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Notification> notifications = new HashSet<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Queue> queues = new HashSet<>();
+
     @Column(name = "online_status")
     private boolean onlineStatus;
 
@@ -167,6 +170,10 @@ public class User {
         return notifications;
     }
 
+    public Set<Queue> getQueues() {
+        return queues;
+    }
+
     public boolean isStudent() {
         return student;
     }
@@ -237,6 +244,10 @@ public class User {
 
     public void setNotifications(Set<Notification> notifications) {
         this.notifications = notifications;
+    }
+
+    public void setQueues(Set<Queue> queues) {
+        this.queues = queues;
     }
 
     public void setStudent(boolean student) {

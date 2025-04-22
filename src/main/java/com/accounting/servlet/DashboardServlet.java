@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -11,14 +13,21 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.web.context.support.SpringBeanAutowiringSupport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.accounting.model.Transaction;
 import com.accounting.model.Notification;
 import com.accounting.service.TransactionService;
 import com.accounting.service.NotificationService;
+import com.accounting.service.PaymentService;
+import com.accounting.service.DocumentService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-@WebServlet("/dashboard")
+@Component
+@WebServlet("/accounting/user/dashboard")
 public class DashboardServlet extends BaseServlet {
     private static final long serialVersionUID = 1L;
     
@@ -27,6 +36,14 @@ public class DashboardServlet extends BaseServlet {
     
     @Autowired
     private NotificationService notificationService;
+    
+    @Autowired
+    private PaymentService paymentService;
+    
+    @Autowired
+    private DocumentService documentService;
+    
+    private static final Logger logger = LoggerFactory.getLogger(DashboardServlet.class);
     
     @Override
     public void init() throws ServletException {
@@ -39,29 +56,36 @@ public class DashboardServlet extends BaseServlet {
             throws ServletException, IOException {
         processRequest(request, response);
         
-        // Set page title
-        request.setAttribute("pageTitle", "Dashboard");
-        
-        
-        request.setAttribute("activeQueueCount", transactionService.getActiveQueueCount());
-        request.setAttribute("lastUpdateTime", new Date());
-        request.setAttribute("todayTransactions", transactionService.getTodayTransactionCount());
-        request.setAttribute("todayTotal", transactionService.getTodayTotalAmount());
-        request.setAttribute("pendingApprovals", transactionService.getPendingApprovalCount());
-        request.setAttribute("highPriorityCount", transactionService.getHighPriorityCount());
-        request.setAttribute("activeUsers", transactionService.getActiveUserCount());
-        request.setAttribute("onlineUsers", transactionService.getOnlineUserCount());
-        
-        // Get recent transactions
-        List<Transaction> recentTransactions = transactionService.getRecentTransactions(10);
-        request.setAttribute("recentTransactions", recentTransactions);
-        
-        // Get system notifications
-        List<Notification> notifications = notificationService.getSystemNotifications();
-        request.setAttribute("notifications", notifications);
-        
-        // Forward to dashboard JSP
-        forwardToJsp(request, response, "/jsp/dashboard.jsp");
+        try {
+            // Get dashboard statistics
+            Map<String, Object> stats = new HashMap<>();
+            stats.put("totalTransactions", transactionService.getTodayTransactionCount());
+            stats.put("totalPayments", paymentService.getPendingPaymentsCount());
+            stats.put("totalDocuments", documentService.getTotalDocumentsCount());
+            stats.put("activeQueues", transactionService.getActiveQueueCount());
+            
+            // Set response type to JSON
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            
+            // Convert stats to JSON and write to response
+            ObjectMapper mapper = new ObjectMapper();
+            String json = mapper.writeValueAsString(stats);
+            
+            if (json == null || json.isEmpty()) {
+                throw new RuntimeException("Empty response generated");
+            }
+            
+            response.getWriter().write(json);
+            
+        } catch (Exception e) {
+            logger.error("Error processing dashboard request", e);
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            Map<String, String> error = new HashMap<>();
+            error.put("error", "Failed to load dashboard data");
+            error.put("errorDetails", e.getMessage());
+            new ObjectMapper().writeValue(response.getWriter(), error);
+        }
     }
     
     @Override

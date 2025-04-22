@@ -32,6 +32,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import com.accounting.model.QueuePosition;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.HttpStatus;
+import com.accounting.exception.ErrorResponse;
+import java.time.LocalDateTime;
 
 @Controller
 @RequestMapping("/kiosk")
@@ -142,13 +145,61 @@ public class KioskController {
         return "features/kiosk-payments";
     }
 
+    private static class QueueResponse {
+        private QueuePosition data;
+        private ErrorResponse error;
+
+        public QueueResponse(QueuePosition data) {
+            this.data = data;
+        }
+
+        public QueueResponse(ErrorResponse error) {
+            this.error = error;
+        }
+    }
+
     @GetMapping("/queue-status")
     @ResponseBody
-    public ResponseEntity<QueuePosition> getQueueStatus(Authentication authentication) {
-        User user = userService.findByUsername(authentication.getName())
-            .orElseThrow(() -> new RuntimeException("User not found"));
-        QueuePosition status = queueService.getQueueStatus(user);
-        return ResponseEntity.ok(status);
+    public ResponseEntity<Object> getQueueStatus(Authentication authentication) {
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return new ResponseEntity<Object>(new ErrorResponse(
+                    LocalDateTime.now(),
+                    HttpStatus.UNAUTHORIZED.value(),
+                    "Authentication required",
+                    "Please log in to check queue status",
+                    "/kiosk/queue-status"
+                ), HttpStatus.UNAUTHORIZED);
+            }
+            
+            String username = authentication.getName();
+            User user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+            QueuePosition status = queueService.getQueueStatus(user);
+            
+            Map<String, Object> response = new HashMap<>();
+            if (status != null) {
+                response.put("queueNumber", status.getQueueNumber());
+                response.put("position", status.getPosition());
+                response.put("estimatedWaitTime", status.getEstimatedWaitTime());
+                response.put("status", "ACTIVE");
+            } else {
+                response.put("queueNumber", "");
+                response.put("position", 0);
+                response.put("estimatedWaitTime", 0);
+                response.put("status", "INACTIVE");
+            }
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return new ResponseEntity<Object>(new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Internal Server Error",
+                e.getMessage(),
+                "/kiosk/queue-status"
+            ), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping("/cancel-queue")

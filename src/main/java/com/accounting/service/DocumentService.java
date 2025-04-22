@@ -61,4 +61,5 @@ public interface DocumentService {
     Document updateDocumentStatus(Long id, DocumentStatus status, String comment);
     List<Map<String, Object>> getDocumentHistory(Long id);
     void addComment(Long id, String comment);
+    long getTotalDocumentsCount();
 } 

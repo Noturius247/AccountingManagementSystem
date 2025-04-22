@@ -427,4 +427,9 @@ public class DocumentServiceImpl implements DocumentService {
             throw new IllegalArgumentException("Document size must be greater than 0");
         }
     }
+
+    @Override
+    public long getTotalDocumentsCount() {
+        return documentRepository.count();
+    }
 } 

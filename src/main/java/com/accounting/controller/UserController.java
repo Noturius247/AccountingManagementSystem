@@ -8,6 +8,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import com.accounting.service.UserDashboardService;
 import com.accounting.model.User;
 import com.accounting.service.UserService;
@@ -19,10 +20,22 @@ import com.accounting.model.Transaction;
 import com.accounting.service.TransactionService;
 import com.accounting.model.Student;
 import com.accounting.model.RegistrationStatus;
+import com.accounting.model.enums.QueueStatus;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.Map;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.security.Principal;
 
 @Controller
-@RequestMapping("/user")
+@RequestMapping("/accounting/user")
 @PreAuthorize("hasRole('USER')")
 public class UserController {
 
@@ -39,76 +52,48 @@ public class UserController {
     private TransactionService transactionService;
 
     @GetMapping("/dashboard")
-    @Transactional(readOnly = true)
-    public String dashboard(Model model, Authentication authentication, HttpServletRequest request) {
-        String username = authentication.getName();
-        
-        // Get user with initialized collections
-        User user = userService.findByUsernameWithCollections(username);
-        
-        // Check if user is a student
-        boolean isStudent = false;
-        Student student = null;
+    public String dashboard(Model model, Principal principal) {
         try {
-            student = studentService.findByUsername(username);
-            isStudent = student != null;
-            if (isStudent) {
-                user.setStudent(true);
-                // Convert Student.RegistrationStatus to User.RegistrationStatus using the string value
-                RegistrationStatus status = RegistrationStatus.valueOf(student.getRegistrationStatus().toString());
-                user.setRegistrationStatus(status);
-                // Add student object to model
-                model.addAttribute("student", student);
+            if (principal == null) {
+                return "redirect:/login";
             }
-        } catch (EntityNotFoundException e) {
-            // User is not a student, which is fine
-            isStudent = false;
-            user.setStudent(false);
-        }
-        
-        // Add user to model
-        model.addAttribute("user", user);
-        
-        // Add dashboard statistics
-        model.addAttribute("stats", userDashboardService.getDashboardStatistics());
-        
-        // Add recent transactions
-        model.addAttribute("recentTransactions", userDashboardService.getRecentTransactions());
-        
-        // Add user notifications
-        model.addAttribute("notifications", userDashboardService.getUserNotifications());
-        
-        // Add user documents
-        model.addAttribute("documents", userDashboardService.getUserDocuments());
-        
-        // Add current balance
-        model.addAttribute("currentBalance", userDashboardService.getCurrentBalance(username));
-        
-        // Add pending payments count
-        model.addAttribute("pendingPaymentsCount", userDashboardService.getPendingPaymentsCount(username));
-        
-        // Add queue position
-        model.addAttribute("queuePosition", userDashboardService.getQueuePosition(username));
-        
-        // Add estimated wait time
-        model.addAttribute("estimatedWaitTime", userDashboardService.getEstimatedWaitTime(username));
-        
-        // Add recent payments
-        model.addAttribute("recentPayments", userDashboardService.getRecentPayments(username));
-        
-        // Add recent documents
-        model.addAttribute("recentDocuments", userDashboardService.getRecentDocuments(username));
 
-        // Check if this is an AJAX request
-        String requestedWith = request.getHeader("X-Requested-With");
-        boolean isAjax = "XMLHttpRequest".equals(requestedWith);
-        
-        if (isAjax) {
-            // Return only the dashboard content for AJAX requests
-            return "user/dashboard :: #dashboard-content";
-        } else {
-            // Return the full page for normal requests
+            User user = userService.findByUsernameWithCollections(principal.getName());
+            Map<String, Object> dashboardData = new HashMap<>();
+            dashboardData.put("totalTransactions", user.getTransactions().size());
+            dashboardData.put("totalDocuments", user.getDocuments().size());
+            dashboardData.put("totalNotifications", user.getNotifications().size());
+            dashboardData.put("activeQueues", user.getQueues().size());
+
+            model.addAttribute("user", user);
+            model.addAttribute("dashboardData", dashboardData);
+            
             return "user/dashboard";
+        } catch (Exception e) {
+            model.addAttribute("error", "Error loading dashboard: " + e.getMessage());
+            return "error";
+        }
+    }
+
+    @GetMapping("/dashboard/data")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getDashboardData(Principal principal) {
+        try {
+            if (principal == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            }
+
+            User user = userService.findByUsernameWithCollections(principal.getName());
+            Map<String, Object> dashboardData = new HashMap<>();
+            dashboardData.put("totalTransactions", user.getTransactions().size());
+            dashboardData.put("totalDocuments", user.getDocuments().size());
+            dashboardData.put("totalNotifications", user.getNotifications().size());
+            dashboardData.put("activeQueues", user.getQueues().size());
+
+            return ResponseEntity.ok(dashboardData);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Collections.singletonMap("error", "Failed to load dashboard data: " + e.getMessage()));
         }
     }
 

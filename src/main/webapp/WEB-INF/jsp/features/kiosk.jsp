@@ -153,7 +153,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="mb-0">School Payment Kiosk</h1>
             <c:if test="${not empty pageContext.request.userPrincipal}">
-                <a href="${pageContext.request.contextPath}/user/dashboard" class="btn btn-outline-primary">
+                <a href="${pageContext.request.contextPath}/accounting/user/dashboard" class="btn btn-outline-primary">
                     <i class="bi bi-arrow-left me-1"></i> Return to Dashboard
                 </a>
             </c:if>

@@ -35,17 +35,37 @@ public class UserDashboardServiceImpl implements UserDashboardService {
     private NotificationRepository notificationRepository;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, timeout = 10)
     public Map<String, Object> getDashboardStatistics() {
+        logger.info("Starting dashboard statistics retrieval");
         Map<String, Object> stats = new HashMap<>();
         try {
+            long startTime = System.currentTimeMillis();
+            
+            logger.debug("Fetching total transactions count");
             stats.put("totalTransactions", transactionRepository.count());
+            
+            logger.debug("Fetching total payments count");
             stats.put("totalPayments", paymentRepository.count());
+            
+            logger.debug("Fetching total documents count");
             stats.put("totalDocuments", documentRepository.count());
+            
+            logger.debug("Fetching active queues count");
             stats.put("activeQueues", queueRepository.countByStatus(QueueStatus.WAITING));
+            
+            long endTime = System.currentTimeMillis();
+            long duration = endTime - startTime;
+            logger.info("Dashboard statistics retrieval completed in {}ms", duration);
+            
+            if (duration > 8000) {
+                logger.warn("Dashboard statistics query took longer than expected: {}ms", duration);
+            }
         } catch (Exception e) {
-            logger.error("Error fetching dashboard statistics", e);
+            logger.error("Error fetching dashboard statistics: {}", e.getMessage(), e);
             stats.put("error", "Failed to load statistics");
+            stats.put("errorDetails", e.getMessage());
+            stats.put("errorType", e.getClass().getSimpleName());
         }
         return stats;
     }

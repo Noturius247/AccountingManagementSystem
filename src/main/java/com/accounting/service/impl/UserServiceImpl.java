@@ -70,6 +70,9 @@ public class UserServiceImpl implements UserService {
             if (user.getNotifications() != null) {
                 Hibernate.initialize(user.getNotifications());
             }
+            if (user.getQueues() != null) {
+                Hibernate.initialize(user.getQueues());
+            }
             
             return user;
         } catch (Exception e) {

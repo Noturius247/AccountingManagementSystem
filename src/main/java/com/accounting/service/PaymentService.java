@@ -35,4 +35,5 @@ public interface PaymentService {
     double getPaymentAmountByType(String type);
     Payment approvePayment(Long id);
     Payment rejectPayment(Long id);
+    long getPendingPaymentsCount();
 } 

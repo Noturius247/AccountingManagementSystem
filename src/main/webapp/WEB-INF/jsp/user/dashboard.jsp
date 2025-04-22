@@ -87,6 +87,30 @@
         .table {
             --bs-table-hover-bg: var(--hover-bg);
         }
+
+        @keyframes flash {
+            0% { background-color: #0d6efd; }
+            50% { background-color: #0dcaf0; }
+            100% { background-color: #0d6efd; }
+        }
+        
+        .flashing {
+            animation: flash 1s ease-in-out;
+        }
+        
+        #queueStatusSection .alert {
+            transition: all 0.3s ease;
+        }
+        
+        #queueStatusSection.flashing .alert {
+            background-color: #0d6efd;
+            color: white;
+        }
+        
+        #queueNumber {
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
     </style>
 </head>
 <body>
@@ -166,16 +190,18 @@
                 </div>
 
                 <!-- Queue Status Section -->
-                <c:set var="showQueueStatus" value="${not empty queuePosition}" />
-                <div id="queueStatusSection" class="mb-4 ${showQueueStatus ? 'd-block' : 'd-none'}">
+                <div id="queueStatusSection" class="mb-4" style="display: none;">
                     <div class="alert alert-info">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h4 class="alert-heading">Queue Status</h4>
-                                <p class="mb-0">You are currently in queue.</p>
+                                <p class="mb-0">Your queue number is:</p>
                                 <div class="mt-2">
-                                    <span class="badge bg-primary me-2" id="queuePosition">Position: ${showQueueStatus ? queuePosition : 0}</span>
-                                    <span class="badge bg-info" id="estimatedWaitTime">Estimated Wait: ${showQueueStatus ? estimatedWaitTime : 0} min</span>
+                                    <span class="badge bg-primary me-2" id="queueNumber" style="font-size: 1.2rem; padding: 0.5rem 1rem;">Q-000</span>
+                                </div>
+                                <div class="mt-2">
+                                    <span class="badge bg-warning me-2" id="queuePosition">Position: 0</span>
+                                    <span class="badge bg-info" id="estimatedWaitTime">Estimated Wait: 0 min</span>
                                 </div>
                             </div>
                             <a href="${pageContext.request.contextPath}/kiosk/queue/status" class="btn btn-outline-primary" target="_blank">
@@ -191,31 +217,31 @@
                         <div class="card h-100 border-primary">
                             <div class="card-body">
                                 <h5 class="card-title text-primary">Current Balance</h5>
-                                <p class="card-text display-6">$${currentBalance}</p>
+                                <p class="card-text display-6" id="currentBalance">$${currentBalance}</p>
                             </div>
                         </div>
                     </div>
                     <div class="col">
                         <div class="card h-100 border-warning">
                             <div class="card-body">
-                                <h5 class="card-title text-warning">Pending Payments</h5>
-                                <p class="card-text display-6">${pendingPaymentsCount}</p>
+                                <h5 class="card-title text-warning">Active Queues</h5>
+                                <p class="card-text display-6" id="activeQueues">${dashboardData.activeQueues}</p>
                             </div>
                         </div>
                     </div>
                     <div class="col">
                         <div class="card h-100 border-success">
                             <div class="card-body">
-                                <h5 class="card-title text-success">Documents</h5>
-                                <p class="card-text display-6">${documents.size()}</p>
+                                <h5 class="card-title text-success">Total Transactions</h5>
+                                <p class="card-text display-6" id="totalTransactions">${dashboardData.totalTransactions}</p>
                             </div>
                         </div>
                     </div>
                     <div class="col">
                         <div class="card h-100 border-info">
                             <div class="card-body">
-                                <h5 class="card-title text-info">Recent Transactions</h5>
-                                <p class="card-text display-6">${recentTransactions.size()}</p>
+                                <h5 class="card-title text-info">Total Documents</h5>
+                                <p class="card-text display-6" id="totalDocuments">${dashboardData.totalDocuments}</p>
                             </div>
                         </div>
                     </div>
@@ -228,7 +254,7 @@
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table table-hover" id="transactionsTable">
                                 <thead>
                                     <tr>
                                         <th>ID</th>
@@ -264,20 +290,47 @@
         </div>
     </div>
 
+    </div>
+
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Custom Dashboard JavaScript -->
+    <!-- jQuery (required for DataTables) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- DataTables -->
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="${pageContext.request.contextPath}/static/js/main.js"></script>
     <script src="${pageContext.request.contextPath}/static/js/dashboard.js"></script>
 
     <script>
+        // Initialize DataTables
+        $(document).ready(function() {
+            $('#transactionsTable').DataTable({
+                responsive: true,
+                pageLength: 10,
+                order: [[0, 'desc']]
+            });
+        });
+
         // Function to update queue status
         function updateQueueStatus() {
             fetch('${pageContext.request.contextPath}/kiosk/queue-status')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     const queueStatusSection = document.getElementById('queueStatusSection');
-                    if (data.position > 0) {
+                    if (data.status === 'ACTIVE' && data.position > 0) {
                         // Update queue position and estimated wait time
                         document.getElementById('queuePosition').textContent = `Position: ${data.position}`;
                         document.getElementById('estimatedWaitTime').textContent = `Estimated Wait: ${data.estimatedWaitTime} min`;
