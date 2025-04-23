@@ -175,22 +175,26 @@ public class KioskController {
             String username = authentication.getName();
             User user = userService.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
-            QueuePosition status = queueService.getQueueStatus(user);
             
-            Map<String, Object> response = new HashMap<>();
-            if (status != null) {
-                response.put("queueNumber", status.getQueueNumber());
-                response.put("position", status.getPosition());
-                response.put("estimatedWaitTime", status.getEstimatedWaitTime());
+            // Check if user is in queue
+            Optional<Queue> userQueue = queueRepository.findByUserUsername(username);
+            if (userQueue.isPresent()) {
+                Queue queue = userQueue.get();
+                Map<String, Object> response = new HashMap<>();
+                response.put("queueNumber", queue.getQueueNumber());
+                response.put("position", queue.getPosition());
+                response.put("estimatedWaitTime", queue.getEstimatedWaitTime());
                 response.put("status", "ACTIVE");
+                return ResponseEntity.ok(response);
             } else {
+                // User is not in queue
+                Map<String, Object> response = new HashMap<>();
                 response.put("queueNumber", "");
                 response.put("position", 0);
                 response.put("estimatedWaitTime", 0);
                 response.put("status", "INACTIVE");
+                return ResponseEntity.ok(response);
             }
-            
-            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return new ResponseEntity<Object>(new ErrorResponse(
                 LocalDateTime.now(),

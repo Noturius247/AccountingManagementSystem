@@ -157,8 +157,6 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<!-- Custom JavaScript -->
-<script src="${pageContext.request.contextPath}/js/main.js"></script>
 
 <script>
     // Simple dropdown initialization
@@ -197,37 +195,62 @@
 
         // Handle dynamic content loading
         document.querySelectorAll('a[data-dynamic]').forEach(link => {
+            console.log('Found dynamic link:', link.href);
             link.addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log('Dynamic link clicked:', this.href);
+                
                 const url = this.getAttribute('href');
+                console.log('Loading URL:', url);
                 
                 // If this is the dashboard link and we're already on the dashboard, do nothing
                 if (url.includes('/accounting/user/dashboard') && window.location.pathname.includes('/accounting/user/dashboard')) {
-                    e.preventDefault();
                     e.stopPropagation();
                     return false;
                 }
                 
                 // If we're already on this page, just prevent the default action
                 if (window.location.pathname === url) {
-                    e.preventDefault();
                     return;
                 }
                 
-                e.preventDefault();
-                
                 // Show loading state
-                const mainContent = document.querySelector('#main-content');
+                const mainContent = document.getElementById('main-content');
                 if (mainContent) {
                     mainContent.classList.add('loading');
+                    console.log('Added loading class to main-content');
+                } else {
+                    console.warn('main-content element not found');
                 }
 
                 // Load content
                 fetch(url)
-                    .then(response => response.text())
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.text();
+                    })
                     .then(html => {
                         if (mainContent) {
-                            mainContent.innerHTML = html;
+                            console.log('Updating content');
+                            // Create a temporary container
+                            const temp = document.createElement('div');
+                            temp.innerHTML = html;
+                            
+                            // Find the main content in the response
+                            const newContent = temp.querySelector('#main-content');
+                            if (newContent) {
+                                mainContent.innerHTML = newContent.innerHTML;
+                            } else {
+                                mainContent.innerHTML = html;
+                            }
+                            
                             mainContent.classList.remove('loading');
+                            console.log('Content updated successfully');
+                        } else {
+                            console.error('main-content element not found for update');
                         }
                     })
                     .catch(error => {

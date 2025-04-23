@@ -48,9 +48,9 @@ public class SecurityConfig {
                 .requestMatchers("/login", "/register", "/forgot-password").permitAll()
                 .requestMatchers("/WEB-INF/jsp/**").permitAll()
                 .requestMatchers("/kiosk/**", "/accounting/kiosk/**").permitAll()
-                .requestMatchers("/admin/**", "/accounting/admin/**").hasRole("ADMIN")
-                .requestMatchers("/manager/**", "/accounting/manager/**").hasRole("MANAGER")
-                .requestMatchers("/user/**", "/accounting/user/**").hasRole("USER")
+                .requestMatchers("/admin/**", "/admin/**").hasRole("ADMIN")
+                .requestMatchers("/manager/**", "/manager/**").hasRole("MANAGER")
+                .requestMatchers("/user/**", "/user/**").hasRole("USER")
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form
@@ -104,14 +104,14 @@ public class SecurityConfig {
             protected String determineTargetUrl(Authentication authentication) {
                 for (GrantedAuthority authority : authentication.getAuthorities()) {
                     if (authority.getAuthority().equals("ROLE_ADMIN")) {
-                        return "/accounting/admin/dashboard";
+                        return "/admin/dashboard";
                     } else if (authority.getAuthority().equals("ROLE_MANAGER")) {
-                        return "/accounting/manager/dashboard";
+                        return "/manager/dashboard";
                     } else if (authority.getAuthority().equals("ROLE_USER")) {
-                        return "/accounting/user/dashboard";
+                        return "/user/dashboard";
                     }
                 }
-                return "/accounting/login";
+                return "/login";
             }
         };
     }

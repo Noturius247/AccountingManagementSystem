@@ -99,4 +99,32 @@ public class Student {
     public String getStudentId() {
         return studentId;
     }
+
+    public void setManager(Manager manager) {
+        this.manager = manager;
+    }
+
+    public Manager getManager() {
+        return manager;
+    }
+
+    public RegistrationStatus getRegistrationStatus() {
+        return registrationStatus;
+    }
+
+    public void setRegistrationStatus(RegistrationStatus registrationStatus) {
+        this.registrationStatus = registrationStatus;
+    }
+
+    @Override
+    public String toString() {
+        return "Student{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", studentId='" + studentId + '\'' +
+                ", program='" + program + '\'' +
+                ", yearLevel=" + yearLevel +
+                '}';
+    }
 } 

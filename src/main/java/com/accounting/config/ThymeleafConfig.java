@@ -6,6 +6,10 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.thymeleaf.templatemode.TemplateMode;
 import org.thymeleaf.templateresolver.StringTemplateResolver;
 
+/**
+ * Thymeleaf configuration ONLY for receipt template rendering.
+ * This is not used for MVC views, which use JSP exclusively.
+ */
 @Configuration
 public class ThymeleafConfig {
 

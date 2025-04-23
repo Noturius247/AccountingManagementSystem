@@ -27,12 +27,15 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final com.accounting.repository.StudentRepository studentRepository;
     private static final Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, 
+                         com.accounting.repository.StudentRepository studentRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.studentRepository = studentRepository;
     }
 
     @Override
@@ -72,6 +75,22 @@ public class UserServiceImpl implements UserService {
             }
             if (user.getQueues() != null) {
                 Hibernate.initialize(user.getQueues());
+            }
+            
+            // Check if user is a student by querying studentRepository
+            boolean isStudent = studentRepository.existsByUserId(user.getId());
+            user.setStudent(isStudent);
+            
+            // If the user is a student, also load the student registration status
+            if (isStudent) {
+                try {
+                    com.accounting.model.Student student = studentRepository.findByUserId(user.getId())
+                        .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("Student not found for user"));
+                    user.setRegistrationStatus(RegistrationStatus.valueOf(student.getRegistrationStatus().name()));
+                } catch (Exception e) {
+                    logger.warn("Failed to load student registration status: {}", e.getMessage());
+                    // Keep default registration status
+                }
             }
             
             return user;

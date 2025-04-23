@@ -40,7 +40,7 @@ public class AuthController {
         } else if (auth.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_MANAGER"))) {
             return "redirect:/manager/dashboard";
         } else if (auth.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_USER"))) {
-            return "redirect:/accounting/user/dashboard";
+            return "redirect:/user/dashboard";
         } else if (auth.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_STUDENT"))) {
             return "redirect:/student/dashboard";
         }

@@ -8,12 +8,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Payments</title>
+    <title>My Payments - Accounting Management System</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="${pageContext.request.contextPath}/static/css/main.css" rel="stylesheet">
+    
+    <style>
+        .stat-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
 </head>
 <body>
+    <!-- Include Header -->
+    <jsp:include page="../includes/user-header.jsp" />
+
     <div class="container-fluid">
         <div class="row">
-            <main class="col-md-12 ms-sm-auto px-md-4">
+            <main class="col-md-12 ms-sm-auto px-md-4" id="main-content">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">My Payments</h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
@@ -47,7 +67,7 @@
                         <div class="card stat-card">
                             <div class="card-body">
                                 <h5 class="card-title">Total Amount</h5>
-                                <h2 class="card-text"><fmt:formatNumber value="${statistics.totalAmount.orElse(0)}" type="currency"/></h2>
+                                <h2 class="card-text"><fmt:formatNumber value="${statistics.totalAmount}" type="currency"/></h2>
                                 <p class="text-muted">This month</p>
                             </div>
                         </div>
@@ -55,9 +75,9 @@
                     <div class="col-md-3">
                         <div class="card stat-card">
                             <div class="card-body">
-                                <h5 class="card-title">Average Payment</h5>
-                                <h2 class="card-text"><fmt:formatNumber value="${statistics.averageAmount}" type="currency"/></h2>
-                                <p class="text-muted">This month</p>
+                                <h5 class="card-title">Current Balance</h5>
+                                <h2 class="card-text"><fmt:formatNumber value="${statistics.currentBalance}" type="currency"/></h2>
+                                <p class="text-muted">Available</p>
                             </div>
                         </div>
                     </div>
@@ -111,16 +131,14 @@
                                 <tbody>
                                     <c:forEach items="${payments}" var="payment">
                                         <tr>
-                                            <td>${fn:substring(payment.createdAt, 0, 10)}</td>
+                                            <td><fmt:formatDate value="${payment.createdAt}" pattern="yyyy-MM-dd HH:mm" /></td>
                                             <td>${payment.id}</td>
                                             <td>${payment.type}</td>
                                             <td>${payment.description}</td>
                                             <td><fmt:formatNumber value="${payment.amount}" type="currency"/></td>
                                             <td>
-                                                <span class="badge ${payment.paymentStatus.name() == 'COMPLETED' ? 'bg-success' : 
-                                                                        payment.paymentStatus.name() == 'PENDING' ? 'bg-warning' : 
-                                                                        'bg-danger'}">
-                                                    ${payment.paymentStatus}
+                                                <span class="badge bg-${payment.status == 'COMPLETED' ? 'success' : payment.status == 'PENDING' ? 'warning' : 'danger'}">
+                                                    ${payment.status}
                                                 </span>
                                             </td>
                                             <td>
@@ -128,7 +146,7 @@
                                                    class="btn btn-sm btn-outline-primary">
                                                     <i class="bi bi-eye"></i> View
                                                 </a>
-                                                <c:if test="${payment.paymentStatus.name() == 'COMPLETED'}">
+                                                <c:if test="${payment.status == 'COMPLETED'}">
                                                     <a href="${pageContext.request.contextPath}/user/payments/${payment.id}/receipt" 
                                                        class="btn btn-sm btn-outline-secondary">
                                                         <i class="bi bi-receipt"></i> Receipt
@@ -137,6 +155,16 @@
                                             </td>
                                         </tr>
                                     </c:forEach>
+                                    <c:if test="${empty payments}">
+                                        <tr>
+                                            <td colspan="7" class="text-center py-4">
+                                                <div class="text-muted">
+                                                    <i class="bi bi-inbox fs-4 d-block mb-2"></i>
+                                                    No payments found
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </c:if>
                                 </tbody>
                             </table>
                         </div>
@@ -145,5 +173,22 @@
             </main>
         </div>
     </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterForm = document.getElementById('filterForm');
+            if (filterForm) {
+                filterForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(filterForm);
+                    const params = new URLSearchParams(formData);
+                    window.location.href = '${pageContext.request.contextPath}/user/payments?' + params.toString();
+                });
+            }
+        });
+    </script>
 </body>
 </html> 

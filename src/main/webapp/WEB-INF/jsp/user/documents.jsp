@@ -11,207 +11,203 @@
     <title>My Documents</title>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <main class="col-md-12 ms-sm-auto px-md-4">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">My Documents</h1>
-                    <div class="btn-toolbar mb-2 mb-md-0">
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                            <i class="bi bi-upload"></i> Upload Document
+    <div id="main-content">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">My Documents</h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                    <i class="bi bi-upload"></i> Upload Document
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Documents</h5>
+                        <h2 class="card-text">${statistics.totalDocuments}</h2>
+                        <p class="text-muted">All time</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Pending Review</h5>
+                        <h2 class="card-text">${statistics.pendingDocuments}</h2>
+                        <p class="text-muted">Awaiting approval</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Approved</h5>
+                        <h2 class="card-text">${statistics.approvedDocuments}</h2>
+                        <p class="text-muted">Successfully verified</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card">
+                    <div class="card-body">
+                        <h5 class="card-title">Rejected</h5>
+                        <h2 class="card-text">${statistics.rejectedDocuments}</h2>
+                        <p class="text-muted">Requires attention</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="filterForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="startDate" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="startDate" name="startDate">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="endDate" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="endDate" name="endDate">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">All</option>
+                            <option value="PENDING">Pending</option>
+                            <option value="APPROVED">Approved</option>
+                            <option value="REJECTED">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="type" class="form-label">Document Type</label>
+                        <select class="form-select" id="type" name="type">
+                            <option value="">All</option>
+                            <option value="RECEIPT">Receipt</option>
+                            <option value="INVOICE">Invoice</option>
+                            <option value="CERTIFICATE">Certificate</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-filter"></i> Apply Filters
+                        </button>
+                        <button type="reset" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Documents Table -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Documents</h5>
+                <div class="d-flex gap-2">
+                    <div class="input-group" style="width: 300px;">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search documents...">
+                        <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-primary" id="exportButton">
+                            <i class="bi bi-download"></i> Export
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" id="bulkDeleteButton" disabled>
+                            <i class="bi bi-trash"></i> Delete Selected
                         </button>
                     </div>
                 </div>
-
-                <!-- Quick Stats -->
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="card stat-card">
-                            <div class="card-body">
-                                <h5 class="card-title">Total Documents</h5>
-                                <h2 class="card-text">${statistics.totalDocuments}</h2>
-                                <p class="text-muted">All time</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card stat-card">
-                            <div class="card-body">
-                                <h5 class="card-title">Pending Review</h5>
-                                <h2 class="card-text">${statistics.pendingDocuments}</h2>
-                                <p class="text-muted">Awaiting approval</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card stat-card">
-                            <div class="card-body">
-                                <h5 class="card-title">Approved</h5>
-                                <h2 class="card-text">${statistics.approvedDocuments}</h2>
-                                <p class="text-muted">Successfully verified</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="card stat-card">
-                            <div class="card-body">
-                                <h5 class="card-title">Rejected</h5>
-                                <h2 class="card-text">${statistics.rejectedDocuments}</h2>
-                                <p class="text-muted">Requires attention</p>
-                            </div>
-                        </div>
-                    </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="selectAll">
+                                    </div>
+                                </th>
+                                <th>Document</th>
+                                <th>Type</th>
+                                <th>Size</th>
+                                <th>Status</th>
+                                <th>
+                                    <a href="#" class="text-decoration-none" data-sort="uploadedAt">
+                                        Upload Date <i class="bi bi-arrow-down-up"></i>
+                                    </a>
+                                </th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="documentsTableBody">
+                            <c:forEach items="${documents}" var="document">
+                                <tr>
+                                    <td>
+                                        <div class="form-check">
+                                            <input class="form-check-input document-checkbox" type="checkbox" 
+                                                   value="${document.id}">
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="bi bi-file-earmark-text me-2"></i>
+                                            <span>${document.fileName}</span>
+                                        </div>
+                                    </td>
+                                    <td>${document.type}</td>
+                                    <td>${document.size}</td>
+                                    <td>
+                                        <span class="badge bg-${document.status == 'ACTIVE' ? 'success' : 'warning'}">
+                                            ${document.status}
+                                        </span>
+                                    </td>
+                                    <td>${document.uploadedAt}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="viewDocument('${document.id}')">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-success"
+                                                    onclick="window.location.href='${pageContext.request.contextPath}/user/documents/${document.id}/download'">
+                                                <i class="bi bi-download"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteDocument('${document.id}')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </c:forEach>
+                        </tbody>
+                    </table>
                 </div>
-
-                <!-- Filters -->
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <form id="filterForm" class="row g-3">
-                            <div class="col-md-3">
-                                <label for="startDate" class="form-label">Start Date</label>
-                                <input type="date" class="form-control" id="startDate" name="startDate">
-                            </div>
-                            <div class="col-md-3">
-                                <label for="endDate" class="form-label">End Date</label>
-                                <input type="date" class="form-control" id="endDate" name="endDate">
-                            </div>
-                            <div class="col-md-3">
-                                <label for="status" class="form-label">Status</label>
-                                <select class="form-select" id="status" name="status">
-                                    <option value="">All</option>
-                                    <option value="PENDING">Pending</option>
-                                    <option value="APPROVED">Approved</option>
-                                    <option value="REJECTED">Rejected</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label for="type" class="form-label">Document Type</label>
-                                <select class="form-select" id="type" name="type">
-                                    <option value="">All</option>
-                                    <option value="RECEIPT">Receipt</option>
-                                    <option value="INVOICE">Invoice</option>
-                                    <option value="CERTIFICATE">Certificate</option>
-                                    <option value="OTHER">Other</option>
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-filter"></i> Apply Filters
-                                </button>
-                                <button type="reset" class="btn btn-secondary">
-                                    <i class="bi bi-x-circle"></i> Clear
-                                </button>
-                            </div>
-                        </form>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="text-muted">
+                        Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> documents
                     </div>
+                    <nav>
+                        <ul class="pagination mb-0">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1">Previous</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
-
-                <!-- Documents Table -->
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Documents</h5>
-                        <div class="d-flex gap-2">
-                            <div class="input-group" style="width: 300px;">
-                                <input type="text" class="form-control" id="searchInput" placeholder="Search documents...">
-                                <button class="btn btn-outline-secondary" type="button" id="searchButton">
-                                    <i class="bi bi-search"></i>
-                                </button>
-                            </div>
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-outline-primary" id="exportButton">
-                                    <i class="bi bi-download"></i> Export
-                                </button>
-                                <button type="button" class="btn btn-outline-danger" id="bulkDeleteButton" disabled>
-                                    <i class="bi bi-trash"></i> Delete Selected
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="selectAll">
-                                            </div>
-                                        </th>
-                                        <th>Document</th>
-                                        <th>Type</th>
-                                        <th>Size</th>
-                                        <th>Status</th>
-                                        <th>
-                                            <a href="#" class="text-decoration-none" data-sort="uploadedAt">
-                                                Upload Date <i class="bi bi-arrow-down-up"></i>
-                                            </a>
-                                        </th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="documentsTableBody">
-                                    <c:forEach items="${documents}" var="document">
-                                        <tr>
-                                            <td>
-                                                <div class="form-check">
-                                                    <input class="form-check-input document-checkbox" type="checkbox" 
-                                                           value="${document.id}">
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <i class="bi bi-file-earmark-text me-2"></i>
-                                                    <span>${document.fileName}</span>
-                                                </div>
-                                            </td>
-                                            <td>${document.type}</td>
-                                            <td>${document.size}</td>
-                                            <td>
-                                                <span class="badge bg-${document.status == 'ACTIVE' ? 'success' : 'warning'}">
-                                                    ${document.status}
-                                                </span>
-                                            </td>
-                                            <td>${document.uploadedAt}</td>
-                                            <td>
-                                                <div class="btn-group">
-                                                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="viewDocument('${document.id}')">
-                                                        <i class="bi bi-eye"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-success"
-                                                            onclick="window.location.href='${pageContext.request.contextPath}/user/documents/${document.id}/download'">
-                                                        <i class="bi bi-download"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteDocument('${document.id}')">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </c:forEach>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <div class="text-muted">
-                                Showing <span id="showingCount">0</span> of <span id="totalCount">0</span> documents
-                            </div>
-                            <nav>
-                                <ul class="pagination mb-0">
-                                    <li class="page-item disabled">
-                                        <a class="page-link" href="#" tabindex="-1">Previous</a>
-                                    </li>
-                                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                                    <li class="page-item">
-                                        <a class="page-link" href="#">Next</a>
-                                    </li>
-                                </ul>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-            </main>
+            </div>
         </div>
     </div>
 

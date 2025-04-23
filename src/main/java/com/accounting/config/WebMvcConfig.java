@@ -71,7 +71,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
         resolver.setPrefix("/WEB-INF/jsp/");
         resolver.setSuffix(".jsp");
         resolver.setViewClass(JstlView.class);
-        resolver.setOrder(2);
+        resolver.setOrder(1);
         resolver.setViewNames("*");
         return resolver;
     }

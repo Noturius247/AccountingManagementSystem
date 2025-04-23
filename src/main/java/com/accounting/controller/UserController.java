@@ -33,9 +33,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.security.Principal;
+import com.accounting.model.Queue;
 
 @Controller
-@RequestMapping("/accounting/user")
+@RequestMapping("/user")
 @PreAuthorize("hasRole('USER')")
 public class UserController {
 
@@ -58,15 +59,59 @@ public class UserController {
                 return "redirect:/login";
             }
 
+            // Get the full user with all collections loaded
             User user = userService.findByUsernameWithCollections(principal.getName());
+            model.addAttribute("user", user);
+            
+            // Dashboard statistics
             Map<String, Object> dashboardData = new HashMap<>();
             dashboardData.put("totalTransactions", user.getTransactions().size());
             dashboardData.put("totalDocuments", user.getDocuments().size());
             dashboardData.put("totalNotifications", user.getNotifications().size());
             dashboardData.put("activeQueues", user.getQueues().size());
+            dashboardData.put("totalPayments", transactionService.getTotalPaymentsByUser(user));
+            dashboardData.put("currentBalance", transactionService.getCurrentBalance(user.getId()));
+            model.addAttribute("userStats", dashboardData);
 
-            model.addAttribute("user", user);
-            model.addAttribute("dashboardData", dashboardData);
+            // Student information if available
+            if (user.isStudent()) {
+                try {
+                    Student student = studentService.getStudentByUser(user);
+                    model.addAttribute("student", student);
+                    model.addAttribute("studentRegistered", true);
+                    
+                    // Explicitly check registration status
+                    String status = student.getRegistrationStatus().name();
+                    model.addAttribute("registrationPending", "PENDING".equals(status));
+                    model.addAttribute("registrationRejected", "REJECTED".equals(status));
+                    model.addAttribute("registrationApproved", "APPROVED".equals(status));
+                    
+                } catch (Exception e) {
+                    model.addAttribute("studentRegistered", false);
+                    model.addAttribute("registrationError", e.getMessage());
+                }
+            } else {
+                model.addAttribute("studentRegistered", false);
+            }
+
+            // Check if user has an active queue
+            Optional<Queue> activeQueue = user.getQueues().stream()
+                .filter(q -> q.getStatus() == QueueStatus.WAITING || q.getStatus() == QueueStatus.PROCESSING)
+                .findFirst();
+
+            // Set queue information
+            if (activeQueue.isPresent()) {
+                Queue queue = activeQueue.get();
+                model.addAttribute("showQueueStatus", true);
+                model.addAttribute("activeQueue", queue);
+            } else {
+                model.addAttribute("showQueueStatus", false);
+                model.addAttribute("activeQueue", null);
+            }
+
+            // Add recent transactions
+            model.addAttribute("recentTransactions", 
+                transactionService.getRecentTransactions(user.getId(), 5));
             
             return "user/dashboard";
         } catch (Exception e) {
@@ -85,10 +130,45 @@ public class UserController {
 
             User user = userService.findByUsernameWithCollections(principal.getName());
             Map<String, Object> dashboardData = new HashMap<>();
+            
+            // Add registration status if user is a student
+            if (user.isStudent()) {
+                try {
+                    Student student = studentService.getStudentByUser(user);
+                    String status = student.getRegistrationStatus().name();
+                    dashboardData.put("registrationStatus", status);
+                    dashboardData.put("registrationPending", "PENDING".equals(status));
+                    dashboardData.put("registrationRejected", "REJECTED".equals(status));
+                    dashboardData.put("registrationApproved", "APPROVED".equals(status));
+                } catch (Exception e) {
+                    dashboardData.put("studentRegistered", false);
+                }
+            }
+            
+            // Add other dashboard data
             dashboardData.put("totalTransactions", user.getTransactions().size());
             dashboardData.put("totalDocuments", user.getDocuments().size());
             dashboardData.put("totalNotifications", user.getNotifications().size());
             dashboardData.put("activeQueues", user.getQueues().size());
+            dashboardData.put("currentBalance", transactionService.getCurrentBalance(user.getId()));
+            
+            // Check if user has an active queue
+            Optional<Queue> userQueue = user.getQueues().stream()
+                .filter(q -> q.getStatus() == QueueStatus.WAITING || q.getStatus() == QueueStatus.PROCESSING)
+                .findFirst();
+                
+            if (userQueue.isPresent()) {
+                Queue queue = userQueue.get();
+                dashboardData.put("queueNumber", queue.getQueueNumber());
+                dashboardData.put("position", queue.getPosition());
+                dashboardData.put("estimatedWaitTime", queue.getEstimatedWaitTime());
+                dashboardData.put("queueStatus", "ACTIVE");
+            } else {
+                dashboardData.put("queueNumber", "");
+                dashboardData.put("position", 0);
+                dashboardData.put("estimatedWaitTime", 0);
+                dashboardData.put("queueStatus", "INACTIVE");
+            }
 
             return ResponseEntity.ok(dashboardData);
         } catch (Exception e) {
@@ -117,5 +197,38 @@ public class UserController {
         
         model.addAttribute("transaction", transaction);
         return "user/transaction-details";
+    }
+
+    @GetMapping("/queue/status")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getQueueStatus(Principal principal) {
+        try {
+            Optional<User> userOpt = userService.findByUsername(principal.getName());
+            if (!userOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("error", "User not found"));
+            }
+            
+            User user = userOpt.get();
+            Optional<Queue> activeQueue = user.getQueues().stream()
+                .filter(q -> q.getStatus() == QueueStatus.WAITING || q.getStatus() == QueueStatus.PROCESSING)
+                .findFirst();
+
+            Map<String, Object> response = new HashMap<>();
+            if (activeQueue.isPresent()) {
+                Queue queue = activeQueue.get();
+                response.put("active", true);
+                response.put("queueNumber", queue.getQueueNumber());
+                response.put("position", queue.getPosition());
+                response.put("waitTime", queue.getEstimatedWaitTime());
+            } else {
+                response.put("active", false);
+            }
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Collections.singletonMap("error", e.getMessage()));
+        }
     }
 } 
