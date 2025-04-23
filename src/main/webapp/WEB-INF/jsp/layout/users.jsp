@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="../../css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="${pageContext.request.contextPath}/js/main.js"></script>
     <style>
         .user-management {
             padding: 20px;
@@ -74,148 +75,6 @@
             gap: 10px;
         }
     </style>
-
-    <script>
-        // Utility Functions
-        const utils = {
-            showLoading() {
-                document.getElementById('loadingOverlay').style.display = 'flex';
-            },
-            
-            hideLoading() {
-                document.getElementById('loadingOverlay').style.display = 'none';
-            },
-            
-            showSuccess(message) {
-                const successDiv = document.getElementById('successMessage');
-                successDiv.textContent = message;
-                successDiv.style.display = 'block';
-                setTimeout(() => successDiv.style.display = 'none', 3000);
-            },
-            
-            showError(message) {
-                const errorDiv = document.getElementById('errorMessage');
-                errorDiv.textContent = message;
-                errorDiv.style.display = 'block';
-                setTimeout(() => errorDiv.style.display = 'none', 3000);
-            }
-        };
-
-        // User Management Functions
-        function addUser() {
-            // Open add user modal
-            // Implementation needed
-        }
-
-        function editUser(userId) {
-            // Open edit user modal
-            // Implementation needed
-        }
-
-        function deleteUser(userId) {
-            if (confirm('Are you sure you want to delete this user?')) {
-                utils.showLoading();
-                fetch(`${pageContext.request.contextPath}/manager/users/${userId}/delete`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        '${_csrf.headerName}': '${_csrf.token}'
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        utils.showSuccess('User deleted successfully');
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        throw new Error('Failed to delete user');
-                    }
-                })
-                .catch(error => {
-                    utils.showError('Error: ' + error.message);
-                })
-                .finally(() => utils.hideLoading());
-            }
-        }
-
-        function viewUser(userId) {
-            window.location.href = `${pageContext.request.contextPath}/manager/users/${userId}`;
-        }
-
-        function applyFilters() {
-            const search = document.getElementById('searchUser').value;
-            const role = document.getElementById('roleFilter').value;
-            const status = document.getElementById('statusFilter').value;
-            
-            const rows = document.querySelectorAll('.user-table tbody tr');
-            rows.forEach(row => {
-                const text = row.textContent.toLowerCase();
-                const roleCell = row.querySelector('.role-badge').textContent;
-                const statusCell = row.querySelector('.status-badge').textContent;
-                
-                const matchesSearch = text.includes(search.toLowerCase());
-                const matchesRole = !role || roleCell === role;
-                const matchesStatus = !status || statusCell === status;
-                
-                row.style.display = matchesSearch && matchesRole && matchesStatus ? '' : 'none';
-            });
-        }
-
-        function applyBulkAction() {
-            const action = document.getElementById('bulkAction').value;
-            const selectedUsers = Array.from(document.querySelectorAll('.user-checkbox:checked'))
-                .map(checkbox => checkbox.value);
-            
-            if (selectedUsers.length === 0) {
-                utils.showError('Please select at least one user');
-                return;
-            }
-
-            utils.showLoading();
-            fetch(`${pageContext.request.contextPath}/manager/users/bulk-action`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    '${_csrf.headerName}': '${_csrf.token}'
-                },
-                body: JSON.stringify({
-                    action: action,
-                    userIds: selectedUsers
-                })
-            })
-            .then(response => {
-                if (response.ok) {
-                    utils.showSuccess('Bulk action completed successfully');
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    throw new Error('Failed to perform bulk action');
-                }
-            })
-            .catch(error => {
-                utils.showError('Error: ' + error.message);
-            })
-            .finally(() => utils.hideLoading());
-        }
-
-        function changePage(page) {
-            window.location.href = `${pageContext.request.contextPath}/manager/users?page=${page}`;
-        }
-
-        // Initialize everything when the DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            // Select all checkbox functionality
-            document.getElementById('selectAll').addEventListener('change', function() {
-                const checkboxes = document.querySelectorAll('.user-checkbox');
-                checkboxes.forEach(checkbox => checkbox.checked = this.checked);
-            });
-
-            // Add search input listener
-            document.getElementById('searchUser').addEventListener('input', applyFilters);
-            
-            // Add filter change listeners
-            document.getElementById('roleFilter').addEventListener('change', applyFilters);
-            document.getElementById('statusFilter').addEventListener('change', applyFilters);
-        });
-    </script>
 </head>
 <body>
     <%@ include file="../includes/manager-header.jsp" %>
@@ -320,7 +179,58 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="${pageContext.request.contextPath}/static/js/manager_dashboard.js"></script>
+    <script>
+        function addUser() {
+            // Open add user modal
+            // Implementation needed
+        }
+
+        function editUser(userId) {
+            // Open edit user modal
+            // Implementation needed
+        }
+
+        function deleteUser(userId) {
+            if (confirm('Are you sure you want to delete this user?')) {
+                // Delete user implementation
+            }
+        }
+
+        function viewUser(userId) {
+            // Open user details modal
+            // Implementation needed
+        }
+
+        function applyFilters() {
+            const search = document.getElementById('searchUser').value;
+            const role = document.getElementById('roleFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            
+            // Apply filters implementation
+        }
+
+        function applyBulkAction() {
+            const action = document.getElementById('bulkAction').value;
+            const selectedUsers = Array.from(document.querySelectorAll('.user-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+            
+            if (selectedUsers.length === 0) {
+                alert('Please select at least one user');
+                return;
+            }
+            
+            // Apply bulk action implementation
+        }
+
+        function changePage(page) {
+            // Change page implementation
+        }
+
+        // Select all checkbox functionality
+        document.getElementById('selectAll').addEventListener('change', function() {
+            const checkboxes = document.querySelectorAll('.user-checkbox');
+            checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+        });
+    </script>
 </body>
 </html> 

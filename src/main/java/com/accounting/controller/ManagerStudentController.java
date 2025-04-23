@@ -17,16 +17,16 @@ import java.util.List;
 import jakarta.persistence.EntityNotFoundException;
 
 @Controller
-@RequestMapping("/admin/students")
-@PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-public class AdminStudentController {
+@RequestMapping("/manager/students")
+@PreAuthorize("hasRole('MANAGER')")
+public class ManagerStudentController {
 
-    private static final Logger logger = LoggerFactory.getLogger(AdminStudentController.class);
+    private static final Logger logger = LoggerFactory.getLogger(ManagerStudentController.class);
     private final StudentService studentService;
     private final EmailService emailService;
 
     @Autowired
-    public AdminStudentController(StudentService studentService, EmailService emailService) {
+    public ManagerStudentController(StudentService studentService, EmailService emailService) {
         this.studentService = studentService;
         this.emailService = emailService;
     }
@@ -36,11 +36,11 @@ public class AdminStudentController {
         try {
             List<Student> pendingStudents = studentService.findByRegistrationStatus(Student.RegistrationStatus.PENDING);
             model.addAttribute("pendingStudents", pendingStudents);
-            return "admin/pending-registrations";
+            return "manager/pending-registrations";
         } catch (Exception e) {
             logger.error("Error loading pending registrations: {}", e.getMessage(), e);
             model.addAttribute("error", "Failed to load pending registrations");
-            return "admin/pending-registrations";
+            return "manager/pending-registrations";
         }
     }
 
@@ -65,7 +65,7 @@ public class AdminStudentController {
             logger.error("Error approving registration: {}", e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", "Failed to approve registration");
         }
-        return "redirect:/admin/students/pending";
+        return "redirect:/manager/students/pending";
     }
 
     @PostMapping("/reject/{id}")
@@ -90,6 +90,6 @@ public class AdminStudentController {
             logger.error("Error rejecting registration: {}", e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", "Failed to reject registration");
         }
-        return "redirect:/admin/students/pending";
+        return "redirect:/manager/students/pending";
     }
 } 

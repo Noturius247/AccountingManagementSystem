@@ -221,4 +221,27 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     @Query("SELECT t FROM Transaction t LEFT JOIN FETCH t.user WHERE t.id = :id")
     Optional<Transaction> findByIdWithUser(@Param("id") Long id);
+
+    List<Transaction> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.status = :status AND t.createdAt >= :startDate")
+    double sumAmountByStatusAndCreatedAtAfter(
+        @Param("status") TransactionStatus status,
+        @Param("startDate") LocalDateTime startDate
+    );
+    
+    @Query("SELECT COALESCE(SUM(t.amount), 0) FROM Transaction t WHERE t.status = :status AND t.createdAt BETWEEN :startDate AND :endDate")
+    double sumAmountByStatusAndCreatedAtBetween(
+        @Param("status") TransactionStatus status,
+        @Param("startDate") LocalDateTime startDate,
+        @Param("endDate") LocalDateTime endDate
+    );
+    
+    Page<Transaction> findByStatus(TransactionStatus status, Pageable pageable);
+    
+    List<Transaction> findByStatusAndCreatedAtBetween(
+        TransactionStatus status,
+        LocalDateTime startDate,
+        LocalDateTime endDate
+    );
 } 

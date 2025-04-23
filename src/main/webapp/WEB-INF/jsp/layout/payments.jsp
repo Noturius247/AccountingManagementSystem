@@ -17,6 +17,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="${pageContext.request.contextPath}/js/main.js"></script>
     <style>
         :root {
             --primary-color: #3498db;
@@ -288,31 +290,6 @@
     </div>
 
     <script>
-        // Utility Functions
-        const utils = {
-            showLoading() {
-                document.getElementById('loadingOverlay').style.display = 'flex';
-            },
-            
-            hideLoading() {
-                document.getElementById('loadingOverlay').style.display = 'none';
-            },
-            
-            showSuccess(message) {
-                const successDiv = document.getElementById('successMessage');
-                successDiv.textContent = message;
-                successDiv.style.display = 'block';
-                setTimeout(() => successDiv.style.display = 'none', 3000);
-            },
-            
-            showError(message) {
-                const errorDiv = document.getElementById('errorMessage');
-                errorDiv.textContent = message;
-                errorDiv.style.display = 'block';
-                setTimeout(() => errorDiv.style.display = 'none', 3000);
-            }
-        };
-
         function searchPayments() {
             const searchText = document.getElementById('paymentSearch').value.toLowerCase();
             const typeFilter = document.getElementById('paymentTypeFilter').value;
@@ -337,7 +314,6 @@
         }
 
         function refreshPayments() {
-            utils.showLoading();
             fetch(`${pageContext.request.contextPath}/manager/payments`, {
                 method: 'GET',
                 headers: {
@@ -357,84 +333,64 @@
                 if (newTableBody) {
                     document.querySelector('#paymentTableBody').innerHTML = newTableBody.innerHTML;
                 }
-                utils.showSuccess('Payments refreshed successfully');
             })
             .catch(error => {
-                utils.showError('Error refreshing payments: ' + error.message);
-            })
-            .finally(() => utils.hideLoading());
+                console.error('Error refreshing payments:', error);
+                alert('Error refreshing payments. Please try again.');
+            });
         }
 
         function approvePayment(paymentId) {
             if (confirm('Are you sure you want to approve this payment?')) {
-                utils.showLoading();
                 fetch(`${pageContext.request.contextPath}/manager/payments/${paymentId}/approve`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        '${_csrf.headerName}': '${_csrf.token}'
+                        'Accept': 'application/json'
                     }
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        utils.showSuccess('Payment approved successfully');
                         refreshPayments();
                     } else {
-                        throw new Error(data.message || 'Failed to approve payment');
+                        alert(data.message || 'Failed to approve payment');
                     }
                 })
                 .catch(error => {
-                    utils.showError('Error: ' + error.message);
-                })
-                .finally(() => utils.hideLoading());
+                    console.error('Error approving payment:', error);
+                    alert('Error approving payment. Please try again.');
+                });
             }
         }
 
         function rejectPayment(paymentId) {
             if (confirm('Are you sure you want to reject this payment?')) {
-                utils.showLoading();
                 fetch(`${pageContext.request.contextPath}/manager/payments/${paymentId}/reject`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        '${_csrf.headerName}': '${_csrf.token}'
+                        'Accept': 'application/json'
                     }
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        utils.showSuccess('Payment rejected successfully');
                         refreshPayments();
                     } else {
-                        throw new Error(data.message || 'Failed to reject payment');
+                        alert(data.message || 'Failed to reject payment');
                     }
                 })
                 .catch(error => {
-                    utils.showError('Error: ' + error.message);
-                })
-                .finally(() => utils.hideLoading());
+                    console.error('Error rejecting payment:', error);
+                    alert('Error rejecting payment. Please try again.');
+                });
             }
         }
 
         function exportPayments() {
-            utils.showLoading();
             window.location.href = `${pageContext.request.contextPath}/manager/payments/export`;
-            setTimeout(() => utils.hideLoading(), 1000);
         }
-
-        // Initialize everything when the DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            // Add search input listener
-            document.getElementById('paymentSearch').addEventListener('input', searchPayments);
-            
-            // Add filter change listeners
-            document.getElementById('paymentTypeFilter').addEventListener('change', filterPayments);
-            document.getElementById('paymentStatusFilter').addEventListener('change', filterPayments);
-        });
     </script>
-    <script src="${pageContext.request.contextPath}/static/js/manager_dashboard.js"></script>
 </body>
 </html> 

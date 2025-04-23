@@ -26,6 +26,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="${pageContext.request.contextPath}/js/main.js"></script>
     <style>
         :root {
             --primary-color: #3498db;
@@ -158,7 +160,7 @@
     </style>
 </head>
 <body>
-    <%@ include file="../includes/manager-header.jsp" %>
+    <%@ include file="../includes/header.jsp" %>
     
     <div class="payment-details">
         <div class="payment-header">
@@ -220,115 +222,41 @@
     </div>
 
     <script>
-        // Utility functions
-        const utils = {
-            showLoading: function() {
-                const overlay = document.createElement('div');
-                overlay.id = 'loadingOverlay';
-                overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: flex; justify-content: center; align-items: center; z-index: 9999;';
-                overlay.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>';
-                document.body.appendChild(overlay);
-            },
-            
-            hideLoading: function() {
-                const overlay = document.getElementById('loadingOverlay');
-                if (overlay) {
-                    overlay.remove();
-                }
-            },
-            
-            showSuccess: function(message) {
-                const toast = document.createElement('div');
-                toast.className = 'alert alert-success alert-dismissible fade show position-fixed';
-                toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
-                toast.innerHTML = `
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                `;
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 3000);
-            },
-            
-            showError: function(message) {
-                const toast = document.createElement('div');
-                toast.className = 'alert alert-danger alert-dismissible fade show position-fixed';
-                toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999;';
-                toast.innerHTML = `
-                    ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                `;
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 5000);
-            }
-        };
-
-        // Payment management functions
-        async function approvePayment(paymentId) {
-            if (!confirm('Are you sure you want to approve this payment?')) {
-                return;
-            }
-
-            try {
-                utils.showLoading();
-                const response = await fetch(`${pageContext.request.contextPath}/manager/payments/${paymentId}/approve`, {
+        function approvePayment(paymentId) {
+            if (confirm('Are you sure you want to approve this payment?')) {
+                fetch(`${pageContext.request.contextPath}/manager/payments/${paymentId}/approve`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.content
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        alert('Failed to approve payment');
                     }
                 });
-
-                if (!response.ok) {
-                    throw new Error('Failed to approve payment');
-                }
-
-                utils.showSuccess('Payment approved successfully');
-                setTimeout(() => window.location.reload(), 1000);
-            } catch (error) {
-                utils.showError(error.message || 'Failed to approve payment');
-            } finally {
-                utils.hideLoading();
             }
         }
 
-        async function rejectPayment(paymentId) {
-            if (!confirm('Are you sure you want to reject this payment?')) {
-                return;
-            }
-
-            try {
-                utils.showLoading();
-                const response = await fetch(`${pageContext.request.contextPath}/manager/payments/${paymentId}/reject`, {
+        function rejectPayment(paymentId) {
+            if (confirm('Are you sure you want to reject this payment?')) {
+                fetch(`${pageContext.request.contextPath}/manager/payments/${paymentId}/reject`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]')?.content
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        alert('Failed to reject payment');
                     }
                 });
-
-                if (!response.ok) {
-                    throw new Error('Failed to reject payment');
-                }
-
-                utils.showSuccess('Payment rejected successfully');
-                setTimeout(() => window.location.reload(), 1000);
-            } catch (error) {
-                utils.showError(error.message || 'Failed to reject payment');
-            } finally {
-                utils.hideLoading();
             }
         }
-
-        // Initialize tooltips and popovers if using Bootstrap
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof bootstrap !== 'undefined') {
-                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                tooltipTriggerList.map(function (tooltipTriggerEl) {
-                    return new bootstrap.Tooltip(tooltipTriggerEl);
-                });
-            }
-        });
     </script>
-    <script src="${pageContext.request.contextPath}/static/js/manager_dashboard.js"></script>
 </body>
 </html> 

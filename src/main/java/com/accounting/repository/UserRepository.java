@@ -80,4 +80,12 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     })
     @Query("SELECT u FROM User u WHERE u.username = :username")
     Optional<User> findByUsernameWithCollections(@Param("username") String username);
+
+    long countByLastActivityBetween(LocalDateTime start, LocalDateTime end);
+    
+    @Query("SELECT u FROM User u WHERE u.username = :username")
+    Optional<User> findByUsernameWithNotificationSettings(@Param("username") String username);
+    
+    @Query("SELECT u FROM User u WHERE u.username = :username")
+    Optional<User> findByUsernameWithRoles(@Param("username") String username);
 } 

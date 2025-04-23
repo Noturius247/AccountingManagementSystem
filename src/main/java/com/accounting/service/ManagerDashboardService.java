@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.List;
 import com.accounting.model.Transaction;
 import com.accounting.model.Kiosk;
+import com.accounting.model.Student;
 
 public interface ManagerDashboardService {
     
@@ -28,6 +29,41 @@ public interface ManagerDashboardService {
     int getActiveUsersCount();
     
     /**
+     * Get total revenue
+     */
+    double getTotalRevenue();
+    
+    /**
+     * Get last month's revenue
+     */
+    double getLastMonthRevenue();
+    
+    /**
+     * Get last hour's user count
+     */
+    int getLastHourUsersCount();
+    
+    /**
+     * Get system health percentage
+     */
+    int getSystemHealth();
+    
+    /**
+     * Get recent tasks
+     */
+    List<Map<String, Object>> getRecentTasks();
+    
+    /**
+     * Get team members
+     */
+    List<Map<String, Object>> getTeamMembers();
+    
+    /**
+     * Get system alerts
+     */
+    List<Map<String, Object>> getSystemAlerts();
+    
+    /**
      * Get active kiosks count
      */
     int getActiveKiosksCount();
@@ -41,4 +77,9 @@ public interface ManagerDashboardService {
      * Get current queue count
      */
     int getCurrentQueueCount();
+    
+    /**
+     * Get pending student registrations
+     */
+    List<Student> getPendingStudentRegistrations();
 } 

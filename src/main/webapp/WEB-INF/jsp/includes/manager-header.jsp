@@ -23,8 +23,9 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-light" href="<c:url value='/manager/queue' />">
-                        <i class="bi bi-list me-1"></i> Queue
+                    <a class="nav-link ${pageContext.request.servletPath == '/manager/queue' ? 'active' : ''}" 
+                       href="${pageContext.request.contextPath}/manager/queue">
+                        <i class="bi bi-people"></i> Queue Management
                     </a>
                 </li>
                 <li class="nav-item">
@@ -40,6 +41,15 @@
                 <li class="nav-item">
                     <a class="nav-link text-light" href="<c:url value='/manager/settings' />">
                         <i class="bi bi-gear me-1"></i> Settings
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link ${pageContext.request.servletPath == '/manager/student-approvals' ? 'active' : ''}" 
+                       href="${pageContext.request.contextPath}/manager/student-approvals">
+                        <i class="bi bi-person-check"></i> Student Approvals
+                        <c:if test="${pendingStudentCount > 0}">
+                            <span class="badge bg-danger">${pendingStudentCount}</span>
+                        </c:if>
                     </a>
                 </li>
             </ul>

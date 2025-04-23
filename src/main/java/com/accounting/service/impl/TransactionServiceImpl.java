@@ -479,7 +479,7 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
 
     @Override
     public List<Transaction> getRecentTransactions(Long userId, int limit) {
-        return transactionRepository.findByUserUsernameOrderByCreatedAtDesc(userId.toString())
+        return transactionRepository.findByUserIdOrderByCreatedAtDesc(userId)
             .stream()
             .limit(limit)
             .collect(Collectors.toList());

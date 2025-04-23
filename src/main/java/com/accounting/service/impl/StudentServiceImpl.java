@@ -149,8 +149,8 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public List<Student> findByRegistrationStatus(String status) {
-        return studentRepository.findByRegistrationStatus(Student.RegistrationStatus.valueOf(status));
+    public List<Student> findByRegistrationStatus(Student.RegistrationStatus status) {
+        return studentRepository.findByRegistrationStatus(status);
     }
 
     @Override
@@ -205,7 +205,7 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public long countByRegistrationStatus(String status) {
-        return studentRepository.countByRegistrationStatus(Student.RegistrationStatus.valueOf(status));
+    public long countByRegistrationStatus(Student.RegistrationStatus status) {
+        return studentRepository.countByRegistrationStatus(status);
     }
 } 

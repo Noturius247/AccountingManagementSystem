@@ -17,8 +17,8 @@ public interface StudentService {
     List<Student> findAll();
     Student findById(Long id);
     void deleteById(Long id);
-    List<Student> findByRegistrationStatus(String status);
-    long countByRegistrationStatus(String status);
+    List<Student> findByRegistrationStatus(Student.RegistrationStatus status);
+    long countByRegistrationStatus(Student.RegistrationStatus status);
     Page<Student> searchStudents(String search, String status, String program, Pageable pageable);
     Page<Student> getStudentsByStatusAndProgram(String status, String program, Pageable pageable);
     Student getStudentById(Long id);

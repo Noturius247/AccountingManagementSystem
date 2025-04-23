@@ -197,9 +197,6 @@
 
     <jsp:include page="/WEB-INF/jsp/includes/footer.jsp" />
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="${pageContext.request.contextPath}/static/js/manager_dashboard.js"></script>
-
     <script>
         function updateStatistics() {
             const rows = document.querySelectorAll('#transactionsTable tbody tr');

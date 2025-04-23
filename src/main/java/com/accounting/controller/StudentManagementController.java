@@ -65,9 +65,9 @@ public class StudentManagementController {
         model.addAttribute("program", program);
         model.addAttribute("search", search);
         model.addAttribute("totalStudents", studentService.countByRegistrationStatus(null));
-        model.addAttribute("pendingCount", studentService.countByRegistrationStatus("PENDING"));
-        model.addAttribute("approvedCount", studentService.countByRegistrationStatus("APPROVED"));
-        model.addAttribute("rejectedCount", studentService.countByRegistrationStatus("REJECTED"));
+        model.addAttribute("pendingCount", studentService.countByRegistrationStatus(Student.RegistrationStatus.PENDING));
+        model.addAttribute("approvedCount", studentService.countByRegistrationStatus(Student.RegistrationStatus.APPROVED));
+        model.addAttribute("rejectedCount", studentService.countByRegistrationStatus(Student.RegistrationStatus.REJECTED));
         
         return "admin/students";
     }
@@ -95,7 +95,7 @@ public class StudentManagementController {
         model.addAttribute("totalPages", studentsPage.getTotalPages());
         model.addAttribute("totalItems", studentsPage.getTotalElements());
         model.addAttribute("status", "PENDING");
-        model.addAttribute("pendingCount", studentService.countByRegistrationStatus("PENDING"));
+        model.addAttribute("pendingCount", studentService.countByRegistrationStatus(Student.RegistrationStatus.PENDING));
         
         return "admin/students";
     }
@@ -123,7 +123,7 @@ public class StudentManagementController {
         model.addAttribute("totalPages", studentsPage.getTotalPages());
         model.addAttribute("totalItems", studentsPage.getTotalElements());
         model.addAttribute("status", "APPROVED");
-        model.addAttribute("pendingCount", studentService.countByRegistrationStatus("PENDING"));
+        model.addAttribute("pendingCount", studentService.countByRegistrationStatus(Student.RegistrationStatus.PENDING));
         
         return "admin/students";
     }

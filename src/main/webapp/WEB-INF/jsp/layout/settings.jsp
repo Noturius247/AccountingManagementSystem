@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="../../css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="${pageContext.request.contextPath}/js/main.js"></script>
     <style>
         .settings-management {
             padding: 20px;
@@ -333,33 +334,7 @@
     </div>
 
     <script>
-        // Utility Functions
-        const utils = {
-            showLoading() {
-                document.getElementById('loadingOverlay').style.display = 'flex';
-            },
-            
-            hideLoading() {
-                document.getElementById('loadingOverlay').style.display = 'none';
-            },
-            
-            showSuccess(message) {
-                const successDiv = document.getElementById('successMessage');
-                successDiv.textContent = message;
-                successDiv.style.display = 'block';
-                setTimeout(() => successDiv.style.display = 'none', 3000);
-            },
-            
-            showError(message) {
-                const errorDiv = document.getElementById('errorMessage');
-                errorDiv.textContent = message;
-                errorDiv.style.display = 'block';
-                setTimeout(() => errorDiv.style.display = 'none', 3000);
-            }
-        };
-
         function saveSettings() {
-            utils.showLoading();
             const settings = {
                 systemConfig: {
                     systemName: document.getElementById('systemName').value,
@@ -399,64 +374,22 @@
                 }
             };
 
-            fetch('${pageContext.request.contextPath}/manager/settings/save', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    '${_csrf.headerName}': '${_csrf.token}'
-                },
-                body: JSON.stringify(settings)
-            })
-            .then(response => {
-                if (response.ok) {
-                    utils.showSuccess('Settings saved successfully');
-                } else {
-                    throw new Error('Failed to save settings');
-                }
-            })
-            .catch(error => {
-                utils.showError('Error: ' + error.message);
-            })
-            .finally(() => utils.hideLoading());
+            // Save settings implementation
+            // This would typically involve an AJAX call to your backend
+            console.log('Saving settings:', settings);
         }
 
         function resetSettings() {
             if (confirm('Are you sure you want to reset all settings to their default values?')) {
-                utils.showLoading();
-                fetch('${pageContext.request.contextPath}/manager/settings/reset', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        '${_csrf.headerName}': '${_csrf.token}'
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        utils.showSuccess('Settings reset successfully');
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        throw new Error('Failed to reset settings');
-                    }
-                })
-                .catch(error => {
-                    utils.showError('Error: ' + error.message);
-                })
-                .finally(() => utils.hideLoading());
+                // Reset settings implementation
+                location.reload();
             }
         }
 
-        // Initialize everything when the DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            // Password expiry toggle
-            document.getElementById('passwordExpiry').addEventListener('change', function() {
-                document.getElementById('passwordExpiryDays').disabled = !this.checked;
-            });
-
-            // Initialize password expiry days state
-            document.getElementById('passwordExpiryDays').disabled = 
-                !document.getElementById('passwordExpiry').checked;
+        // Password expiry toggle
+        document.getElementById('passwordExpiry').addEventListener('change', function() {
+            document.getElementById('passwordExpiryDays').disabled = !this.checked;
         });
     </script>
-    <script src="${pageContext.request.contextPath}/static/js/manager_dashboard.js"></script>
 </body>
 </html> 

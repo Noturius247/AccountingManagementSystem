@@ -109,4 +109,121 @@ function initializeManagerTables() {
             });
         }
     });
-} 
+}
+
+// Notification handling
+function toggleNotifications() {
+    const panel = document.getElementById('notificationPanel');
+    panel.classList.toggle('active');
+}
+
+function markAsRead(notificationId) {
+    fetch(`${contextPath}/api/notifications/${notificationId}/read`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            [window.dashboardData.csrfHeader]: window.dashboardData.csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const notification = document.querySelector(`[data-notification-id="${notificationId}"]`);
+            if (notification) {
+                notification.classList.remove('unread');
+                updateUnreadCount();
+            }
+        }
+    })
+    .catch(error => console.error('Error marking notification as read:', error));
+}
+
+function markAllAsRead() {
+    fetch(`${contextPath}/api/notifications/mark-all-read`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            [window.dashboardData.csrfHeader]: window.dashboardData.csrfToken
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelectorAll('.notification-item.unread').forEach(item => {
+                item.classList.remove('unread');
+            });
+            updateUnreadCount();
+        }
+    })
+    .catch(error => console.error('Error marking all notifications as read:', error));
+}
+
+function updateUnreadCount() {
+    const unreadCount = document.querySelectorAll('.notification-item.unread').length;
+    const countElement = document.getElementById('notificationCount');
+    if (countElement) {
+        countElement.textContent = unreadCount;
+        countElement.style.display = unreadCount > 0 ? 'block' : 'none';
+    }
+}
+
+// Initialize charts when the document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Revenue Chart
+    const revenueCtx = document.getElementById('revenueChart')?.getContext('2d');
+    if (revenueCtx) {
+        new Chart(revenueCtx, {
+            type: 'line',
+            data: {
+                labels: window.dashboardData.revenueLabels || [],
+                datasets: [{
+                    label: 'Revenue',
+                    data: window.dashboardData.revenueData || [],
+                    borderColor: '#3498db',
+                    tension: 0.4,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Activity Chart
+    const activityCtx = document.getElementById('activityChart')?.getContext('2d');
+    if (activityCtx) {
+        new Chart(activityCtx, {
+            type: 'bar',
+            data: {
+                labels: window.dashboardData.departmentLabels || [],
+                datasets: [{
+                    label: 'Activity Score',
+                    data: window.dashboardData.departmentData || [],
+                    backgroundColor: '#2ecc71'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    }
+}); 
