@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -154,9 +155,64 @@
             margin: 0.5rem 0 0;
             color: var(--secondary-color);
         }
+
+        .student-header {
+            background: white;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .student-header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .student-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+
+        .student-header .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .student-header .btn-logout {
+            padding: 0.5rem 1rem;
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .student-header .btn-logout:hover {
+            background: var(--danger-color);
+            color: white;
+        }
     </style>
 </head>
 <body>
+    <!-- Student Header with Logout -->
+    <div class="student-header">
+        <div class="container">
+            <h1>Student Portal</h1>
+            <div class="user-actions">
+                <span>Welcome, ${studentName}</span>
+                <form action="${pageContext.request.contextPath}/logout" method="post" style="display: inline;">
+                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                    <button type="submit" class="btn-logout">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="dashboard-container">
         <div class="welcome-section">
             <div class="welcome-header">
@@ -166,9 +222,9 @@
                 </div>
             </div>
             
-            <div class="registration-status ${registrationStatus == 'COMPLETED' ? 'completed' : registrationStatus == 'PENDING' ? 'pending' : 'rejected'}">
+            <div class="registration-status ${registrationStatus == 'APPROVED' ? 'completed' : registrationStatus == 'PENDING' ? 'pending' : 'rejected'}">
                 <h4>Registration Status: ${registrationStatus}</h4>
-                <c:if test="${registrationStatus == 'COMPLETED'}">
+                <c:if test="${registrationStatus == 'APPROVED'}">
                     <p>Your registration is complete. You can now access all student services.</p>
                 </c:if>
                 <c:if test="${registrationStatus == 'PENDING'}">
@@ -177,7 +233,7 @@
                 <c:if test="${registrationStatus == 'REJECTED'}">
                     <p>Your registration has been rejected. Please contact the administration for more information.</p>
                 </c:if>
-                <c:if test="${registrationStatus != 'COMPLETED' && registrationStatus != 'PENDING'}">
+                <c:if test="${registrationStatus != 'APPROVED' && registrationStatus != 'PENDING'}">
                     <div class="action-buttons">
                         <a href="${pageContext.request.contextPath}/student-registration" class="btn btn-primary">
                             <i class="bi bi-pencil-square"></i> Complete Registration

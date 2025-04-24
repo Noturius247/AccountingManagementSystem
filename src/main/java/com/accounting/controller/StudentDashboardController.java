@@ -47,7 +47,7 @@ public class StudentDashboardController {
         // Get student information
         Student student = studentService.findByUsername(username);
         if (student == null || student.getRegistrationStatus() == null || 
-            !student.getRegistrationStatus().equals("COMPLETED")) {
+            student.getRegistrationStatus() != Student.RegistrationStatus.APPROVED) {
             return "redirect:/student-registration";
         }
 
