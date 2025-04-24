@@ -18,25 +18,29 @@ import com.accounting.model.RegistrationStatus;
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(columnDefinition = "bigint(20)")
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, length = 255)
     private String username;
 
-    @Column(nullable = false)
-    private String email;
-
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String password;
 
-    @Column(name = "first_name")
+    @Column(nullable = false, length = 255)
+    private String email;
+
+    @Column(name = "first_name", length = 255)
     private String firstName;
 
-    @Column(name = "last_name")
+    @Column(name = "last_name", length = 255)
     private String lastName;
 
-    @Column(nullable = false)
-    private BigDecimal balance = BigDecimal.ZERO;
+    @Column(name = "phone_number", length = 20)
+    private String phoneNumber;
+
+    @Column(columnDefinition = "TEXT")
+    private String address;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -44,13 +48,31 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "tinyint(1) default 1")
     private boolean enabled = true;
+
+    @Column(name = "account_non_expired", columnDefinition = "tinyint(1) default 1")
+    private boolean accountNonExpired = true;
+
+    @Column(name = "account_non_locked", columnDefinition = "tinyint(1) default 1")
+    private boolean accountNonLocked = true;
+
+    @Column(name = "credentials_non_expired", columnDefinition = "tinyint(1) default 1")
+    private boolean credentialsNonExpired = true;
+
+    @Column(name = "last_login", columnDefinition = "timestamp")
+    private LocalDateTime lastLogin;
+
+    @Column(name = "online_status", columnDefinition = "tinyint(1) default 0")
+    private boolean onlineStatus = false;
+
+    @Column(precision = 38, scale = 2)
+    private BigDecimal balance = BigDecimal.ZERO;
 
     @Column(name = "last_activity")
     private LocalDateTime lastActivity;
 
-    @Column(nullable = false)
+    @Column(length = 255)
     private String role;
 
     @ElementCollection
@@ -71,14 +93,11 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Queue> queues = new HashSet<>();
 
-    @Column(name = "online_status")
-    private boolean onlineStatus;
-
     @Transient
     private boolean student;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "registration_status")
+    @Column(name = "registration_status", columnDefinition = "ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING'")
     private RegistrationStatus registrationStatus = RegistrationStatus.PENDING;
 
     @PrePersist

@@ -13,8 +13,8 @@
             <p>Please keep this ID safe as you will need it for all student-related transactions.</p>
             
             <div class="actions">
-                <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
-                <a href="/kiosk" class="btn btn-secondary">Go to Kiosk</a>
+                <a href="${pageContext.request.contextPath}/user/dashboard" class="btn btn-primary">Go to Dashboard</a>
+                <a href="${pageContext.request.contextPath}/kiosk" class="btn btn-secondary">Go to Kiosk</a>
             </div>
         </div>
     </div>

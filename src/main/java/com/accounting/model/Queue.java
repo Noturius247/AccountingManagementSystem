@@ -79,7 +79,7 @@ public class Queue {
     private Long serviceId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     private User user;
 
     @Enumerated(EnumType.STRING)
@@ -138,69 +138,165 @@ public class Queue {
         this.processedAt = LocalDateTime.now();
     }
 
-    public LocalDateTime getProcessedAt() {
-        return processedAt;
+    // Getters and Setters
+    public Long getId() {
+        return id;
     }
 
-    public void setProcessedAt(LocalDateTime processedAt) {
-        this.processedAt = processedAt != null ? processedAt : null;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public String getFormattedCreatedAt() {
-        return createdAt != null ? createdAt.format(DATE_FORMATTER) : "";
+    public String getQueueNumber() {
+        return queueNumber;
     }
 
-    public String getFormattedUpdatedAt() {
-        return updatedAt != null ? updatedAt.format(DATE_FORMATTER) : "";
+    public void setQueueNumber(String queueNumber) {
+        this.queueNumber = queueNumber;
     }
 
-    public String getFormattedProcessedAt() {
-        return processedAt != null ? processedAt.format(DATE_FORMATTER) : "";
+    public String getUserUsername() {
+        return userUsername;
     }
 
-    public String getFormattedEstimatedWaitTime() {
-        if (estimatedWaitTime == null) return null;
-        Duration duration = Duration.ofMinutes(estimatedWaitTime);
-        long hours = duration.toHours();
-        long minutes = duration.toMinutesPart();
-        return String.format("%02d:%02d", hours, minutes);
+    public void setUserUsername(String userUsername) {
+        this.userUsername = userUsername;
     }
 
-    public void setEstimatedWaitTime(String time) {
-        if (time != null) {
-            try {
-                this.estimatedWaitTime = Integer.parseInt(time.replaceAll("[^0-9]", ""));
-            } catch (NumberFormatException e) {
-                this.estimatedWaitTime = 0;
-            }
-        }
+    public String getKioskSessionId() {
+        return kioskSessionId;
     }
 
-    public String getFormattedWaitTime() {
-        if (estimatedWaitTime < 60) {
-            return estimatedWaitTime + " minutes";
-        } else {
-            int hours = estimatedWaitTime / 60;
-            int minutes = estimatedWaitTime % 60;
-            return hours + " hour" + (hours > 1 ? "s" : "") + 
-                   (minutes > 0 ? " " + minutes + " minute" + (minutes > 1 ? "s" : "") : "");
-        }
+    public void setKioskSessionId(String kioskSessionId) {
+        this.kioskSessionId = kioskSessionId;
     }
 
-    public String getPriorityLevel() {
-        return priority != null ? priority.toString().toLowerCase() : "medium";
+    public String getPublicIdentifier() {
+        return publicIdentifier;
     }
 
-    public String getStatusColor() {
-        return status != null ? status.toString().toLowerCase() : "waiting";
+    public void setPublicIdentifier(String publicIdentifier) {
+        this.publicIdentifier = publicIdentifier;
+    }
+
+    public String getKioskTerminalId() {
+        return kioskTerminalId;
+    }
+
+    public void setKioskTerminalId(String kioskTerminalId) {
+        this.kioskTerminalId = kioskTerminalId;
+    }
+
+    public QueueStatus getStatus() {
+        return status;
     }
 
     public void setStatus(QueueStatus status) {
         this.status = status;
     }
 
-    public QueueStatus getStatus() {
-        return status;
+    public QueueType getType() {
+        return type;
+    }
+
+    public void setType(QueueType type) {
+        this.type = type;
+    }
+
+    public Priority getPriority() {
+        return priority;
+    }
+
+    public void setPriority(Priority priority) {
+        this.priority = priority;
+    }
+
+    public Integer getPosition() {
+        return position;
+    }
+
+    public void setPosition(Integer position) {
+        this.position = position;
+    }
+
+    public Integer getEstimatedWaitTime() {
+        return estimatedWaitTime;
+    }
+
+    public void setEstimatedWaitTime(Integer estimatedWaitTime) {
+        this.estimatedWaitTime = estimatedWaitTime;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public LocalDateTime getProcessedAt() {
+        return processedAt;
+    }
+
+    public void setProcessedAt(LocalDateTime processedAt) {
+        this.processedAt = processedAt;
+    }
+
+    public Long getServiceId() {
+        return serviceId;
+    }
+
+    public void setServiceId(Long serviceId) {
+        this.serviceId = serviceId;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public ReceiptPreference getReceiptPreference() {
+        return receiptPreference;
+    }
+
+    public void setReceiptPreference(ReceiptPreference receiptPreference) {
+        this.receiptPreference = receiptPreference;
+    }
+
+    public String getEmailAddress() {
+        return emailAddress;
+    }
+
+    public void setEmailAddress(String emailAddress) {
+        this.emailAddress = emailAddress;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public Date getCreatedAtAsDate() {
@@ -213,13 +309,5 @@ public class Queue {
 
     public long getProcessedAtTimestamp() {
         return processedAt != null ? processedAt.toInstant(ZoneOffset.UTC).toEpochMilli() : 0;
-    }
-
-    public User getUser() {
-        return this.user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
     }
 } 

@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page Not Found - Accounting Management System</title>
+    <title>Access Denied - Accounting Management System</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -21,13 +21,13 @@
             <div class="col-md-8">
                 <div class="card shadow-sm">
                     <div class="card-body text-center py-5">
-                        <i class="bi bi-question-circle text-warning" style="font-size: 4rem;"></i>
-                        <h2 class="mt-4">Page Not Found</h2>
+                        <i class="bi bi-shield-exclamation text-danger" style="font-size: 4rem;"></i>
+                        <h2 class="mt-4">Access Denied</h2>
                         <p class="text-muted mb-4">
-                            The page you're looking for doesn't exist or has been moved.
+                            You don't have permission to access this page.
                         </p>
                         <c:if test="${not empty errorMessage}">
-                            <div class="alert alert-warning mb-4">
+                            <div class="alert alert-danger mb-4">
                                 ${errorMessage}
                             </div>
                         </c:if>

@@ -2,12 +2,19 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ page import="java.time.format.DateTimeFormatter" %>
+<%@ page import="java.time.LocalDateTime" %>
+<%!
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm");
+%>
 
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
     <title>Student Approvals - Manager Dashboard</title>
     
     <!-- Bootstrap CSS -->
@@ -26,6 +33,16 @@
             <main class="col-md-12 ms-sm-auto px-md-4">
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">Student Registration Approvals</h1>
+                    <div class="btn-toolbar mb-2 mb-md-0">
+                        <div class="btn-group me-2">
+                            <select class="form-select" id="statusFilter" onchange="filterByStatus(this.value)">
+                                <option value="PENDING" ${param.status == 'PENDING' || empty param.status ? 'selected' : ''}>Pending</option>
+                                <option value="APPROVED" ${param.status == 'APPROVED' ? 'selected' : ''}>Approved</option>
+                                <option value="REJECTED" ${param.status == 'REJECTED' ? 'selected' : ''}>Rejected</option>
+                                <option value="ALL" ${param.status == 'ALL' ? 'selected' : ''}>All</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Success Message -->
@@ -58,11 +75,12 @@
                                         <th>Academic Year</th>
                                         <th>Semester</th>
                                         <th>Registration Date</th>
+                                        <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <c:forEach items="${pendingStudents}" var="student">
+                                    <c:forEach items="${students}" var="student">
                                         <tr>
                                             <td>${student.studentId}</td>
                                             <td>${student.fullName}</td>
@@ -70,23 +88,49 @@
                                             <td>${student.yearLevel}</td>
                                             <td>${student.academicYear}</td>
                                             <td>${student.semester}</td>
-                                            <td><fmt:formatDate value="${student.createdAt}" pattern="MMM dd, yyyy HH:mm" /></td>
                                             <td>
-                                                <button class="btn btn-sm btn-success" onclick="approveStudent(${student.id})">
-                                                    <i class="bi bi-check-circle"></i> Approve
-                                                </button>
-                                                <button class="btn btn-sm btn-danger" onclick="showRejectModal(${student.id})">
-                                                    <i class="bi bi-x-circle"></i> Reject
-                                                </button>
+                                                <c:if test="${not empty student.createdAt}">
+                                                    <fmt:parseDate value="${student.createdAt}" pattern="yyyy-MM-dd'T'HH:mm" var="parsedDate" type="both"/>
+                                                    <fmt:formatDate value="${parsedDate}" pattern="MMM dd, yyyy HH:mm"/>
+                                                </c:if>
+                                            </td>
+                                            <td>
+                                                <span class="badge ${student.registrationStatus == 'APPROVED' ? 'bg-success' : 
+                                                                  student.registrationStatus == 'PENDING' ? 'bg-warning' : 'bg-danger'}">
+                                                    ${student.registrationStatus}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <c:choose>
+                                                    <c:when test="${student.registrationStatus == 'PENDING'}">
+                                                        <a href="${pageContext.request.contextPath}/manager/student-approvals/${student.id}" class="btn btn-sm btn-info me-1">
+                                                            <i class="bi bi-eye"></i> View
+                                                        </a>
+                                                        <button class="btn btn-sm btn-success" onclick='approveStudent("${student.id}")'>
+                                                            <i class="bi bi-check-circle"></i> Approve
+                                                        </button>
+                                                        <button class="btn btn-sm btn-danger" onclick='showRejectModal("${student.id}")'>
+                                                            <i class="bi bi-x-circle"></i> Reject
+                                                        </button>
+                                                    </c:when>
+                                                    <c:when test="${student.registrationStatus == 'APPROVED'}">
+                                                        <a href="${pageContext.request.contextPath}/manager/student-approvals/${student.id}" class="btn btn-sm btn-info me-1">
+                                                            <i class="bi bi-eye"></i> View
+                                                        </a>
+                                                        <button class="btn btn-sm btn-warning" onclick="revokeApproval('${student.id}')">
+                                                            <i class="bi bi-arrow-counterclockwise"></i> Revoke
+                                                        </button>
+                                                    </c:when>
+                                                </c:choose>
                                             </td>
                                         </tr>
                                     </c:forEach>
-                                    <c:if test="${empty pendingStudents}">
+                                    <c:if test="${empty students}">
                                         <tr>
-                                            <td colspan="8" class="text-center py-4">
+                                            <td colspan="9" class="text-center py-4">
                                                 <div class="text-muted">
                                                     <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                                    No pending student registrations
+                                                    No students found
                                                 </div>
                                             </td>
                                         </tr>
@@ -131,22 +175,70 @@
         let selectedStudentId = null;
         const rejectModal = new bootstrap.Modal(document.getElementById('rejectModal'));
 
-        function approveStudent(studentId) {
-            if (confirm('Are you sure you want to approve this student registration?')) {
-                fetch(`${pageContext.request.contextPath}/manager/student-approvals/${studentId}/approve`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        '${_csrf.headerName}': '${_csrf.token}'
-                    }
-                }).then(response => {
-                    if (response.ok) {
-                        window.location.reload();
-                    } else {
-                        alert('Failed to approve student registration');
-                    }
-                });
+        function buildUrl(studentId, action) {
+            if (!studentId || !action) {
+                console.error('Both studentId and action are required for buildUrl');
+                return null;
             }
+            
+            // Get the context path and ensure it starts with a slash
+            const contextPath = '${pageContext.request.contextPath}'.replace(/^\/+|\/+$/g, '');
+            
+            // Clean up the studentId by removing any potential slashes
+            studentId = studentId.toString().replace(/[^\d]/g, '');
+            
+            // Construct the URL parts, ensuring each part is clean of leading/trailing slashes
+            const parts = [
+                contextPath,
+                'manager',
+                'student-approvals',
+                studentId,
+                action
+            ].filter(Boolean).map(part => part.toString().replace(/^\/+|\/+$/g, ''));
+            
+            // Join all parts with a single slash
+            return '/' + parts.join('/');
+        }
+
+        function approveStudent(studentId) {
+            if (!studentId || !confirm('Are you sure you want to approve this student registration?')) {
+                return;
+            }
+
+            const url = buildUrl(studentId, 'approve');
+            if (!url) {
+                alert('Invalid URL construction');
+                return;
+            }
+
+            console.log('Sending approval request to:', url); // Debug log
+
+            const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
+            const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        try {
+                            const error = JSON.parse(text);
+                            throw new Error(error.message || 'Failed to approve student registration');
+                        } catch (e) {
+                            throw new Error('Failed to approve student registration');
+                        }
+                    });
+                }
+                window.location.href = '${pageContext.request.contextPath}/manager/student-approvals';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message || 'Failed to approve student registration. Please try again.');
+            });
         }
 
         function showRejectModal(studentId) {
@@ -161,22 +253,85 @@
                 return;
             }
 
+            const url = buildUrl(selectedStudentId, 'reject');
+            if (!url) {
+                alert('Invalid URL construction');
+                return;
+            }
+
+            const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
+            const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
             const formData = new FormData();
             formData.append('reason', reason);
 
-            fetch(`${pageContext.request.contextPath}/manager/student-approvals/${selectedStudentId}/reject`, {
+            fetch(url, {
                 method: 'POST',
                 body: formData,
                 headers: {
-                    '${_csrf.headerName}': '${_csrf.token}'
+                    [csrfHeader]: csrfToken
                 }
-            }).then(response => {
-                if (response.ok) {
-                    window.location.reload();
-                } else {
-                    alert('Failed to reject student registration');
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        try {
+                            const error = JSON.parse(text);
+                            throw new Error(error.message || 'Failed to reject student registration');
+                        } catch (e) {
+                            throw new Error('Failed to reject student registration');
+                        }
+                    });
                 }
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message || 'Failed to reject student registration. Please try again.');
             });
+        }
+
+        function revokeApproval(studentId) {
+            if (!studentId || !confirm('Are you sure you want to revoke this student\'s approval?')) {
+                return;
+            }
+
+            const url = buildUrl(studentId, 'revoke');
+            if (!url) {
+                alert('Invalid URL construction');
+                return;
+            }
+
+            const csrfToken = document.querySelector("meta[name='_csrf']").getAttribute("content");
+            const csrfHeader = document.querySelector("meta[name='_csrf_header']").getAttribute("content");
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    [csrfHeader]: csrfToken
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        try {
+                            const error = JSON.parse(text);
+                            throw new Error(error.message || 'Failed to revoke approval');
+                        } catch (e) {
+                            throw new Error('Failed to revoke approval');
+                        }
+                    });
+                }
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message || 'Failed to revoke approval. Please try again.');
+            });
+        }
+
+        function filterByStatus(status) {
+            window.location.href = '${pageContext.request.contextPath}/manager/student-approvals?status=' + status;
         }
     </script>
 </body>

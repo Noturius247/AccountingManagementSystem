@@ -100,7 +100,7 @@ public class Notification {
             status = NotificationStatus.UNREAD;
         }
         if (priority == null) {
-            priority = Priority.MEDIUM;
+            priority = Priority.NORMAL;
         }
     }
 

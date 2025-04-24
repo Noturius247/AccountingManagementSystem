@@ -13,6 +13,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Controller
 public class AuthController {
@@ -91,19 +93,33 @@ public class AuthController {
         try {
             logger.debug("Attempting to register new user: {}", user.getUsername());
             
-            // Set default role to USER if not specified
-            if (user.getRole() == null) {
-                user.setRole("ROLE_USER");
-            }
-            
-            // Enable the user by default
+            // Set default values for required fields
+            user.setRole(user.getRole() == null ? "ROLE_USER" : user.getRole());
             user.setEnabled(true);
-            
-            // Set initial registration status
+            user.setAccountNonExpired(true);
+            user.setAccountNonLocked(true);
+            user.setCredentialsNonExpired(true);
+            user.setOnlineStatus(false);
+            user.setBalance(BigDecimal.ZERO);
             user.setRegistrationStatus(RegistrationStatus.PENDING);
+            
+            // Set timestamps
+            LocalDateTime now = LocalDateTime.now();
+            user.setCreatedAt(now);
+            user.setUpdatedAt(now);
+            user.setLastActivity(now);
             
             // Encode the password before saving
             user.setPassword(passwordEncoder.encode(user.getPassword()));
+            
+            // Validate required fields
+            if (user.getUsername() == null || user.getUsername().trim().isEmpty() ||
+                user.getEmail() == null || user.getEmail().trim().isEmpty() ||
+                user.getPassword() == null || user.getPassword().trim().isEmpty()) {
+                throw new IllegalArgumentException("Username, email and password are required");
+            }
+            
+            // Save the user
             userService.registerUser(user);
             
             logger.info("Successfully registered new user: {}", user.getUsername());

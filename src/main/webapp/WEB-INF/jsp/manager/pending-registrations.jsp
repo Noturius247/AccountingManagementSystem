@@ -79,7 +79,7 @@
                 </div>
 
                 <div class="action-buttons">
-                    <form action="${pageContext.request.contextPath}/manager/students/approve/${student.id}" method="post" style="display: inline;">
+                    <form action="${pageContext.request.contextPath}/manager/student-approvals/${student.id}/approve" method="post" style="display: inline;">
                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
                         <button type="submit" class="btn btn-success">
                             <i class="bi bi-check-circle"></i> Approve
@@ -91,7 +91,7 @@
                 </div>
 
                 <div id="rejectForm${student.id}" class="reject-form">
-                    <form action="${pageContext.request.contextPath}/manager/students/reject/${student.id}" method="post">
+                    <form action="${pageContext.request.contextPath}/manager/student-approvals/${student.id}/reject" method="post">
                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
                         <div class="mb-3">
                             <label for="reason${student.id}" class="form-label">Reason for Rejection</label>

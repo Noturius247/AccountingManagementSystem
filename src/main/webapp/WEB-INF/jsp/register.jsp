@@ -1,4 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -429,9 +432,10 @@
         <div class="error-message" id="errorMessage"></div>
 
         <form id="registerForm" action="${pageContext.request.contextPath}/register" method="POST" onsubmit="return handleSubmit(event)">
+            <sec:csrfInput />
             <div class="form-row">
                 <div class="form-group">
-                    <label for="firstName">First Name</label>
+                    <label for="firstName">First Name *</label>
                     <div class="input-group">
                         <i class="fas fa-user input-icon"></i>
                         <input type="text" id="firstName" name="firstName" class="form-control" required 
@@ -439,7 +443,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="lastName">Last Name</label>
+                    <label for="lastName">Last Name *</label>
                     <div class="input-group">
                         <i class="fas fa-user input-icon"></i>
                         <input type="text" id="lastName" name="lastName" class="form-control" required 
@@ -449,75 +453,94 @@
             </div>
 
             <div class="form-group">
-                <label for="email">Email Address</label>
+                <label for="email">Email Address *</label>
                 <div class="input-group">
                     <i class="fas fa-envelope input-icon"></i>
                     <input type="email" id="email" name="email" class="form-control" required 
-                        placeholder="Enter your email address">
+                        placeholder="Enter your email address"
+                        pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$">
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="username">Username</label>
+                <label for="username">Username *</label>
                 <div class="input-group">
                     <i class="fas fa-id-badge input-icon"></i>
                     <input type="text" id="username" name="username" class="form-control" required 
-                        placeholder="Choose a username">
+                        placeholder="Choose a username"
+                        pattern="[a-zA-Z0-9_]{4,20}"
+                        title="Username must be 4-20 characters long and can only contain letters, numbers, and underscores">
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="password">Password</label>
-                <div class="password-input">
+                <label for="phoneNumber">Phone Number</label>
+                <div class="input-group">
+                    <i class="fas fa-phone input-icon"></i>
+                    <input type="tel" id="phoneNumber" name="phoneNumber" class="form-control"
+                        placeholder="Enter your phone number"
+                        pattern="[0-9]{10,}"
+                        title="Please enter a valid phone number">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="address">Address</label>
+                <div class="input-group">
+                    <i class="fas fa-home input-icon"></i>
+                    <textarea id="address" name="address" class="form-control" 
+                        placeholder="Enter your address" rows="3"></textarea>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password *</label>
+                <div class="input-group password-input">
                     <i class="fas fa-lock input-icon"></i>
                     <input type="password" id="password" name="password" class="form-control" required 
-                        placeholder="Create a password" onkeyup="checkPasswordStrength()">
-                    <button type="button" onclick="togglePassword()" class="toggle-password">
-                        <i class="fas fa-eye" id="toggleIcon"></i>
+                        placeholder="Enter your password"
+                        onkeyup="checkPasswordStrength()">
+                    <button type="button" class="toggle-password" onclick="togglePassword()">
+                        <i id="toggleIcon" class="fas fa-eye"></i>
                     </button>
                 </div>
                 <div class="password-strength">
-                    <div class="password-strength-bar" id="passwordStrengthBar"></div>
+                    <div id="passwordStrengthBar" class="password-strength-bar"></div>
                 </div>
                 <div class="password-requirements">
-                    <div class="requirement" id="lengthReq">
-                        <i class="fas fa-check-circle"></i> At least 8 characters
-                    </div>
-                    <div class="requirement" id="uppercaseReq">
-                        <i class="fas fa-check-circle"></i> Uppercase letter
-                    </div>
-                    <div class="requirement" id="lowercaseReq">
-                        <i class="fas fa-check-circle"></i> Lowercase letter
-                    </div>
-                    <div class="requirement" id="numberReq">
-                        <i class="fas fa-check-circle"></i> Number
-                    </div>
-                    <div class="requirement" id="specialReq">
-                        <i class="fas fa-check-circle"></i> Special character
-                    </div>
+                    <div id="lengthReq" class="requirement">At least 8 characters</div>
+                    <div id="uppercaseReq" class="requirement">At least one uppercase letter</div>
+                    <div id="lowercaseReq" class="requirement">At least one lowercase letter</div>
+                    <div id="numberReq" class="requirement">At least one number</div>
+                    <div id="specialReq" class="requirement">At least one special character</div>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="confirmPassword">Confirm Password</label>
-                <div class="password-input">
+                <label for="confirmPassword">Confirm Password *</label>
+                <div class="input-group password-input">
                     <i class="fas fa-lock input-icon"></i>
                     <input type="password" id="confirmPassword" name="confirmPassword" class="form-control" required 
                         placeholder="Confirm your password">
-                    <button type="button" onclick="toggleConfirmPassword()" class="toggle-password">
-                        <i class="fas fa-eye" id="toggleConfirmIcon"></i>
+                    <button type="button" class="toggle-password" onclick="toggleConfirmPassword()">
+                        <i id="toggleConfirmIcon" class="fas fa-eye"></i>
                     </button>
                 </div>
             </div>
 
             <div class="form-group">
-                <button type="submit" class="btn-register" id="registerButton">
-                    <span>Create Account</span>
-                    <div id="loadingIndicator" style="display: none;">
-                        <div class="spinner"></div>
-                    </div>
-                </button>
+                <div class="form-check">
+                    <input type="checkbox" id="termsAccepted" name="termsAccepted" class="form-check-input" required>
+                    <label class="form-check-label" for="termsAccepted">
+                        I agree to the Terms and Conditions *
+                    </label>
+                </div>
             </div>
+
+            <button type="submit" id="registerButton" class="btn-register">
+                <span>Create Account</span>
+                <div id="loadingIndicator" class="spinner" style="display: none;"></div>
+            </button>
         </form>
 
         <div class="register-footer">
@@ -583,13 +606,15 @@
             const strength = Object.values(requirements).filter(Boolean).length;
             let strengthClass = '';
 
-            if (strength <= 1) {
-                strengthClass = 'password-strength-weak';
+            if (strength === 0) {
+                strengthClass = '';  // Empty password
             } else if (strength <= 2) {
+                strengthClass = 'password-strength-weak';
+            } else if (strength <= 3) {
                 strengthClass = 'password-strength-medium';
-            } else if (strength <= 4) {
+            } else if (strength === 4) {
                 strengthClass = 'password-strength-good';
-            } else {
+            } else if (strength === 5) {
                 strengthClass = 'password-strength-strong';
             }
 
@@ -639,10 +664,12 @@
             buttonText.textContent = 'Creating account...';
 
             // Submit form
+            const token = document.querySelector('input[name="_csrf"]').value;
             fetch(form.action, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-TOKEN': token
                 },
                 body: new URLSearchParams(new FormData(form))
             })

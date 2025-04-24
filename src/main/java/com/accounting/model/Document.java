@@ -101,7 +101,7 @@ public class Document {
             status = DocumentStatus.DRAFT;
         }
         if (priority == null) {
-            priority = Priority.MEDIUM;
+            priority = Priority.NORMAL;
         }
         if (user != null) {
             userUsername = user.getUsername();

@@ -24,4 +24,5 @@ public interface StudentService {
     Student getStudentById(Long id);
     void approveStudent(Long id);
     void rejectStudent(Long id);
+    void revokeApproval(Long id);
 } 

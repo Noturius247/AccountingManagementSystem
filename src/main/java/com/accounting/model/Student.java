@@ -57,7 +57,7 @@ public class Student {
     @Column(nullable = false)
     private String semester;
 
-    @NotBlank(message = "Registration status is required")
+    @NotNull(message = "Registration status is required")
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private RegistrationStatus registrationStatus;
@@ -114,6 +114,26 @@ public class Student {
 
     public void setRegistrationStatus(RegistrationStatus registrationStatus) {
         this.registrationStatus = registrationStatus;
+    }
+
+    public String getProgram() {
+        return program;
+    }
+
+    public Integer getYearLevel() {
+        return yearLevel;
+    }
+
+    public String getAcademicYear() {
+        return academicYear;
+    }
+
+    public String getSemester() {
+        return semester;
+    }
+
+    public Long getId() {
+        return id;
     }
 
     @Override

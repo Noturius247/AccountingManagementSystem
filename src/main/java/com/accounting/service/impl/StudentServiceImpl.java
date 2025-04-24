@@ -3,6 +3,7 @@ package com.accounting.service.impl;
 import com.accounting.model.Student;
 import com.accounting.model.User;
 import com.accounting.repository.StudentRepository;
+import com.accounting.repository.UserRepository;
 import com.accounting.service.StudentService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolation;
@@ -23,12 +24,14 @@ import java.util.Set;
 public class StudentServiceImpl implements StudentService {
 
     private final StudentRepository studentRepository;
+    private final UserRepository userRepository;
     private final Validator validator;
     private final AtomicInteger sequence = new AtomicInteger(1);
 
     @Autowired
-    public StudentServiceImpl(StudentRepository studentRepository, Validator validator) {
+    public StudentServiceImpl(StudentRepository studentRepository, UserRepository userRepository, Validator validator) {
         this.studentRepository = studentRepository;
+        this.userRepository = userRepository;
         this.validator = validator;
     }
 
@@ -190,6 +193,12 @@ public class StudentServiceImpl implements StudentService {
             throw new IllegalStateException("Only pending registrations can be approved");
         }
         student.setRegistrationStatus(Student.RegistrationStatus.APPROVED);
+        
+        // Update the user's role to STUDENT
+        User user = student.getUser();
+        user.setRole("ROLE_STUDENT");
+        userRepository.save(user);
+        
         studentRepository.save(student);
     }
 
@@ -207,5 +216,22 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public long countByRegistrationStatus(Student.RegistrationStatus status) {
         return studentRepository.countByRegistrationStatus(status);
+    }
+
+    @Override
+    @Transactional
+    public void revokeApproval(Long id) {
+        Student student = getStudentById(id);
+        if (student.getRegistrationStatus() != Student.RegistrationStatus.APPROVED) {
+            throw new IllegalStateException("Only approved registrations can be revoked");
+        }
+        student.setRegistrationStatus(Student.RegistrationStatus.PENDING);
+        
+        // Revert the user's role back to default
+        User user = student.getUser();
+        user.setRole("ROLE_USER");
+        userRepository.save(user);
+        
+        studentRepository.save(student);
     }
 } 

@@ -23,6 +23,7 @@ import com.accounting.model.Student;
 import com.accounting.service.StudentService;
 import com.accounting.service.EmailService;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.http.ResponseEntity;
 
 @Controller
 @RequestMapping("/manager")
@@ -82,6 +83,13 @@ public class ManagerController {
                 model.addAttribute("revenueGrowth", statistics.get("revenueGrowth"));
                 model.addAttribute("pendingApprovals", statistics.get("pendingCount"));
                 model.addAttribute("activeUsers", statistics.get("activeUsers"));
+                
+                // Add student registration data
+                List<Student> allStudents = studentService.findAll();
+                model.addAttribute("students", allStudents);
+                model.addAttribute("pendingCount", studentService.countByRegistrationStatus(Student.RegistrationStatus.PENDING));
+                model.addAttribute("approvedCount", studentService.countByRegistrationStatus(Student.RegistrationStatus.APPROVED));
+                model.addAttribute("rejectedCount", studentService.countByRegistrationStatus(Student.RegistrationStatus.REJECTED));
                 
                 // Load additional data
                 CompletableFuture.runAsync(() -> {
@@ -186,19 +194,30 @@ public class ManagerController {
     }
 
     @GetMapping("/student-approvals")
-    public String viewPendingStudents(Model model) {
+    public String viewPendingStudents(@RequestParam(required = false) String status, Model model) {
         try {
-            List<Student> pendingStudents = studentService.findByRegistrationStatus(Student.RegistrationStatus.PENDING);
-            model.addAttribute("pendingStudents", pendingStudents);
+            List<Student> students;
+            if (status == null || status.equals("PENDING")) {
+                students = studentService.findByRegistrationStatus(Student.RegistrationStatus.PENDING);
+            } else if (status.equals("ALL")) {
+                students = studentService.findAll();
+            } else {
+                students = studentService.findByRegistrationStatus(Student.RegistrationStatus.valueOf(status));
+            }
+            model.addAttribute("students", students);
             
-            // Add count for the header badge
-            long pendingCount = studentService.countByRegistrationStatus(Student.RegistrationStatus.PENDING);
-            model.addAttribute("pendingStudentCount", pendingCount);
+            // Add counts for different statuses
+            model.addAttribute("pendingCount", 
+                studentService.countByRegistrationStatus(Student.RegistrationStatus.PENDING));
+            model.addAttribute("approvedCount", 
+                studentService.countByRegistrationStatus(Student.RegistrationStatus.APPROVED));
+            model.addAttribute("rejectedCount", 
+                studentService.countByRegistrationStatus(Student.RegistrationStatus.REJECTED));
             
             return "manager/student-approvals";
         } catch (Exception e) {
-            log.error("Error loading pending students", e);
-            model.addAttribute("error", "Failed to load pending students");
+            log.error("Error loading students", e);
+            model.addAttribute("error", "Failed to load students");
             return "manager/student-approvals";
         }
     }
@@ -212,8 +231,7 @@ public class ManagerController {
                 throw new IllegalArgumentException("Student not found");
             }
             
-            student.setRegistrationStatus(Student.RegistrationStatus.APPROVED);
-            studentService.save(student);
+            studentService.approveStudent(id);
             
             // Send approval email
             emailService.sendRegistrationApprovedEmail(
@@ -259,5 +277,38 @@ public class ManagerController {
             redirectAttributes.addFlashAttribute("error", "Failed to reject student registration: " + e.getMessage());
         }
         return "redirect:/manager/student-approvals";
+    }
+
+    @PostMapping("/student-approvals/{id}/revoke")
+    @Transactional
+    public ResponseEntity<?> revokeApproval(@PathVariable Long id) {
+        try {
+            studentService.revokeApproval(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("Error revoking student approval", e);
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/student-approvals/{id}")
+    @Transactional(readOnly = true)
+    public String viewStudent(@PathVariable Long id, Model model) {
+        try {
+            Student student = studentService.findById(id);
+            if (student == null) {
+                throw new IllegalArgumentException("Student not found");
+            }
+            
+            // Initialize the user to ensure it's loaded
+            student.getUser().getEmail(); // This will force loading of the User entity
+            
+            model.addAttribute("student", student);
+            return "manager/student-details";
+        } catch (Exception e) {
+            log.error("Error viewing student details", e);
+            model.addAttribute("error", "Failed to load student details");
+            return "redirect:/manager/student-approvals";
+        }
     }
 } 

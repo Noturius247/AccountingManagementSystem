@@ -914,8 +914,8 @@
                                     <i class="bi bi-people"></i>
                                     <span>Students Awaiting Approval</span>
                                 </div>
-                                <a href="${pageContext.request.contextPath}/manager/students/pending" class="btn btn-primary mt-3">
-                                    <i class="bi bi-list-check"></i> View All
+                                <a href="${pageContext.request.contextPath}/manager/student-approvals?status=PENDING" class="btn btn-primary mt-3">
+                                    View All Pending Registrations
                                 </a>
                             </div>
                         </div>
@@ -1194,12 +1194,14 @@
                             </div>
                         </div>
 
-                        <!-- Pending Registrations Section -->
+                        <!-- Student Registration Card -->
                         <div class="card shadow mb-4">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center bg-primary text-white">
-                                <h6 class="m-0 font-weight-bold">Student Registration Approvals</h6>
+                                <h6 class="m-0 font-weight-bold">Student Registrations</h6>
                                 <div>
-                                    <span class="badge bg-warning">Pending: ${pendingCount}</span>
+                                    <span class="badge bg-warning me-2">Pending: ${pendingCount}</span>
+                                    <span class="badge bg-success me-2">Approved: ${approvedCount}</span>
+                                    <span class="badge bg-danger">Rejected: ${rejectedCount}</span>
                                 </div>
                             </div>
                             <div class="card-body">
@@ -1216,36 +1218,55 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <c:forEach items="${pendingStudents}" var="student">
+                                            <c:forEach items="${students}" var="student">
                                                 <tr>
                                                     <td>${student.studentId}</td>
                                                     <td>${student.fullName}</td>
                                                     <td>${student.program}</td>
                                                     <td>${student.yearLevel}</td>
                                                     <td>
-                                                        <span class="badge bg-warning">PENDING</span>
+                                                        <span class="badge ${student.registrationStatus == 'APPROVED' ? 'bg-success' : 
+                                                                          student.registrationStatus == 'PENDING' ? 'bg-warning' : 'bg-danger'}">
+                                                            ${student.registrationStatus}
+                                                        </span>
                                                     </td>
                                                     <td>
                                                         <div class="btn-group">
-                                                            <form action="${pageContext.request.contextPath}/manager/students/approve/${student.id}" method="post" style="display: inline;">
-                                                                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
-                                                                <button type="submit" class="btn btn-success btn-sm">
-                                                                    <i class="bi bi-check"></i> Approve
-                                                                </button>
-                                                            </form>
-                                                            <button type="button" class="btn btn-danger btn-sm" onclick="showRejectForm('${student.id}')">
-                                                                <i class="bi bi-x"></i> Reject
-                                                            </button>
+                                                            <a href="${pageContext.request.contextPath}/manager/student-approvals/${student.id}" 
+                                                               class="btn btn-sm btn-outline-primary">
+                                                                <i class="bi bi-eye"></i> View
+                                                            </a>
+                                                            <c:choose>
+                                                                <c:when test="${student.registrationStatus == 'PENDING'}">
+                                                                    <button type="button" 
+                                                                            class="btn btn-sm btn-outline-success"
+                                                                            onclick="approveStudent('${student.id}')">
+                                                                        <i class="bi bi-check"></i> Approve
+                                                                    </button>
+                                                                    <button type="button" 
+                                                                            class="btn btn-sm btn-outline-danger"
+                                                                            onclick="rejectStudent('${student.id}')">
+                                                                        <i class="bi bi-x"></i> Reject
+                                                                    </button>
+                                                                </c:when>
+                                                                <c:when test="${student.registrationStatus == 'APPROVED'}">
+                                                                    <button type="button" 
+                                                                            class="btn btn-sm btn-outline-warning"
+                                                                            onclick="revokeApproval('${student.id}')">
+                                                                        <i class="bi bi-arrow-counterclockwise"></i> Revoke
+                                                                    </button>
+                                                                </c:when>
+                                                            </c:choose>
                                                         </div>
                                                     </td>
                                                 </tr>
                                             </c:forEach>
-                                            <c:if test="${empty pendingStudents}">
+                                            <c:if test="${empty students}">
                                                 <tr>
                                                     <td colspan="6" class="text-center">
                                                         <div class="p-3">
                                                             <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                                            <p class="text-muted">No pending registrations</p>
+                                                            <p class="text-muted">No students found</p>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -1264,7 +1285,7 @@
                                         <h5 class="modal-title">Reject Registration</h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
-                                    <form id="rejectForm" action="${pageContext.request.contextPath}/manager/students/reject/" method="post">
+                                    <form id="rejectForm" action="" method="post">
                                         <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
                                         <div class="modal-body">
                                             <div class="mb-3">
@@ -1285,134 +1306,52 @@
                             function showRejectForm(studentId) {
                                 const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
                                 const form = document.getElementById('rejectForm');
-                                form.action = '${pageContext.request.contextPath}/manager/students/reject/' + studentId;
+                                form.action = '${pageContext.request.contextPath}/manager/student-approvals/' + studentId + '/reject';
                                 modal.show();
                             }
+
+                            function approveStudent(studentId) {
+                                if (confirm('Are you sure you want to approve this student registration?')) {
+                                    fetch(`${pageContext.request.contextPath}/manager/student-approvals/${studentId}/approve`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            '${_csrf.headerName}': '${_csrf.token}'
+                                        }
+                                    })
+                                    .then(response => {
+                                        if (response.ok) {
+                                            window.location.reload();
+                                        } else {
+                                            alert('Failed to approve student registration');
+                                        }
+                                    });
+                                }
+                            }
+
+                            function rejectStudent(studentId) {
+                                showRejectForm(studentId);
+                            }
+
+                            function revokeApproval(studentId) {
+                                if (confirm('Are you sure you want to revoke this student\'s approval?')) {
+                                    fetch(`${pageContext.request.contextPath}/manager/student-approvals/${studentId}/revoke`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            '${_csrf.headerName}': '${_csrf.token}'
+                                        }
+                                    })
+                                    .then(response => {
+                                        if (response.ok) {
+                                            window.location.reload();
+                                        } else {
+                                            alert('Failed to revoke student approval');
+                                        }
+                                    });
+                                }
+                            }
                         </script>
-
-                        <!-- Student Registrations Section -->
-                        <div class="manager-section">
-                            <div class="section-header">
-                                <h2>Pending Student Registrations</h2>
-                                <div class="action-buttons">
-                                    <a href="${pageContext.request.contextPath}/manager/students/pending" class="btn btn-primary">
-                                        <i class="bi bi-list"></i> View All
-                                    </a>
-                                </div>
-                            </div>
-                            
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Student ID</th>
-                                            <th>Full Name</th>
-                                            <th>Program</th>
-                                            <th>Year Level</th>
-                                            <th>Academic Year</th>
-                                            <th>Semester</th>
-                                            <th>Registration Date</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <c:forEach items="${pendingRegistrations}" var="student">
-                                            <tr>
-                                                <td>${student.studentId}</td>
-                                                <td>${student.fullName}</td>
-                                                <td>${student.program}</td>
-                                                <td>${student.yearLevel}</td>
-                                                <td>${student.academicYear}</td>
-                                                <td>${student.semester}</td>
-                                                <td><fmt:formatDate value="${student.createdAt}" pattern="yyyy-MM-dd HH:mm" /></td>
-                                                <td>
-                                                    <div class="btn-group">
-                                                        <a href="${pageContext.request.contextPath}/admin/student-management/${student.id}" 
-                                                           class="btn btn-sm btn-outline-primary">
-                                                            <i class="bi bi-eye"></i> View
-                                                        </a>
-                                                        <button type="button" 
-                                                                class="btn btn-sm btn-outline-success"
-                                                                onclick="approveStudent('${student.id}')">
-                                                            <i class="bi bi-check"></i> Approve
-                                                        </button>
-                                                        <button type="button" 
-                                                                class="btn btn-sm btn-outline-danger"
-                                                                onclick="rejectStudent('${student.id}')">
-                                                            <i class="bi bi-x"></i> Reject
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </c:forEach>
-                                        <c:if test="${empty pendingRegistrations}">
-                                            <tr>
-                                                <td colspan="8" class="text-center">
-                                                    <div class="p-3">
-                                                        <i class="bi bi-inbox fs-4 d-block mb-2"></i>
-                                                        <p class="text-muted">No pending registrations</p>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        </c:if>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-
-                        <!-- Add Quick Access to Recent Pending Registrations -->
-                        <div class="manager-section">
-                            <div class="section-header">
-                                <h2>Recent Pending Registrations</h2>
-                                <a href="/manager/students/pending" class="btn btn-primary">
-                                    <i class="bi bi-list-check"></i> View All
-                                </a>
-                            </div>
-
-                            <c:if test="${empty pendingStudents}">
-                                <div class="alert alert-info">
-                                    <i class="bi bi-info-circle"></i> No pending student registrations.
-                                </div>
-                            </c:if>
-
-                            <c:if test="${not empty pendingStudents}">
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>Student ID</th>
-                                                <th>Full Name</th>
-                                                <th>Program</th>
-                                                <th>Year Level</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <c:forEach items="${pendingStudents}" var="student" end="4">
-                                                <tr>
-                                                    <td>${student.studentId}</td>
-                                                    <td>${student.fullName}</td>
-                                                    <td>${student.program}</td>
-                                                    <td>${student.yearLevel}</td>
-                                                    <td>
-                                                        <div class="action-buttons">
-                                                            <form action="/manager/students/approve/${student.id}" method="post" style="display: inline;">
-                                                                <button type="submit" class="btn btn-success btn-sm">
-                                                                    <i class="bi bi-check-circle"></i> Approve
-                                                                </button>
-                                                            </form>
-                                                            <button type="button" class="btn btn-danger btn-sm" onclick="showRejectForm('${student.id}')">
-                                                                <i class="bi bi-x-circle"></i> Reject
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            </c:forEach>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </c:if>
-                        </div>
                     </div>
                 </div>
             </main>
@@ -1484,57 +1423,6 @@
                 });
             }
         });
-    </script>
-
-    <!-- Add JavaScript for approve/reject functionality -->
-    <script>
-        function approveStudent(studentId) {
-            if (confirm('Are you sure you want to approve this student registration?')) {
-                fetch(`${pageContext.request.contextPath}/admin/student-management/${studentId}/approve`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        '${_csrf.headerName}': '${_csrf.token}'
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.reload();
-                    } else {
-                        alert('Failed to approve student registration');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while processing your request');
-                });
-            }
-        }
-
-        function rejectStudent(studentId) {
-            const reason = prompt('Please enter the reason for rejection:');
-            if (reason) {
-                fetch(`${pageContext.request.contextPath}/admin/student-management/${studentId}/reject`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        '${_csrf.headerName}': '${_csrf.token}'
-                    },
-                    body: JSON.stringify({ reason: reason })
-                })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.reload();
-                    } else {
-                        alert('Failed to reject student registration');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while processing your request');
-                });
-            }
-        }
     </script>
 </body>
 </html> 

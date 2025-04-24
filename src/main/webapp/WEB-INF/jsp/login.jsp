@@ -405,6 +405,12 @@
                 You have been logged out successfully
             </div>
         </c:if>
+        <c:if test="${param.registered != null}">
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                Registration successful! Please login with your credentials.
+            </div>
+        </c:if>
 
         <form action="${pageContext.request.contextPath}/login" method="post">
             <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}" />
