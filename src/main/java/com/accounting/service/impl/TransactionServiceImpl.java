@@ -155,7 +155,7 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
     @Override
     @Transactional(readOnly = true)
     public int getHighPriorityCount() {
-        return Math.toIntExact(transactionRepository.countByStatus(TransactionStatus.PENDING));
+        return Math.toIntExact(transactionRepository.countByPriority("HIGH"));
     }
 
     @Override
@@ -277,13 +277,12 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getTransactionStatistics() {
-        Map<String, Object> stats = new HashMap<>();
-        stats.put("totalTransactions", transactionRepository.count());
-        stats.put("todayTransactions", getTodayTransactionCount());
-        stats.put("todayAmount", getTodayTotalAmount());
-        stats.put("pendingApprovals", getPendingApprovalCount());
-        stats.put("highPriority", getHighPriorityCount());
-        return stats;
+        Map<String, Object> statistics = new HashMap<>();
+        statistics.put("totalTransactions", getTotalTransactions());
+        statistics.put("todayCount", getTodayTransactionCount());
+        statistics.put("todayAmount", getTodayTotalAmount());
+        statistics.put("pendingCount", getPendingApprovalCount());
+        return statistics;
     }
 
     @Override
@@ -539,5 +538,80 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
     @Transactional(readOnly = true)
     public long getTotalPaymentsByUser(User user) {
         return transactionRepository.countByUserUsernameAndStatus(user.getUsername(), TransactionStatus.COMPLETED);
+    }
+
+    @Override
+    public List<Transaction> findTransactionsWithFilters(String status, String startDate, String endDate, String amountRange) {
+        LocalDateTime start = startDate != null ? LocalDateTime.parse(startDate) : null;
+        LocalDateTime end = endDate != null ? LocalDateTime.parse(endDate) : null;
+        
+        // Parse amount range if provided (format: "min-max")
+        BigDecimal minAmount = null;
+        BigDecimal maxAmount = null;
+        if (amountRange != null && !amountRange.isEmpty()) {
+            String[] range = amountRange.split("-");
+            if (range.length == 2) {
+                minAmount = new BigDecimal(range[0]);
+                maxAmount = new BigDecimal(range[1]);
+            }
+        }
+        
+        // Build dynamic query based on filters
+        return transactionRepository.findTransactionsWithFilters(
+            status != null ? TransactionStatus.valueOf(status) : null,
+            start,
+            end,
+            minAmount,
+            maxAmount
+        );
+    }
+
+    @Override
+    public byte[] exportTransactions(String format, String startDate, String endDate) throws Exception {
+        LocalDateTime start = startDate != null ? LocalDateTime.parse(startDate) : null;
+        LocalDateTime end = endDate != null ? LocalDateTime.parse(endDate) : null;
+        
+        List<Transaction> transactions = transactionRepository.findByCreatedAtBetween(start, end);
+        
+        if ("csv".equalsIgnoreCase(format)) {
+            return exportToCSV(transactions);
+        } else if ("excel".equalsIgnoreCase(format)) {
+            return exportToExcel(transactions);
+        } else {
+            throw new IllegalArgumentException("Unsupported export format: " + format);
+        }
+    }
+
+    @Override
+    public void bulkUpdateStatus(List<Long> transactionIds, TransactionStatus newStatus) {
+        List<Transaction> transactions = transactionRepository.findAllById(transactionIds);
+        for (Transaction transaction : transactions) {
+            transaction.setStatus(newStatus);
+            transaction.setUpdatedAt(LocalDateTime.now());
+        }
+        transactionRepository.saveAll(transactions);
+    }
+
+    private byte[] exportToCSV(List<Transaction> transactions) {
+        StringBuilder csv = new StringBuilder();
+        csv.append("ID,Date,Amount,Status,Notes\n");
+        
+        for (Transaction t : transactions) {
+            csv.append(String.format("%d,%s,%.2f,%s,%s\n",
+                t.getId(),
+                t.getCreatedAt(),
+                t.getAmount(),
+                t.getStatus(),
+                t.getNotes() != null ? t.getNotes().replace(",", ";") : ""
+            ));
+        }
+        
+        return csv.toString().getBytes();
+    }
+
+    private byte[] exportToExcel(List<Transaction> transactions) throws Exception {
+        // Implementation using Apache POI or similar library
+        // This is a placeholder - actual implementation would depend on the Excel library being used
+        throw new UnsupportedOperationException("Excel export not yet implemented");
     }
 } 

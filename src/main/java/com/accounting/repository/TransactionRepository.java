@@ -244,4 +244,21 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
         LocalDateTime startDate,
         LocalDateTime endDate
     );
+
+    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.priority = :priority")
+    long countByPriority(@Param("priority") String priority);
+
+    @Query("SELECT t FROM Transaction t WHERE " +
+           "(:status IS NULL OR t.status = :status) AND " +
+           "(:startDate IS NULL OR t.createdAt >= :startDate) AND " +
+           "(:endDate IS NULL OR t.createdAt <= :endDate) AND " +
+           "(:minAmount IS NULL OR t.amount >= :minAmount) AND " +
+           "(:maxAmount IS NULL OR t.amount <= :maxAmount)")
+    List<Transaction> findTransactionsWithFilters(
+        @Param("status") TransactionStatus status,
+        @Param("startDate") LocalDateTime startDate,
+        @Param("endDate") LocalDateTime endDate,
+        @Param("minAmount") BigDecimal minAmount,
+        @Param("maxAmount") BigDecimal maxAmount
+    );
 } 

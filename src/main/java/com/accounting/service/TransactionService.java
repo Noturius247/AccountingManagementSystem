@@ -2,6 +2,7 @@ package com.accounting.service;
 
 import com.accounting.model.Transaction;
 import com.accounting.model.User;
+import com.accounting.model.enums.TransactionStatus;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -120,4 +121,10 @@ public interface TransactionService {
      * Get total number of payments for a user
      */
     long getTotalPaymentsByUser(User user);
+
+    List<Transaction> findTransactionsWithFilters(String status, String startDate, String endDate, String amountRange);
+    
+    byte[] exportTransactions(String format, String startDate, String endDate) throws Exception;
+    
+    void bulkUpdateStatus(List<Long> transactionIds, TransactionStatus newStatus);
 } 

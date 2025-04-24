@@ -3,180 +3,173 @@
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
-<%@ include file="../includes/manager-header.jsp" %>
-
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Manager Transaction Management</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
+    <meta name="contextPath" content="${pageContext.request.contextPath}"/>
+    <title>Transactions - Manager Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="${pageContext.request.contextPath}/static/css/main.css" rel="stylesheet">
     <style>
-        .transaction-card {
-            transition: all 0.3s ease;
-        }
-        .transaction-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
         .status-badge {
-            font-size: 0.8rem;
-            padding: 0.3rem 0.6rem;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: 500;
         }
-        .status-pending { background-color: #ffd700; }
-        .status-completed { background-color: #90EE90; }
-        .status-failed { background-color: #ffcccb; }
+        .status-pending {
+            background-color: #ffd700;
+            color: #000;
+        }
+        .status-completed {
+            background-color: #28a745;
+            color: #fff;
+        }
+        .status-failed {
+            background-color: #dc3545;
+            color: #fff;
+        }
+        .transaction-table th {
+            background-color: #800000;
+            color: white;
+        }
+        .transaction-table {
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
-    <div class="container-fluid py-4">
-        <div class="row mb-4">
-            <div class="col">
-                <h2>Transaction Management</h2>
-            </div>
-        </div>
+    <!-- Include Header -->
+    <jsp:include page="../includes/manager-header.jsp" />
 
-        <!-- Statistics Cards -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card bg-primary text-white">
-                    <div class="card-body">
-                        <h5 class="card-title">Total Transactions</h5>
-                        <h3 class="card-text" id="totalTransactions">0</h3>
+    <div class="container-fluid">
+        <div class="row">
+            <main class="col-md-12 ms-sm-auto px-md-4" id="main-content">
+                <div id="transaction-content">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2">Transaction Management</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="btn-group me-2">
+                                <select class="form-select" id="statusFilter" onchange="filterByStatus(this.value)">
+                                    <option value="ALL" ${param.status == 'ALL' ? 'selected' : ''}>All Transactions</option>
+                                    <option value="PENDING" ${param.status == 'PENDING' || empty param.status ? 'selected' : ''}>Pending</option>
+                                    <option value="COMPLETED" ${param.status == 'COMPLETED' ? 'selected' : ''}>Completed</option>
+                                    <option value="FAILED" ${param.status == 'FAILED' ? 'selected' : ''}>Failed</option>
+                                </select>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-warning" type="button" onclick="resetQueue()">
+                                    <i class="bi bi-arrow-repeat"></i> Reset Queue
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-warning text-dark">
-                    <div class="card-body">
-                        <h5 class="card-title">Pending</h5>
-                        <h3 class="card-text" id="pendingTransactions">0</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-success text-white">
-                    <div class="card-body">
-                        <h5 class="card-title">Completed</h5>
-                        <h3 class="card-text" id="completedTransactions">0</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card bg-danger text-white">
-                    <div class="card-body">
-                        <h5 class="card-title">Failed</h5>
-                        <h3 class="card-text" id="failedTransactions">0</h3>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Filters -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <form id="filterForm" class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">Start Date</label>
-                        <input type="date" class="form-control" id="startDate" name="startDate">
+                    <!-- Filters -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <form id="filterForm" class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" id="startDate" name="startDate">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="endDate" name="endDate">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Amount Range</label>
+                                    <select class="form-select" id="amountRange" name="amountRange">
+                                        <option value="">All</option>
+                                        <option value="0-1000">₱0 - ₱1,000</option>
+                                        <option value="1000-5000">₱1,000 - ₱5,000</option>
+                                        <option value="5000+">₱5,000+</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary me-2">Filter</button>
+                                    <button type="button" class="btn btn-secondary" onclick="resetFilters()">Reset</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">End Date</label>
-                        <input type="date" class="form-control" id="endDate" name="endDate">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Status</label>
-                        <select class="form-select" id="status" name="status">
-                            <option value="">All</option>
-                            <option value="PENDING">Pending</option>
-                            <option value="COMPLETED">Completed</option>
-                            <option value="FAILED">Failed</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Amount Range</label>
-                        <select class="form-select" id="amountRange" name="amountRange">
-                            <option value="">All</option>
-                            <option value="0-1000">$0 - $1,000</option>
-                            <option value="1000-5000">$1,000 - $5,000</option>
-                            <option value="5000+">$5,000+</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary me-2">Filter</button>
-                        <button type="button" class="btn btn-secondary" onclick="resetFilters()">Reset</button>
-                    </div>
-                </form>
-            </div>
-        </div>
 
-        <!-- Bulk Actions -->
-        <div class="row mb-3">
-            <div class="col">
-                <button class="btn btn-success me-2" onclick="bulkApprove()">Approve Selected</button>
-                <button class="btn btn-danger me-2" onclick="bulkReject()">Reject Selected</button>
-                <div class="btn-group">
-                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        Export
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#" onclick="exportTransactions('pdf')">Export as PDF</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="exportTransactions('excel')">Export as Excel</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="exportTransactions('csv')">Export as CSV</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+                    <!-- Bulk Actions -->
+                    <div class="row mb-3">
+                        <div class="col">
+                            <button class="btn btn-success me-2" onclick="bulkApprove()">
+                                <i class="bi bi-check-circle"></i> Approve Selected
+                            </button>
+                            <button class="btn btn-danger me-2" onclick="bulkReject()">
+                                <i class="bi bi-x-circle"></i> Reject Selected
+                            </button>
+                        </div>
+                    </div>
 
-        <!-- Transactions Table -->
-        <div class="card">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover" id="transactionsTable">
-                        <thead>
-                            <tr>
-                                <th><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
-                                <th>ID</th>
-                                <th>Date</th>
-                                <th>User</th>
-                                <th>Description</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <c:forEach items="${transactions}" var="transaction">
-                                <tr>
-                                    <td><input type="checkbox" class="transaction-checkbox" value="${transaction.id}"></td>
-                                    <td>${transaction.id}</td>
-                                    <td>${transaction.createdAt}</td>
-                                    <td>${transaction.user != null ? transaction.user.username : 'N/A'}</td>
-                                    <td>${transaction.notes != null ? transaction.notes : 'N/A'}</td>
-                                    <td>$<fmt:formatNumber value="${transaction.amount}" pattern="#,##0.00"/></td>
-                                    <td>
-                                        <span class="badge status-${fn:toLowerCase(transaction.status)}">
-                                            ${transaction.status}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <button class="btn btn-sm btn-info me-1" onclick="viewTransaction(${transaction.id})">
-                                            <i class="fas fa-eye"></i>
-                                        </button>
-                                        <c:if test="${transaction.status == 'PENDING'}">
-                                            <button class="btn btn-sm btn-success me-1" onclick="approveTransaction(${transaction.id})">
-                                                <i class="fas fa-check"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-danger" onclick="rejectTransaction(${transaction.id})">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </c:if>
-                                    </td>
-                                </tr>
-                            </c:forEach>
-                        </tbody>
-                    </table>
+                    <!-- Transactions Table -->
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped" id="transactionTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Transaction #</th>
+                                            <th>Date</th>
+                                            <th>Amount</th>
+                                            <th>Type</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <c:forEach items="${transactions}" var="transaction">
+                                            <tr>
+                                                <td>${transaction.id}</td>
+                                                <td>${transaction.transactionNumber}</td>
+                                                <td>
+                                                    <fmt:parseDate value="${transaction.createdAt}" pattern="yyyy-MM-dd'T'HH:mm" var="parsedDate" type="both" />
+                                                    <fmt:formatDate value="${parsedDate}" pattern="yyyy-MM-dd HH:mm" />
+                                                </td>
+                                                <td>${transaction.currency} ${transaction.amount}</td>
+                                                <td>${transaction.type}</td>
+                                                <td>
+                                                    <c:choose>
+                                                        <c:when test="${transaction.status == 'PENDING'}">
+                                                            <span class="badge status-badge status-pending">PENDING</span>
+                                                        </c:when>
+                                                        <c:when test="${transaction.status == 'COMPLETED'}">
+                                                            <span class="badge status-badge status-completed">COMPLETED</span>
+                                                        </c:when>
+                                                        <c:otherwise>
+                                                            <span class="badge status-badge status-failed">FAILED</span>
+                                                        </c:otherwise>
+                                                    </c:choose>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-primary" onclick="viewTransaction('${transaction.id}')">View</button>
+                                                    <c:if test="${transaction.status == 'PENDING'}">
+                                                        <button class="btn btn-sm btn-success" onclick="approveTransaction('${transaction.id}')">Approve</button>
+                                                        <button class="btn btn-sm btn-danger" onclick="rejectTransaction('${transaction.id}')">Reject</button>
+                                                    </c:if>
+                                                </td>
+                                            </tr>
+                                        </c:forEach>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </main>
         </div>
     </div>
 
@@ -195,48 +188,63 @@
         </div>
     </div>
 
-    <jsp:include page="/WEB-INF/jsp/includes/footer.jsp" />
-
+    <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="${pageContext.request.contextPath}/static/js/manager_dashboard.js"></script>
-
+    <!-- Custom JavaScript -->
+    <script src="${pageContext.request.contextPath}/static/js/manager-dashboard.js"></script>
     <script>
-        function updateStatistics() {
-            const rows = document.querySelectorAll('#transactionsTable tbody tr');
-            let total = rows.length;
-            let pending = 0, completed = 0, failed = 0;
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTransactionStatistics();
+            initializeTransactionComponents();
+        });
 
-            rows.forEach(row => {
-                const status = row.querySelector('.status-badge').textContent.trim();
-                if (status === 'PENDING') pending++;
-                else if (status === 'COMPLETED') completed++;
-                else if (status === 'FAILED') failed++;
-            });
+        function filterByStatus(status) {
+            window.location.href = '${pageContext.request.contextPath}/manager/transactions?status=' + status;
+        }
 
-            document.getElementById('totalTransactions').textContent = total;
-            document.getElementById('pendingTransactions').textContent = pending;
-            document.getElementById('completedTransactions').textContent = completed;
-            document.getElementById('failedTransactions').textContent = failed;
+        function resetFilters() {
+            document.getElementById('filterForm').reset();
+            document.getElementById('filterForm').submit();
+        }
+
+        function resetQueue() {
+            if (confirm('Are you sure you want to reset the transaction queue? This action cannot be undone.')) {
+                fetch(`${pageContext.request.contextPath}/manager/transactions/reset-queue`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [document.querySelector("meta[name='_csrf_header']").content]: document.querySelector("meta[name='_csrf']").content
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Failed to reset queue');
+                    }
+                });
+            }
         }
 
         function viewTransaction(id) {
-            fetch(`/manager/transactions/${id}`)
+            fetch(`${pageContext.request.contextPath}/manager/transactions/${id}`)
                 .then(response => response.json())
                 .then(transaction => {
                     const details = document.getElementById('transactionDetails');
                     details.innerHTML = `
                         <div class="row">
                             <div class="col-md-6">
-                                <p><strong>ID:</strong> ${transaction.id}</p>
-                                <p><strong>Date:</strong> ${transaction.date}</p>
-                                <p><strong>User:</strong> ${transaction.user.username}</p>
-                                <p><strong>Amount:</strong> $${transaction.amount.toFixed(2)}</p>
+                                <p><strong>ID:</strong> \${transaction.id}</p>
+                                <p><strong>Date:</strong> \${transaction.createdAt}</p>
+                                <p><strong>User:</strong> \${transaction.user ? transaction.user.username : 'N/A'}</p>
+                                <p><strong>Amount:</strong> ₱\${transaction.amount.toFixed(2)}</p>
                             </div>
                             <div class="col-md-6">
-                                <p><strong>Status:</strong> ${transaction.status}</p>
-                                <p><strong>Description:</strong> ${transaction.description}</p>
-                                <p><strong>Created By:</strong> ${transaction.createdBy}</p>
-                                <p><strong>Last Modified:</strong> ${transaction.lastModified}</p>
+                                <p><strong>Status:</strong> \${transaction.status}</p>
+                                <p><strong>Description:</strong> \${transaction.notes || 'N/A'}</p>
+                                <p><strong>Payment Method:</strong> \${transaction.paymentMethod}</p>
+                                <p><strong>Reference:</strong> \${transaction.reference || 'N/A'}</p>
                             </div>
                         </div>
                     `;
@@ -246,80 +254,81 @@
 
         function approveTransaction(id) {
             if (confirm('Are you sure you want to approve this transaction?')) {
-                fetch(`/manager/transactions/${id}/approve`, { method: 'POST' })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        }
-                    });
+                fetch(`${pageContext.request.contextPath}/manager/transactions/${id}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [document.querySelector("meta[name='_csrf_header']").content]: document.querySelector("meta[name='_csrf']").content
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Failed to approve transaction');
+                    }
+                });
             }
         }
 
         function rejectTransaction(id) {
             if (confirm('Are you sure you want to reject this transaction?')) {
-                fetch(`/manager/transactions/${id}/reject`, { method: 'POST' })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        }
-                    });
+                fetch(`${pageContext.request.contextPath}/manager/transactions/${id}/reject`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [document.querySelector("meta[name='_csrf_header']").content]: document.querySelector("meta[name='_csrf']").content
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Failed to reject transaction');
+                    }
+                });
             }
         }
 
         function bulkApprove() {
-            const selected = getSelectedTransactions();
+            const selected = Array.from(document.querySelectorAll('.transaction-checkbox:checked')).map(cb => cb.value);
             if (selected.length === 0) {
                 alert('Please select transactions to approve');
                 return;
             }
             if (confirm(`Are you sure you want to approve ${selected.length} transactions?`)) {
                 Promise.all(selected.map(id => 
-                    fetch(`/manager/transactions/${id}/approve`, { method: 'POST' })
-                )).then(() => location.reload());
+                    fetch(`${pageContext.request.contextPath}/manager/transactions/${id}/approve`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            [document.querySelector("meta[name='_csrf_header']").content]: document.querySelector("meta[name='_csrf']").content
+                        }
+                    })
+                )).then(() => window.location.reload());
             }
         }
 
         function bulkReject() {
-            const selected = getSelectedTransactions();
+            const selected = Array.from(document.querySelectorAll('.transaction-checkbox:checked')).map(cb => cb.value);
             if (selected.length === 0) {
                 alert('Please select transactions to reject');
                 return;
             }
             if (confirm(`Are you sure you want to reject ${selected.length} transactions?`)) {
                 Promise.all(selected.map(id => 
-                    fetch(`/manager/transactions/${id}/reject`, { method: 'POST' })
-                )).then(() => location.reload());
+                    fetch(`${pageContext.request.contextPath}/manager/transactions/${id}/reject`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            [document.querySelector("meta[name='_csrf_header']").content]: document.querySelector("meta[name='_csrf']").content
+                        }
+                    })
+                )).then(() => window.location.reload());
             }
         }
-
-        function getSelectedTransactions() {
-            return Array.from(document.querySelectorAll('.transaction-checkbox:checked'))
-                .map(checkbox => checkbox.value);
-        }
-
-        function toggleSelectAll() {
-            const checkboxes = document.querySelectorAll('.transaction-checkbox');
-            const selectAll = document.getElementById('selectAll');
-            checkboxes.forEach(checkbox => checkbox.checked = selectAll.checked);
-        }
-
-        function exportTransactions(format) {
-            const startDate = document.getElementById('startDate').value;
-            const endDate = document.getElementById('endDate').value;
-            window.location.href = `/manager/transactions/export?format=${format}&startDate=${startDate}&endDate=${endDate}`;
-        }
-
-        function resetFilters() {
-            document.getElementById('filterForm').reset();
-            document.getElementById('filterForm').submit();
-        }
-
-        // Initialize statistics on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            updateStatistics();
-        });
     </script>
 </body>
 </html> 

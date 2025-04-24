@@ -1,3 +1,6 @@
+// Get the application context path
+const contextPath = document.querySelector('meta[name="contextPath"]')?.getAttribute('content') || '';
+
 document.addEventListener('DOMContentLoaded', function() {
     // Handle dynamic content loading for manager dashboard
     const dashboardLink = document.querySelector('a[href*="/manager/dashboard"]');
@@ -11,6 +14,26 @@ document.addEventListener('DOMContentLoaded', function() {
             // Otherwise, let the normal navigation happen
         });
     }
+
+    // Add event listener for transaction links in header and sidebar
+    document.addEventListener('click', function(e) {
+        const transactionLink = e.target.closest('a[href*="/manager/transactions"], button[onclick*="viewAllTransactions"]');
+        if (transactionLink) {
+            e.preventDefault();
+            viewAllTransactions();
+        }
+    });
+
+    // Initialize transactions if we're on the transactions page
+    if (window.location.pathname.includes('/manager/transactions')) {
+        initializeTransactionComponents();
+    }
+
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 });
 
 function loadManagerDashboardContent() {
@@ -226,4 +249,191 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-}); 
+});
+
+function viewAllTransactions() {
+    const mainContent = document.getElementById('main-content');
+    if (!mainContent) return;
+
+    // Show loading indicator
+    mainContent.innerHTML = `
+        <div class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
+            <div class="text-center">
+                <div class="spinner-border text-maroon mb-3" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted">Loading Transactions...</p>
+            </div>
+        </div>
+    `;
+
+    // Fetch transactions content
+    fetch(`${contextPath}/manager/transactions`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'text/html'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.text();
+    })
+    .then(html => {
+        // Create a temporary container
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+
+        // Find the transaction content in the response
+        const newContent = temp.querySelector('#transaction-content');
+        if (newContent) {
+            mainContent.innerHTML = `
+                <div id="transaction-content">
+                    ${newContent.innerHTML}
+                </div>
+            `;
+        } else {
+            throw new Error('Could not find transaction content in response');
+        }
+        
+        // Initialize transaction-specific components
+        initializeTransactionComponents();
+        
+        // Update browser URL without page reload
+        const title = 'Transactions - Manager Dashboard';
+        window.history.pushState({}, title, `${contextPath}/manager/transactions`);
+        document.title = title;
+
+        // Update transaction statistics
+        updateTransactionStatistics();
+    })
+    .catch(error => {
+        console.error('Error loading transactions:', error);
+        mainContent.innerHTML = `
+            <div class="alert alert-danger mx-3 mt-3">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                Failed to load transactions. Please try again.
+            </div>
+        `;
+    });
+}
+
+function updateTransactionStatistics() {
+    fetch(`${contextPath}/manager/transaction-statistics`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Update statistics in the UI
+        document.getElementById('total-transactions').textContent = data.totalTransactions || 0;
+        document.getElementById('pending-transactions').textContent = data.pendingTransactions || 0;
+        document.getElementById('completed-transactions').textContent = data.completedTransactions || 0;
+        document.getElementById('failed-transactions').textContent = data.failedTransactions || 0;
+    })
+    .catch(error => {
+        console.error('Error updating transaction statistics:', error);
+        showAlert('error', 'Failed to update transaction statistics');
+    });
+}
+
+function initializeTransactionComponents() {
+    // Initialize datepickers, filters, etc.
+    const filterForm = document.getElementById('filterForm');
+    if (filterForm) {
+        filterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            applyFilters();
+        });
+    }
+}
+
+function applyFilters() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    const amountRange = document.getElementById('amountRange').value;
+    
+    let url = `${contextPath}/manager/transactions?`;
+    if (startDate) url += `&startDate=${startDate}`;
+    if (endDate) url += `&endDate=${endDate}`;
+    if (amountRange) url += `&amountRange=${amountRange}`;
+    
+    loadTransactions(url);
+}
+
+function resetFilters() {
+    document.getElementById('filterForm').reset();
+    loadTransactions(`${contextPath}/manager/transactions`);
+}
+
+function loadTransactions(url) {
+    const mainContent = document.getElementById('main-content');
+    if (!mainContent) return;
+
+    // Show loading indicator
+    mainContent.innerHTML = `
+        <div class="d-flex justify-content-center align-items-center" style="min-height: 400px;">
+            <div class="text-center">
+                <div class="spinner-border text-maroon mb-3" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="text-muted">Loading Transactions...</p>
+            </div>
+        </div>
+    `;
+
+    // Fetch transactions content
+    fetch(url, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'text/html'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.text();
+    })
+    .then(html => {
+        // Create a temporary container
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+
+        // Find the transaction content in the response
+        const newContent = temp.querySelector('#transaction-content');
+        if (newContent) {
+            mainContent.innerHTML = newContent.innerHTML;
+        } else {
+            mainContent.innerHTML = html;
+        }
+        
+        // Initialize transaction-specific components
+        initializeTransactionComponents();
+        
+        // Update browser URL without page reload
+        window.history.pushState({}, 'Transactions - Manager Dashboard', url);
+        document.title = 'Transactions - Manager Dashboard';
+
+        // Update transaction statistics
+        updateTransactionStatistics();
+    })
+    .catch(error => {
+        console.error('Error loading transactions:', error);
+        mainContent.innerHTML = `
+            <div class="alert alert-danger mx-3 mt-3">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                Failed to load transactions. Please try again.
+            </div>
+        `;
+    });
+} 

@@ -24,6 +24,14 @@ import com.accounting.service.StudentService;
 import com.accounting.service.EmailService;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.http.ResponseEntity;
+import jakarta.servlet.http.HttpServletRequest;
+import com.accounting.model.enums.TransactionStatus;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ContentDisposition;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Controller
 @RequestMapping("/manager")
@@ -130,9 +138,34 @@ public class ManagerController {
     }
 
     @GetMapping("/transactions")
-    public String viewTransactions(Model model) {
+    public String viewTransactions(
+            Model model, 
+            HttpServletRequest request,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate,
+            @RequestParam(required = false) String amountRange) {
         try {
-            model.addAttribute("transactions", transactionService.getAllTransactions());
+            List<Transaction> transactions;
+            
+            // Apply filters if present
+            if (status != null || startDate != null || endDate != null || amountRange != null) {
+                transactions = transactionService.findTransactionsWithFilters(status, startDate, endDate, amountRange);
+            } else {
+                transactions = transactionService.getAllTransactions();
+            }
+            
+            model.addAttribute("transactions", transactions);
+            
+            // Add transaction statistics with consistent naming
+            model.addAttribute("totalTransactions", transactionService.getTotalTransactions());
+            model.addAttribute("pendingTransactions", transactionService.getTotalPendingTransactions());
+            model.addAttribute("completedTransactions", transactionService.getCompletedQueueCount());
+            model.addAttribute("failedTransactions", transactionService.getTotalFailedTransactions());
+            
+            if (isAjaxRequest(request)) {
+                return "manager/transactions :: #transaction-content";
+            }
             return "manager/transactions";
         } catch (Exception e) {
             log.error("Error loading transactions", e);
@@ -174,11 +207,88 @@ public class ManagerController {
         return response;
     }
 
+    @GetMapping("/transaction-statistics")
+    @PreAuthorize("hasRole('MANAGER')")
+    @ResponseBody
+    public Map<String, Object> getTransactionStatistics() {
+        Map<String, Object> statistics = new HashMap<>();
+        try {
+            statistics.put("totalTransactions", transactionService.getTotalTransactions());
+            statistics.put("pendingTransactions", transactionService.getTotalPendingTransactions());
+            statistics.put("completedTransactions", transactionService.getCompletedQueueCount());
+            statistics.put("failedTransactions", transactionService.getTotalFailedTransactions());
+        } catch (Exception e) {
+            log.error("Error fetching transaction statistics", e);
+            statistics.put("error", "Failed to fetch statistics");
+        }
+        return statistics;
+    }
+
     @GetMapping("/transactions/export")
-    public void exportTransactions(@RequestParam String format,
-                                 @RequestParam(required = false) String startDate,
-                                 @RequestParam(required = false) String endDate) {
-        // Implementation for exporting transactions
+    public ResponseEntity<byte[]> exportTransactions(
+            @RequestParam String format,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+        try {
+            byte[] content = transactionService.exportTransactions(format, startDate, endDate);
+            String filename = "transactions_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDisposition(ContentDisposition.builder("attachment")
+                .filename(filename + "." + format.toLowerCase())
+                .build());
+                
+            switch (format.toLowerCase()) {
+                case "pdf":
+                    headers.setContentType(MediaType.APPLICATION_PDF);
+                    break;
+                case "excel":
+                    headers.setContentType(MediaType.parseMediaType("application/vnd.ms-excel"));
+                    break;
+                case "csv":
+                    headers.setContentType(MediaType.parseMediaType("text/csv"));
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported format: " + format);
+            }
+            
+            return new ResponseEntity<>(content, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("Error exporting transactions", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    @PostMapping("/transactions/bulk-approve")
+    @ResponseBody
+    public Map<String, Object> bulkApprove(@RequestBody List<Long> transactionIds) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            transactionService.bulkUpdateStatus(transactionIds, TransactionStatus.COMPLETED);
+            response.put("success", true);
+            response.put("message", "Transactions approved successfully");
+        } catch (Exception e) {
+            log.error("Error in bulk approve", e);
+            response.put("success", false);
+            response.put("message", "Failed to approve transactions: " + e.getMessage());
+        }
+        return response;
+    }
+
+    @PostMapping("/transactions/bulk-reject")
+    @ResponseBody
+    public Map<String, Object> bulkReject(@RequestBody List<Long> transactionIds) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            transactionService.bulkUpdateStatus(transactionIds, TransactionStatus.FAILED);
+            response.put("success", true);
+            response.put("message", "Transactions rejected successfully");
+        } catch (Exception e) {
+            log.error("Error in bulk reject", e);
+            response.put("success", false);
+            response.put("message", "Failed to reject transactions: " + e.getMessage());
+        }
+        return response;
     }
 
     @GetMapping("/reports")
@@ -310,5 +420,9 @@ public class ManagerController {
             model.addAttribute("error", "Failed to load student details");
             return "redirect:/manager/student-approvals";
         }
+    }
+
+    private boolean isAjaxRequest(HttpServletRequest request) {
+        return "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
     }
 } 
