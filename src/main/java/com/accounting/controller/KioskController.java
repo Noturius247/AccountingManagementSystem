@@ -6,6 +6,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import com.accounting.service.KioskService;
 import com.accounting.service.QueueService;
+import com.accounting.service.PdfService;
 import com.accounting.model.Queue;
 import com.accounting.model.enums.QueueStatus;
 import com.accounting.model.enums.QueueType;
@@ -35,10 +36,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.http.HttpStatus;
 import com.accounting.exception.ErrorResponse;
 import java.time.LocalDateTime;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ContentDisposition;
+import java.time.format.DateTimeFormatter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller
 @RequestMapping("/kiosk")
 public class KioskController {
+
+    private static final Logger logger = LoggerFactory.getLogger(KioskController.class);
 
     @Autowired
     private KioskService kioskService;
@@ -61,6 +70,9 @@ public class KioskController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private PdfService pdfService;
+
     @GetMapping("")
     public String showKiosk() {
         return "features/kiosk";
@@ -69,6 +81,8 @@ public class KioskController {
     @GetMapping("/payment/{type}")
     public String showPaymentForm(@PathVariable String type) {
         switch(type) {
+            case "enrollment":
+                return "features/enrollment-payment";
             case "tuition":
                 return "features/tuition-payment";
             case "library":
@@ -81,16 +95,17 @@ public class KioskController {
                 return "features/graduation-payment";
             case "transcript":
                 return "features/transcript-payment";
-            case "chemistry":
-                return "features/chemistry-payment";
             default:
                 return "redirect:/kiosk";
         }
     }
 
     @GetMapping("/queue")
-    public String showQueue() {
-        return "features/queue";
+    public String showQueue(Authentication authentication) {
+        if (authentication != null && authentication.isAuthenticated()) {
+            return "features/queue";
+        }
+        return "redirect:/kiosk/queue/status";
     }
 
     @GetMapping("/queue/status")
@@ -161,17 +176,18 @@ public class KioskController {
     @GetMapping("/queue-status")
     @ResponseBody
     public ResponseEntity<Object> getQueueStatus(Authentication authentication) {
-        try {
-            if (authentication == null || !authentication.isAuthenticated()) {
-                return new ResponseEntity<Object>(new ErrorResponse(
-                    LocalDateTime.now(),
-                    HttpStatus.UNAUTHORIZED.value(),
-                    "Authentication required",
-                    "Please log in to check queue status",
-                    "/kiosk/queue-status"
-                ), HttpStatus.UNAUTHORIZED);
-            }
+        if (authentication == null || !authentication.isAuthenticated()) {
+            // For public users, only return current processing number
+            Queue currentQueue = queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PROCESSING)
+                .orElse(queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.WAITING)
+                    .orElse(null));
             
+            Map<String, Object> response = new HashMap<>();
+            response.put("currentProcessingNumber", currentQueue != null ? currentQueue.getQueueNumber() : "No queue being processed");
+            return ResponseEntity.ok(response);
+        }
+        
+        try {
             String username = authentication.getName();
             User user = userService.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -208,8 +224,14 @@ public class KioskController {
 
     @PostMapping("/cancel-queue")
     @ResponseBody
-    public Map<String, Object> cancelQueue(@RequestParam String number) {
+    public Map<String, Object> cancelQueue(@RequestParam String number, Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            response.put("success", false);
+            response.put("error", "Authentication required to cancel queue");
+            return response;
+        }
+        
         try {
             queueService.cancelQueue(number);
             response.put("success", true);
@@ -226,6 +248,66 @@ public class KioskController {
         Payment payment = paymentService.getPaymentById(id);
         model.addAttribute("payment", payment);
         return "features/payment-confirmation";
+    }
+
+    @GetMapping("/payment/{id}/download-receipt")
+    public ResponseEntity<byte[]> downloadReceipt(@PathVariable Long id) {
+        try {
+            Payment payment = paymentService.getPaymentById(id);
+            if (payment == null || payment.getPaymentStatus() != PaymentStatus.PROCESSED) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // Generate receipt content
+            String receiptContent = generateReceiptContent(payment);
+            byte[] pdfContent = pdfService.generatePdf(receiptContent);
+
+            // Set up response headers for PDF download
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDisposition(ContentDisposition.builder("attachment")
+                .filename("receipt_" + payment.getPaymentNumber() + ".pdf")
+                .build());
+
+            return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfContent);
+        } catch (Exception e) {
+            logger.error("Error generating receipt PDF", e);
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    private String generateReceiptContent(Payment payment) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        StringBuilder receipt = new StringBuilder();
+        
+        receipt.append("=================================\n");
+        receipt.append("         PAYMENT RECEIPT         \n");
+        receipt.append("=================================\n\n");
+        
+        receipt.append("Transaction ID: ").append(payment.getTransactionId()).append("\n");
+        receipt.append("Date: ").append(payment.getProcessedAt().format(formatter)).append("\n");
+        receipt.append("Payment Number: ").append(payment.getPaymentNumber()).append("\n");
+        receipt.append("Description: ").append(payment.getDescription()).append("\n\n");
+        
+        receipt.append("Amount: PHP ").append(String.format("%,.2f", payment.getAmount())).append("\n");
+        if (payment.getTaxAmount().compareTo(BigDecimal.ZERO) > 0) {
+            receipt.append("Tax: PHP ").append(String.format("%,.2f", payment.getTaxAmount())).append("\n");
+        }
+        receipt.append("Payment Method: ").append(payment.getPaymentMethod()).append("\n");
+        receipt.append("Status: ").append(payment.getPaymentStatus()).append("\n\n");
+        
+        if (payment.getQueueNumber() != null) {
+            receipt.append("Queue Number: ").append(payment.getQueueNumber()).append("\n");
+        }
+        
+        receipt.append("=================================\n");
+        receipt.append("Thank you for your payment!\n");
+        receipt.append("This is your official receipt.\n");
+        receipt.append("=================================");
+        
+        return receipt.toString();
     }
 
     @PostMapping("/payment/tuition/process")
@@ -514,5 +596,69 @@ public class KioskController {
             response.put("error", e.getMessage());
         }
         return response;
+    }
+
+    @PostMapping("/payment/enrollment/process")
+    public String processEnrollmentPayment(
+            @RequestParam String fullName,
+            @RequestParam String email,
+            @RequestParam String contactNumber,
+            @RequestParam String program,
+            @RequestParam String academicYear,
+            @RequestParam String semester,
+            @RequestParam String amount,
+            Model model) {
+        try {
+            // Create a unique applicant ID that will be used during registration
+            String applicantId = "APL-" + System.currentTimeMillis() + "-" + fullName.replaceAll("\\s+", "").substring(0, Math.min(fullName.length(), 5)).toUpperCase();
+
+            // Create a temporary reference number for the enrollment
+            String enrollmentRef = "ENR-" + System.currentTimeMillis();
+
+            // Create payment record without student association
+            Payment payment = new Payment();
+            payment.setDescription("New Student Enrollment - " + program + " (" + academicYear + " " + semester + ")");
+            payment.setAmount(amount);
+            payment.setPaymentStatus(PaymentStatus.PENDING);
+            payment.setType(PaymentType.CASH);
+            payment.setPaymentMethod("KIOSK");
+            payment.setTransactionReference(enrollmentRef);
+            
+            // Store applicant information in payment metadata
+            Map<String, String> metadata = new HashMap<>();
+            metadata.put("applicantId", applicantId);  // Add applicant ID to metadata
+            metadata.put("fullName", fullName);
+            metadata.put("email", email);
+            metadata.put("contactNumber", contactNumber);
+            metadata.put("program", program);
+            metadata.put("academicYear", academicYear);
+            metadata.put("semester", semester);
+            metadata.put("paymentStatus", "ENROLLMENT_PAID");  // Add payment status for registration
+            payment.setMetadata(metadata);
+            
+            // Process the payment
+            Payment processedPayment = paymentService.processPayment(payment);
+            
+            // Generate queue number
+            String queueNumber = queueService.generateQueueNumber();
+            queueService.createQueueEntry(queueNumber, processedPayment.getId());
+            
+            // Add payment details to model for confirmation
+            model.addAttribute("payment", processedPayment);
+            model.addAttribute("queueNumber", queueNumber);
+            model.addAttribute("enrollmentRef", enrollmentRef);
+            
+            return "features/payment-confirmation";
+        } catch (Exception e) {
+            model.addAttribute("error", "Failed to process payment: " + e.getMessage());
+            model.addAttribute("fullName", fullName);
+            model.addAttribute("email", email);
+            model.addAttribute("contactNumber", contactNumber);
+            model.addAttribute("program", program);
+            model.addAttribute("academicYear", academicYear);
+            model.addAttribute("semester", semester);
+            model.addAttribute("amount", amount);
+            return "features/enrollment-payment";
+        }
     }
 } 

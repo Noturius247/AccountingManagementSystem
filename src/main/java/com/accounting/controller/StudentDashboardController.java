@@ -3,6 +3,7 @@ package com.accounting.controller;
 import com.accounting.model.Student;
 import com.accounting.model.Transaction;
 import com.accounting.model.Document;
+import com.accounting.model.Payment;
 import com.accounting.service.StudentService;
 import com.accounting.service.TransactionService;
 import com.accounting.service.DocumentService;
@@ -65,9 +66,13 @@ public class StudentDashboardController {
         double lastPayment = transactionService.getLastPaymentAmount(student.getId());
         String dueDate = transactionService.getNextDueDate(student.getId());
         
+        // Get recent payments for this student
+        List<Transaction> recentPayments = transactionService.getRecentTransactions(student.getId(), 5);
+        
         model.addAttribute("currentBalance", String.format("%.2f", currentBalance));
         model.addAttribute("lastPayment", String.format("%.2f", lastPayment));
         model.addAttribute("dueDate", dueDate);
+        model.addAttribute("recentPayments", recentPayments);
 
         // Get document information
         List<Document> documents = documentService.getStudentDocuments(student.getId());

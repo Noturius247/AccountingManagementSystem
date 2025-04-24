@@ -17,6 +17,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Currency;
+import java.util.Map;
+import java.util.HashMap;
 
 @Entity
 @Table(name = "payments")
@@ -77,17 +79,11 @@ public class Payment {
     @Column
     private String receiptUrl;
 
-    @Column
-    private String referenceNumber;
-
-    @Column
-    private String paymentGatewayResponse;
+    @Column(name = "transaction_reference")
+    private String transactionReference;
 
     @Column(name = "payment_number", nullable = false, unique = true)
     private String paymentNumber;
-
-    @Column(name = "transaction_reference")
-    private String transactionReference;
 
     @Column(length = 3)
     private String currency;
@@ -101,6 +97,13 @@ public class Payment {
 
     @Column(name = "tax_amount", precision = 19, scale = 2)
     private BigDecimal taxAmount;
+
+    @ElementCollection
+    @CollectionTable(name = "payment_metadata", 
+        joinColumns = @JoinColumn(name = "payment_id"))
+    @MapKeyColumn(name = "metadata_key")
+    @Column(name = "metadata_value")
+    private Map<String, String> metadata = new HashMap<>();
 
     @PrePersist
     protected void onCreate() {

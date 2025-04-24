@@ -25,14 +25,15 @@
     
     <style>
         :root {
-            --primary-color: #3498db;
-            --secondary-color: #2ecc71;
-            --success-color: #2ecc71;
-            --danger-color: #e74c3c;
-            --warning-color: #f39c12;
+            --primary-color: #800000;    /* Maroon */
+            --secondary-color: #D4AF37;  /* Gold */
+            --accent-color: #FFD700;     /* Bright Gold */
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
             --info-color: #17a2b8;
-            --dark-color: #2c3e50;
-            --light-color: #ecf0f1;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
             --border-color: #dee2e6;
             --text-color: #212529;
             --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
@@ -201,8 +202,25 @@
         }
 
         .btn-primary {
-            background: var(--primary-color);
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
             color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #600000;  /* Darker maroon */
+            border-color: #600000;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #B08F26;  /* Darker gold */
+            border-color: #B08F26;
         }
 
         .btn-success {
@@ -263,9 +281,9 @@
         }
 
         .table th {
-            background-color: #f8f9fa;
+            background-color: var(--light-color);
             font-weight: 600;
-            color: var(--dark-color);
+            color: var(--primary-color);
         }
 
         .table tr:hover {
@@ -441,20 +459,20 @@
 
         .progress-bar {
             height: 100%;
-            background-color: #4CAF50;
+            background-color: var(--primary-color);
             transition: width 0.3s;
         }
 
         .progress-bar.bg-success {
-            background-color: #2ecc71;
+            background-color: var(--success-color);
         }
 
         .progress-bar.bg-warning {
-            background-color: #f39c12;
+            background-color: var(--warning-color);
         }
 
         .progress-bar.bg-danger {
-            background-color: #e74c3c;
+            background-color: var(--danger-color);
         }
 
         .chart-container {
@@ -680,7 +698,11 @@
         }
 
         .border-left-primary {
-            border-left: 0.25rem solid #4e73df !important;
+            border-left: 0.25rem solid var(--primary-color) !important;
+        }
+
+        .border-left-secondary {
+            border-left: 0.25rem solid var(--secondary-color) !important;
         }
 
         .border-left-success {
@@ -701,7 +723,11 @@
         }
 
         .text-primary {
-            color: #4e73df !important;
+            color: var(--primary-color) !important;
+        }
+
+        .text-secondary {
+            color: var(--secondary-color) !important;
         }
 
         .text-success {
@@ -727,12 +753,12 @@
         }
 
         .table thead th {
-            background-color: #f8f9fc;
+            background-color: var(--light-color);
             border-top: none;
             font-weight: 600;
             text-transform: uppercase;
             font-size: 0.8rem;
-            color: #4e73df;
+            color: var(--primary-color);
         }
 
         .table td {
@@ -792,7 +818,7 @@
         }
 
         .modal-header {
-            background-color: #4e73df;
+            background-color: var(--primary-color);
             color: white;
             border-top-left-radius: 0.35rem;
             border-top-right-radius: 0.35rem;
@@ -866,16 +892,6 @@
                 <div id="main-content">
                     <!-- Dashboard Content -->
                     <div class="manager-dashboard">
-                        <div class="dashboard-header">
-                            <h1>Manager Dashboard</h1>
-                            <div class="notification-bell">
-                                <i class="bi bi-bell"></i>
-                                <c:if test="${pendingCount > 0}">
-                                    <span class="notification-count">${pendingCount}</span>
-                                </c:if>
-                            </div>
-                        </div>
-
                         <div class="error-message" id="errorMessage"></div>
                         <div class="success-message" id="successMessage"></div>
                         
@@ -978,83 +994,6 @@
                                                     </small>
                                                 </div>
                                             </c:forEach>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h5>Team Members</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="team-list">
-                                            <c:forEach items="${teamMembers}" var="member">
-                                                <div class="team-member">
-                                                    <div class="member-avatar">
-                                                        ${member.name.charAt(0)}
-                                                    </div>
-                                                    <div class="member-info">
-                                                        <div class="member-name">${member.name}</div>
-                                                        <div class="member-role">${member.role}</div>
-                                                    </div>
-                                                    <div class="member-status status-${member.status.toLowerCase()}"></div>
-                                                </div>
-                                            </c:forEach>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-header">
-                                        <h5>Recent Transactions</h5>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="table-responsive">
-                                            <table class="table table-hover">
-                                                <thead>
-                                                    <tr>
-                                                        <th>ID</th>
-                                                        <th>Date</th>
-                                                        <th>Type</th>
-                                                        <th>Amount</th>
-                                                        <th>Status</th>
-                                                        <th>Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <c:forEach items="${recentTransactions}" var="transaction">
-                                                        <tr>
-                                                            <td>${transaction.id}</td>
-                                                            <td>
-                                                                ${fn:replace(transaction.createdAt.toString(), 'T', ' ')}
-                                                            </td>
-                                                            <td>${transaction.type}</td>
-                                                            <td><fmt:formatNumber value="${transaction.amount}" type="currency"/></td>
-                                                            <td>
-                                                                <span class="badge ${transaction.status == 'COMPLETED' ? 'bg-success' : 
-                                                                              transaction.status == 'PENDING' ? 'bg-warning' : 'bg-danger'}">
-                                                                    ${transaction.status}
-                                                                </span>
-                                                            </td>
-                                                            <td>
-                                                                <button class="btn btn-sm btn-info" onclick="viewTransaction('${transaction.id}')">
-                                                                    <i class="bi bi-eye"></i>
-                                                                </button>
-                                                                <c:if test="${transaction.status == 'PENDING'}">
-                                                                    <button class="btn btn-sm btn-success" onclick="approveTransaction('${transaction.id}')">
-                                                                        <i class="bi bi-check"></i>
-                                                                    </button>
-                                                                </c:if>
-                                                            </td>
-                                                        </tr>
-                                                    </c:forEach>
-                                                </tbody>
-                                            </table>
                                         </div>
                                     </div>
                                 </div>

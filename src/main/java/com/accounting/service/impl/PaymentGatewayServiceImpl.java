@@ -4,6 +4,7 @@ import com.accounting.service.PaymentGatewayService;
 import com.accounting.model.Payment;
 import com.accounting.model.enums.PaymentStatus;
 import com.accounting.repository.PaymentRepository;
+import com.accounting.service.PdfService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +14,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 import java.util.HashMap;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Service
@@ -21,10 +23,12 @@ public class PaymentGatewayServiceImpl implements PaymentGatewayService {
     private static final Logger logger = LoggerFactory.getLogger(PaymentGatewayServiceImpl.class);
 
     private final PaymentRepository paymentRepository;
+    private final PdfService pdfService;
 
     @Autowired
-    public PaymentGatewayServiceImpl(PaymentRepository paymentRepository) {
+    public PaymentGatewayServiceImpl(PaymentRepository paymentRepository, PdfService pdfService) {
         this.paymentRepository = paymentRepository;
+        this.pdfService = pdfService;
     }
 
     @Override
@@ -39,8 +43,13 @@ public class PaymentGatewayServiceImpl implements PaymentGatewayService {
             boolean success = simulatePaymentProcessing(payment);
             
             if (success) {
-                payment.setPaymentStatus(PaymentStatus.COMPLETED);
+                payment.setPaymentStatus(PaymentStatus.PROCESSED);
                 payment.setProcessedAt(LocalDateTime.now());
+                
+                // Generate and print receipt
+                String receiptContent = generateReceiptContent(payment);
+                byte[] pdfReceipt = pdfService.generatePdf(receiptContent);
+                printReceipt(pdfReceipt); // This will handle the actual printing
             } else {
                 payment.setPaymentStatus(PaymentStatus.FAILED);
             }
@@ -80,7 +89,7 @@ public class PaymentGatewayServiceImpl implements PaymentGatewayService {
             
             boolean success = simulatePaymentProcessing(refund);
             if (success) {
-                refund.setPaymentStatus(PaymentStatus.COMPLETED);
+                refund.setPaymentStatus(PaymentStatus.PROCESSED);
                 refund.setProcessedAt(LocalDateTime.now());
             } else {
                 refund.setPaymentStatus(PaymentStatus.FAILED);
@@ -97,7 +106,7 @@ public class PaymentGatewayServiceImpl implements PaymentGatewayService {
     public Payment schedulePayment(Payment payment, String schedule) {
         try {
             payment.setTransactionId(UUID.randomUUID().toString());
-            payment.setPaymentStatus(PaymentStatus.SCHEDULED);
+            payment.setPaymentStatus(PaymentStatus.PENDING);
             payment.setSchedule(schedule);
             payment.setCreatedAt(LocalDateTime.now());
             return paymentRepository.save(payment);
@@ -113,7 +122,7 @@ public class PaymentGatewayServiceImpl implements PaymentGatewayService {
             Payment payment = paymentRepository.findByScheduleId(scheduleId)
                 .orElseThrow(() -> new RuntimeException("Scheduled payment not found"));
             
-            payment.setPaymentStatus(PaymentStatus.CANCELLED);
+            payment.setPaymentStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);
             return true;
         } catch (Exception e) {
@@ -151,6 +160,59 @@ public class PaymentGatewayServiceImpl implements PaymentGatewayService {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return false;
+        }
+    }
+
+    private String generateReceiptContent(Payment payment) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        StringBuilder receipt = new StringBuilder();
+        
+        receipt.append("=================================\n");
+        receipt.append("         PAYMENT RECEIPT         \n");
+        receipt.append("=================================\n\n");
+        
+        receipt.append("Transaction ID: ").append(payment.getTransactionId()).append("\n");
+        receipt.append("Date: ").append(payment.getProcessedAt().format(formatter)).append("\n");
+        receipt.append("Payment Number: ").append(payment.getPaymentNumber()).append("\n");
+        receipt.append("Description: ").append(payment.getDescription()).append("\n\n");
+        
+        receipt.append("Amount: PHP ").append(String.format("%,.2f", payment.getAmount())).append("\n");
+        if (payment.getTaxAmount().compareTo(BigDecimal.ZERO) > 0) {
+            receipt.append("Tax: PHP ").append(String.format("%,.2f", payment.getTaxAmount())).append("\n");
+        }
+        receipt.append("Payment Method: ").append(payment.getPaymentMethod()).append("\n");
+        receipt.append("Status: ").append(payment.getPaymentStatus()).append("\n\n");
+        
+        if (payment.getQueueNumber() != null) {
+            receipt.append("Queue Number: ").append(payment.getQueueNumber()).append("\n");
+        }
+        
+        receipt.append("=================================\n");
+        receipt.append("Thank you for your payment!\n");
+        receipt.append("This is your official receipt.\n");
+        receipt.append("=================================");
+        
+        return receipt.toString();
+    }
+
+    private void printReceipt(byte[] pdfReceipt) {
+        try {
+            // Here you would implement the actual printing logic
+            // This could involve sending to a thermal printer or regular printer
+            // For now, we'll just log that we're printing
+            logger.info("Printing receipt...");
+            
+            // TODO: Implement actual printer integration
+            // Example: Use Java Print Service
+            // PrintService printService = PrintServiceLookup.lookupDefaultPrintService();
+            // if (printService != null) {
+            //     DocPrintJob job = printService.createPrintJob();
+            //     Doc doc = new SimpleDoc(pdfReceipt, DocFlavor.BYTE_ARRAY.AUTOSENSE, null);
+            //     job.print(doc, null);
+            // }
+        } catch (Exception e) {
+            logger.error("Error printing receipt", e);
+            // Don't throw the exception as printing failure shouldn't affect payment processing
         }
     }
 } 

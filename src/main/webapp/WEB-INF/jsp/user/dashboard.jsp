@@ -99,8 +99,8 @@
                 <h1 class="h2">Welcome, ${user.firstName}!</h1>
                 <div class="btn-toolbar mb-2 mb-md-0">
                     <div class="btn-group me-2">
-                        <a href="${pageContext.request.contextPath}/kiosk" class="btn btn-primary" target="_blank">
-                            <i class="bi bi-display me-1"></i> Access Kiosk
+                        <a href="${pageContext.request.contextPath}/kiosk/payment/enrollment" class="btn btn-primary">
+                            <i class="bi bi-person-plus me-1"></i> New Student Enrollment
                         </a>
                         <button type="button" class="btn btn-sm btn-outline-secondary">Export</button>
                         <button type="button" class="btn btn-sm btn-outline-secondary">Print</button>

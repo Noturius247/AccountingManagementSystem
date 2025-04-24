@@ -1,6 +1,12 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ page import="java.time.format.DateTimeFormatter" %>
+<%
+    DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
+    request.setAttribute("dateFormatter", dateFormatter);
+%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -267,12 +273,42 @@
                     <h3>Financial Status</h3>
                 </div>
                 <div class="info-card-content">
+                    <p>Student ID</p>
+                    <div class="value">${studentId}</div>
                     <p>Current Balance</p>
                     <div class="value">₱${currentBalance}</div>
                     <p>Last Payment</p>
                     <div class="value">₱${lastPayment}</div>
                     <p>Payment Due Date</p>
                     <div class="value">${dueDate}</div>
+                    <p>Payment History</p>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <c:forEach items="${recentPayments}" var="transaction">
+                                    <tr>
+                                        <td>${transaction.createdAt.format(dateFormatter)}</td>
+                                        <td>${transaction.transactionNumber}</td>
+                                        <td>₱${transaction.amount}</td>
+                                        <td>
+                                            <span class="badge ${transaction.status == 'COMPLETED' ? 'bg-success' : 
+                                                              transaction.status == 'PENDING' ? 'bg-warning' : 'bg-danger'}">
+                                                ${transaction.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </c:forEach>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 <div class="action-buttons">
                     <a href="${pageContext.request.contextPath}/payments" class="btn btn-primary">

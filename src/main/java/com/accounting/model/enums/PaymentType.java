@@ -1,8 +1,8 @@
 package com.accounting.model.enums;
 
 public enum PaymentType {
+    BANK,
     CASH,
-    CREDIT,
-    DEBIT,
-    BANK_TRANSFER
+    CARD,
+    ONLINE
 } 

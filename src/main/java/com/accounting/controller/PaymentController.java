@@ -27,6 +27,16 @@ public class PaymentController {
     @GetMapping
     public String redirectToKiosk(RedirectAttributes redirectAttributes) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        
+        // Check if user has ROLE_STUDENT
+        boolean isStudent = authentication.getAuthorities().stream()
+            .anyMatch(a -> a.getAuthority().equals("ROLE_STUDENT"));
+            
+        if (!isStudent) {
+            // If not a student, redirect to enrollment payment
+            return "redirect:/kiosk/payment/enrollment";
+        }
+        
         String username = authentication.getName();
         
         // Get student information
