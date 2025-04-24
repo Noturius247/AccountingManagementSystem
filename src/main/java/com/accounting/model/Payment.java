@@ -105,6 +105,18 @@ public class Payment {
     @Column(name = "metadata_value")
     private Map<String, String> metadata = new HashMap<>();
 
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
+
+    @Column(name = "purpose")
+    private String purpose;
+
+    @Column(name = "base_price", precision = 19, scale = 2)
+    private BigDecimal basePrice;
+
+    @Column(name = "copies")
+    private Integer copies;
+
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) {
@@ -252,5 +264,13 @@ public class Payment {
 
     public void setPaymentStatus(PaymentStatus paymentStatus) {
         this.paymentStatus = paymentStatus;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
     }
 } 

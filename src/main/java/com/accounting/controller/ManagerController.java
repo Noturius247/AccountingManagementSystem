@@ -227,8 +227,8 @@ public class ManagerController {
     @GetMapping("/transactions/export")
     public ResponseEntity<byte[]> exportTransactions(
             @RequestParam String format,
-            @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate) {
+                                 @RequestParam(required = false) String startDate,
+                                 @RequestParam(required = false) String endDate) {
         try {
             byte[] content = transactionService.exportTransactions(format, startDate, endDate);
             String filename = "transactions_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));

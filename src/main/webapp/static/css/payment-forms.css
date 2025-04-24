@@ -1,0 +1,58 @@
+/* Error message styling */
+.error-message {
+    color: var(--danger-color);
+    background-color: #ffe6e6;
+    padding: 10px;
+    border-radius: var(--border-radius-sm);
+    margin-top: 5px;
+    font-size: 0.9em;
+    border: 1px solid var(--danger-color);
+    display: none;
+}
+
+/* Loading spinner styling */
+.loading {
+    display: none;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+/* Student info styling */
+.student-info {
+    display: none;
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 20px;
+}
+
+.student-info h3 {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    font-size: 1.1em;
+}
+
+.student-info p {
+    margin: 5px 0;
+    color: var(--dark-color);
+} 

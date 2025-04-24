@@ -103,7 +103,7 @@ public class KioskController {
     @GetMapping("/queue")
     public String showQueue(Authentication authentication) {
         if (authentication != null && authentication.isAuthenticated()) {
-            return "features/queue";
+        return "features/queue";
         }
         return "redirect:/kiosk/queue/status";
     }
@@ -176,7 +176,7 @@ public class KioskController {
     @GetMapping("/queue-status")
     @ResponseBody
     public ResponseEntity<Object> getQueueStatus(Authentication authentication) {
-        if (authentication == null || !authentication.isAuthenticated()) {
+            if (authentication == null || !authentication.isAuthenticated()) {
             // For public users, only return current processing number
             Queue currentQueue = queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PROCESSING)
                 .orElse(queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.WAITING)
@@ -316,49 +316,122 @@ public class KioskController {
             @RequestParam String academicYear,
             @RequestParam String semester,
             @RequestParam String amount,
+            @RequestParam(required = false) String notes,
             Model model) {
         try {
-            // First check if student exists
-            Student student = studentRepository.findByStudentId(studentId)
-                .orElseThrow(() -> new EntityNotFoundException("Student ID not found. Please register first."));
-
-            // Validate amount
-            BigDecimal paymentAmount = new BigDecimal(amount);
-            if (paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("Payment amount must be greater than 0");
+            logger.debug("Processing tuition payment request for student: {}", studentId);
+            // Input validation
+            if (studentId == null || studentId.trim().isEmpty()) {
+                model.addAttribute("error", "Student ID is required");
+                return "features/tuition-payment";
             }
 
-            // Create payment record
-            Payment payment = new Payment();
-            payment.setDescription("Tuition Payment - " + academicYear + " Semester " + semester);
-            payment.setAmount(amount);
-            payment.setPaymentStatus(PaymentStatus.PENDING);
-            payment.setType(PaymentType.CASH);
-            payment.setUser(student.getUser());
-            payment.setPaymentMethod("KIOSK");
-            payment.setTransactionReference("TUI-" + System.currentTimeMillis());
-            
-            // Process the payment
-            Payment processedPayment = paymentService.processPayment(payment);
-            
-            // Generate queue number
-            String queueNumber = queueService.generateQueueNumber();
-            queueService.createQueueEntry(queueNumber, processedPayment.getId());
-            
-            // Add payment details to model for confirmation
-            model.addAttribute("payment", processedPayment);
-            model.addAttribute("queueNumber", queueNumber);
-            model.addAttribute("student", student);
-            
-            return "features/payment-confirmation";
+            // Academic Year validation
+            if (!isValidAcademicYear(academicYear)) {
+                model.addAttribute("error", "Invalid Academic Year format. Expected format: YYYY-YYYY");
+                return "features/tuition-payment";
+            }
+
+            // Semester validation
+            if (!isValidSemester(semester)) {
+                model.addAttribute("error", "Invalid Semester. Must be FIRST, SECOND, or SUMMER");
+                return "features/tuition-payment";
+            }
+
+            // Amount validation
+            BigDecimal paymentAmount;
+            try {
+                paymentAmount = new BigDecimal(amount);
+                if (paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                    model.addAttribute("error", "Payment amount must be greater than 0");
+                    return "features/tuition-payment";
+                }
+            } catch (NumberFormatException e) {
+                model.addAttribute("error", "Invalid amount format");
+                return "features/tuition-payment";
+            }
+
+            // Student validation
+            Student student;
+            try {
+                student = studentRepository.findByStudentId(studentId)
+                .orElseThrow(() -> new EntityNotFoundException("Student ID not found. Please register first."));
+
+                // Validate if semester matches student's current semester
+                if (!semester.equals(student.getSemester())) {
+                    model.addAttribute("error", "Selected semester does not match student's current semester: " + student.getSemester());
+                    return "features/tuition-payment";
+                }
+
+                // Validate if academic year matches student's current academic year
+                if (!academicYear.equals(student.getAcademicYear())) {
+                    model.addAttribute("error", "Selected academic year does not match student's current academic year: " + student.getAcademicYear());
+                    return "features/tuition-payment";
+                }
+
+            } catch (EntityNotFoundException e) {
+                model.addAttribute("error", e.getMessage());
+                return "features/tuition-payment";
+            }
+
+            try {
+                // Create temporary payment object (not saved to database)
+                Payment payment = Payment.builder()
+                    .description("Tuition Payment - " + academicYear + " Semester " + semester)
+                    .amount(paymentAmount)
+                    .type(PaymentType.CASH)
+                    .user(student.getUser())
+                    .paymentMethod("KIOSK")
+                    .transactionReference("TUI-" + System.currentTimeMillis())
+                    .notes(notes != null ? notes.trim() : null)
+                    .build();
+                
+                model.addAttribute("payment", payment);
+                model.addAttribute("student", student);
+                
+                return "features/payment-confirmation";
+            } catch (Exception e) {
+                logger.error("Error preparing payment: {}", e.getMessage());
+                model.addAttribute("error", "Error preparing payment. Please try again.");
+                return "features/tuition-payment";
+            }
         } catch (Exception e) {
-            model.addAttribute("error", "Failed to process payment: " + e.getMessage());
+            logger.error("Unexpected error in tuition payment: {}", e.getMessage());
+            model.addAttribute("error", "An unexpected error occurred. Please try again later.");
+            // Preserve form data
             model.addAttribute("studentId", studentId);
             model.addAttribute("academicYear", academicYear);
             model.addAttribute("semester", semester);
             model.addAttribute("amount", amount);
+            model.addAttribute("notes", notes);
             return "features/tuition-payment";
         }
+    }
+
+    private boolean isValidAcademicYear(String academicYear) {
+        if (academicYear == null || academicYear.trim().isEmpty()) {
+            return false;
+        }
+        // Check format YYYY-YYYY
+        String[] years = academicYear.split("-");
+        if (years.length != 2) {
+            return false;
+        }
+        try {
+            int firstYear = Integer.parseInt(years[0]);
+            int secondYear = Integer.parseInt(years[1]);
+            // Validate year range and that second year is one more than first year
+            return firstYear >= 2000 && firstYear <= 2100 && secondYear == firstYear + 1;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private boolean isValidSemester(String semester) {
+        if (semester == null || semester.trim().isEmpty()) {
+            return false;
+        }
+        return semester.equals("FIRST") || semester.equals("SECOND") || semester.equals("SUMMER");
     }
 
     @PostMapping("/verify-student")
@@ -368,10 +441,15 @@ public class KioskController {
         try {
             Student student = studentRepository.findByStudentId(studentId)
                 .orElseThrow(() -> new EntityNotFoundException("Student not found"));
+            
             response.put("success", true);
-            response.put("studentName", student.getUser().getUsername());
+            response.put("studentId", student.getStudentId());
+            response.put("fullName", student.getFullName());
             response.put("program", student.getProgram());
             response.put("yearLevel", student.getYearLevel());
+            response.put("semester", student.getSemester());
+            response.put("academicYear", student.getAcademicYear());
+            
         } catch (Exception e) {
             response.put("success", false);
             response.put("error", "Invalid Student ID");
@@ -382,36 +460,77 @@ public class KioskController {
     @PostMapping("/payment/library/process")
     public String processLibraryPayment(
             @RequestParam String studentId,
-            @RequestParam String studentName,
+            @RequestParam String feeType,
+            @RequestParam(required = false) String description,
             @RequestParam(defaultValue = "500.00") String amount,
             Model model) {
         try {
-            Student student = studentRepository.findByStudentId(studentId)
-                .orElseThrow(() -> new EntityNotFoundException("Student ID not found. Please register first."));
-
-            BigDecimal paymentAmount = new BigDecimal(amount);
-            if (paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("Payment amount must be greater than 0");
+            // Input validation
+            if (studentId == null || studentId.trim().isEmpty()) {
+                model.addAttribute("error", "Student ID is required");
+                return "features/library-payment";
             }
 
-            Payment payment = new Payment();
-            payment.setDescription("Library Fee Payment");
-            payment.setAmount(amount);
-            payment.setPaymentStatus(PaymentStatus.PENDING);
-            payment.setType(PaymentType.CASH);
-            payment.setUser(student.getUser());
-            payment.setPaymentMethod("KIOSK");
-            payment.setTransactionReference("LIB-" + System.currentTimeMillis());
-            
-            Payment processedPayment = paymentService.processPayment(payment);
-            String queueNumber = queueService.generateQueueNumber();
-            queueService.createQueueEntry(queueNumber, processedPayment.getId());
-            
-            return "redirect:/kiosk/queue/status?number=" + queueNumber;
+            if (feeType == null || feeType.trim().isEmpty()) {
+                model.addAttribute("error", "Fee Type is required");
+                return "features/library-payment";
+            }
+
+            // Amount validation
+            BigDecimal paymentAmount;
+            try {
+                paymentAmount = new BigDecimal(amount);
+            if (paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                    model.addAttribute("error", "Payment amount must be greater than 0");
+                    return "features/library-payment";
+                }
+            } catch (NumberFormatException e) {
+                model.addAttribute("error", "Invalid amount format");
+                return "features/library-payment";
+            }
+
+            // Student validation
+            Student student;
+            try {
+                student = studentRepository.findByStudentId(studentId)
+                    .orElseThrow(() -> new EntityNotFoundException("Student ID not found. Please register first."));
+            } catch (EntityNotFoundException e) {
+                model.addAttribute("error", e.getMessage());
+                return "features/library-payment";
+            }
+
+            try {
+                String notes = String.format("Fee Type: %s%s", 
+                    feeType,
+                    (description != null && !description.trim().isEmpty()) ? 
+                        "\nDescription: " + description.trim() : "");
+
+                // Create temporary payment object (not saved to database)
+                Payment payment = Payment.builder()
+                    .description("Library Fee Payment - " + feeType)
+                    .amount(paymentAmount)
+                    .type(PaymentType.CASH)
+                    .user(student.getUser())
+                    .paymentMethod("KIOSK")
+                    .transactionReference("LIB-" + System.currentTimeMillis())
+                    .notes(notes)
+                    .build();
+                
+                model.addAttribute("payment", payment);
+                model.addAttribute("student", student);
+                
+                return "features/payment-confirmation";
+            } catch (Exception e) {
+                logger.error("Error preparing payment: {}", e.getMessage());
+                model.addAttribute("error", "Error preparing payment. Please try again.");
+                return "features/library-payment";
+            }
         } catch (Exception e) {
-            model.addAttribute("error", "Failed to process payment: " + e.getMessage());
+            logger.error("Unexpected error in library payment: {}", e.getMessage());
+            model.addAttribute("error", "An unexpected error occurred. Please try again later.");
             model.addAttribute("studentId", studentId);
-            model.addAttribute("studentName", studentName);
+            model.addAttribute("feeType", feeType);
+            model.addAttribute("description", description);
             model.addAttribute("amount", amount);
             return "features/library-payment";
         }
@@ -433,22 +552,22 @@ public class KioskController {
                 throw new IllegalArgumentException("Payment amount must be greater than 0");
             }
 
-            Payment payment = new Payment();
-            payment.setDescription("Laboratory Fee Payment - " + labType);
-            payment.setAmount(amount);
-            payment.setPaymentStatus(PaymentStatus.PENDING);
-            payment.setType(PaymentType.CASH);
-            payment.setUser(student.getUser());
-            payment.setPaymentMethod("KIOSK");
-            payment.setTransactionReference("LAB-" + System.currentTimeMillis());
+            // Create temporary payment object (not saved to database)
+            Payment payment = Payment.builder()
+                .description("Laboratory Fee Payment - " + labType)
+                .amount(paymentAmount)
+                .type(PaymentType.CASH)
+                .user(student.getUser())
+                .paymentMethod("KIOSK")
+                .transactionReference("LAB-" + System.currentTimeMillis())
+                .build();
             
-            Payment processedPayment = paymentService.processPayment(payment);
-            String queueNumber = queueService.generateQueueNumber();
-            queueService.createQueueEntry(queueNumber, processedPayment.getId());
+            model.addAttribute("payment", payment);
+            model.addAttribute("student", student);
             
-            return "redirect:/kiosk/queue/status?number=" + queueNumber;
+            return "features/payment-confirmation";
         } catch (Exception e) {
-            model.addAttribute("error", "Failed to process payment: " + e.getMessage());
+            model.addAttribute("error", "Error preparing payment: " + e.getMessage());
             model.addAttribute("studentId", studentId);
             model.addAttribute("studentName", studentName);
             model.addAttribute("labType", labType);
@@ -473,22 +592,22 @@ public class KioskController {
                 throw new IllegalArgumentException("Payment amount must be greater than 0");
             }
 
-            Payment payment = new Payment();
-            payment.setDescription("ID Replacement - " + reason);
-            payment.setAmount(amount);
-            payment.setPaymentStatus(PaymentStatus.PENDING);
-            payment.setType(PaymentType.CASH);
-            payment.setUser(student.getUser());
-            payment.setPaymentMethod("KIOSK");
-            payment.setTransactionReference("ID-" + System.currentTimeMillis());
+            // Create temporary payment object (not saved to database)
+            Payment payment = Payment.builder()
+                .description("ID Replacement - " + reason)
+                .amount(paymentAmount)
+                .type(PaymentType.CASH)
+                .user(student.getUser())
+                .paymentMethod("KIOSK")
+                .transactionReference("ID-" + System.currentTimeMillis())
+                .build();
             
-            Payment processedPayment = paymentService.processPayment(payment);
-            String queueNumber = queueService.generateQueueNumber();
-            queueService.createQueueEntry(queueNumber, processedPayment.getId());
+            model.addAttribute("payment", payment);
+            model.addAttribute("student", student);
             
-            return "redirect:/kiosk/queue/status?number=" + queueNumber;
+            return "features/payment-confirmation";
         } catch (Exception e) {
-            model.addAttribute("error", "Failed to process payment: " + e.getMessage());
+            model.addAttribute("error", "Error preparing payment: " + e.getMessage());
             model.addAttribute("studentId", studentId);
             model.addAttribute("studentName", studentName);
             model.addAttribute("reason", reason);
@@ -513,22 +632,22 @@ public class KioskController {
                 throw new IllegalArgumentException("Payment amount must be greater than 0");
             }
 
-            Payment payment = new Payment();
-            payment.setDescription("Graduation Fee - " + graduationType);
-            payment.setAmount(amount);
-            payment.setPaymentStatus(PaymentStatus.PENDING);
-            payment.setType(PaymentType.CASH);
-            payment.setUser(student.getUser());
-            payment.setPaymentMethod("KIOSK");
-            payment.setTransactionReference("GRAD-" + System.currentTimeMillis());
+            // Create temporary payment object (not saved to database)
+            Payment payment = Payment.builder()
+                .description("Graduation Fee - " + graduationType)
+                .amount(paymentAmount)
+                .type(PaymentType.CASH)
+                .user(student.getUser())
+                .paymentMethod("KIOSK")
+                .transactionReference("GRAD-" + System.currentTimeMillis())
+                .build();
             
-            Payment processedPayment = paymentService.processPayment(payment);
-            String queueNumber = queueService.generateQueueNumber();
-            queueService.createQueueEntry(queueNumber, processedPayment.getId());
+            model.addAttribute("payment", payment);
+            model.addAttribute("student", student);
             
-            return "redirect:/kiosk/queue/status?number=" + queueNumber;
+            return "features/payment-confirmation";
         } catch (Exception e) {
-            model.addAttribute("error", "Failed to process payment: " + e.getMessage());
+            model.addAttribute("error", "Error preparing payment: " + e.getMessage());
             model.addAttribute("studentId", studentId);
             model.addAttribute("studentName", studentName);
             model.addAttribute("graduationType", graduationType);
@@ -540,56 +659,136 @@ public class KioskController {
     @PostMapping("/payment/transcript/process")
     public String processTranscriptPayment(
             @RequestParam String studentId,
-            @RequestParam String studentName,
             @RequestParam Integer copies,
+            @RequestParam String purpose,
+            @RequestParam String deliveryMethod,
             @RequestParam(defaultValue = "200.00") String amount,
             Model model) {
         try {
-            Student student = studentRepository.findByStudentId(studentId)
-                .orElseThrow(() -> new EntityNotFoundException("Student ID not found. Please register first."));
-
-            BigDecimal paymentAmount = new BigDecimal(amount);
-            if (paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("Payment amount must be greater than 0");
+            // Input validation
+            if (studentId == null || studentId.trim().isEmpty()) {
+                model.addAttribute("error", "Student ID is required");
+                return "features/transcript-payment";
             }
 
-            Payment payment = new Payment();
-            payment.setDescription("Transcript Request - " + copies + " copies");
-            payment.setAmount(amount);
-            payment.setPaymentStatus(PaymentStatus.PENDING);
-            payment.setType(PaymentType.CASH);
-            payment.setUser(student.getUser());
-            payment.setPaymentMethod("KIOSK");
-            payment.setTransactionReference("TOR-" + System.currentTimeMillis());
-            
-            Payment processedPayment = paymentService.processPayment(payment);
-            String queueNumber = queueService.generateQueueNumber();
-            queueService.createQueueEntry(queueNumber, processedPayment.getId());
-            
-            return "redirect:/kiosk/queue/status?number=" + queueNumber;
+            if (copies == null || copies < 1 || copies > 10) {
+                model.addAttribute("error", "Number of copies must be between 1 and 10");
+                return "features/transcript-payment";
+            }
+
+            if (purpose == null || purpose.trim().isEmpty()) {
+                model.addAttribute("error", "Purpose is required");
+                return "features/transcript-payment";
+            }
+
+            // Amount validation
+            BigDecimal paymentAmount;
+            try {
+                paymentAmount = new BigDecimal(amount);
+                if (paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                    model.addAttribute("error", "Payment amount must be greater than 0");
+                    return "features/transcript-payment";
+                }
+            } catch (NumberFormatException e) {
+                model.addAttribute("error", "Invalid amount format");
+                return "features/transcript-payment";
+            }
+
+            // Student validation
+            Student student;
+            try {
+                student = studentRepository.findByStudentId(studentId)
+                    .orElseThrow(() -> new EntityNotFoundException("Student ID not found. Please register first."));
+            } catch (EntityNotFoundException e) {
+                model.addAttribute("error", e.getMessage());
+                return "features/transcript-payment";
+            }
+
+            try {
+                // Calculate fees
+                BigDecimal basePrice = new BigDecimal("200.00");
+
+                // Create temporary payment object (not saved to database)
+                Payment payment = Payment.builder()
+                    .description("Transcript Request - " + copies + " copies (" + purpose + ")")
+                    .amount(paymentAmount)
+                    .type(PaymentType.CASH)
+                    .user(student.getUser())
+                    .paymentMethod("KIOSK")
+                    .transactionReference("TOR-" + System.currentTimeMillis())
+                    .notes("Transcript request details")
+                    .copies(copies)
+                    .purpose(purpose)
+                    .basePrice(basePrice)
+                    .build();
+                
+                model.addAttribute("payment", payment);
+                model.addAttribute("student", student);
+                
+                return "features/payment-confirmation";
+            } catch (Exception e) {
+                logger.error("Error preparing payment: {}", e.getMessage());
+                model.addAttribute("error", "Error preparing payment. Please try again.");
+                return "features/transcript-payment";
+            }
         } catch (Exception e) {
-            model.addAttribute("error", "Failed to process payment: " + e.getMessage());
+            logger.error("Unexpected error in transcript payment: {}", e.getMessage());
+            model.addAttribute("error", "An unexpected error occurred. Please try again later.");
             model.addAttribute("studentId", studentId);
-            model.addAttribute("studentName", studentName);
             model.addAttribute("copies", copies);
+            model.addAttribute("purpose", purpose);
             model.addAttribute("amount", amount);
             return "features/transcript-payment";
         }
     }
 
-    @PostMapping("/payment/cancel/{id}")
+    @PostMapping("/payment/confirm/{id}")
     @ResponseBody
-    public Map<String, Object> cancelPayment(@PathVariable Long id) {
+    public Map<String, Object> confirmPayment(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();
         try {
             Payment payment = paymentService.getPaymentById(id);
-            if (payment.getPaymentStatus() == PaymentStatus.PENDING) {
-                paymentService.cancelPayment(id);
+            
+            // If payment doesn't exist in database yet, save it as PENDING
+            if (payment == null) {
+                payment.setPaymentStatus(PaymentStatus.PENDING);
+                payment = paymentService.createPayment(payment);
+                
                 response.put("success", true);
-                response.put("message", "Payment cancelled successfully");
+                response.put("message", "Payment saved successfully");
+                return response;
+            }
+            
+            // If payment exists and is PENDING, process it
+            if (payment.getPaymentStatus() == PaymentStatus.PENDING) {
+                // Process the payment
+                Payment processedPayment = paymentService.processPayment(payment);
+                if (processedPayment == null) {
+                    throw new RuntimeException("Failed to process payment");
+                }
+
+                // Generate queue number
+                String queueNumber = queueService.generateQueueNumber();
+                if (queueNumber == null || queueNumber.trim().isEmpty()) {
+                    throw new RuntimeException("Failed to generate queue number");
+                }
+
+                try {
+                    queueService.createQueueEntry(queueNumber, processedPayment.getId());
+                } catch (Exception e) {
+                    logger.error("Failed to create queue entry: {}", e.getMessage());
+                }
+
+                processedPayment.setPaymentStatus(PaymentStatus.PROCESSED);
+                processedPayment.setProcessedAt(LocalDateTime.now());
+                paymentService.updatePayment(processedPayment);
+                
+                response.put("success", true);
+                response.put("message", "Payment confirmed successfully");
+                response.put("queueNumber", queueNumber);
             } else {
                 response.put("success", false);
-                response.put("error", "Only pending payments can be cancelled");
+                response.put("error", "Only pending payments can be confirmed");
             }
         } catch (Exception e) {
             response.put("success", false);
@@ -615,42 +814,31 @@ public class KioskController {
             // Create a temporary reference number for the enrollment
             String enrollmentRef = "ENR-" + System.currentTimeMillis();
 
-            // Create payment record without student association
-            Payment payment = new Payment();
-            payment.setDescription("New Student Enrollment - " + program + " (" + academicYear + " " + semester + ")");
-            payment.setAmount(amount);
-            payment.setPaymentStatus(PaymentStatus.PENDING);
-            payment.setType(PaymentType.CASH);
-            payment.setPaymentMethod("KIOSK");
-            payment.setTransactionReference(enrollmentRef);
+            // Create temporary payment object (not saved to database)
+            Payment payment = Payment.builder()
+                .description("New Student Enrollment - " + program + " (" + academicYear + " " + semester + ")")
+                .amount(new BigDecimal(amount))
+                .type(PaymentType.CASH)
+                .paymentMethod("KIOSK")
+                .transactionReference(enrollmentRef)
+                .metadata(Map.of(
+                    "applicantId", applicantId,
+                    "fullName", fullName,
+                    "email", email,
+                    "contactNumber", contactNumber,
+                    "program", program,
+                    "academicYear", academicYear,
+                    "semester", semester,
+                    "paymentStatus", "ENROLLMENT_PAID"
+                ))
+                .build();
             
-            // Store applicant information in payment metadata
-            Map<String, String> metadata = new HashMap<>();
-            metadata.put("applicantId", applicantId);  // Add applicant ID to metadata
-            metadata.put("fullName", fullName);
-            metadata.put("email", email);
-            metadata.put("contactNumber", contactNumber);
-            metadata.put("program", program);
-            metadata.put("academicYear", academicYear);
-            metadata.put("semester", semester);
-            metadata.put("paymentStatus", "ENROLLMENT_PAID");  // Add payment status for registration
-            payment.setMetadata(metadata);
-            
-            // Process the payment
-            Payment processedPayment = paymentService.processPayment(payment);
-            
-            // Generate queue number
-            String queueNumber = queueService.generateQueueNumber();
-            queueService.createQueueEntry(queueNumber, processedPayment.getId());
-            
-            // Add payment details to model for confirmation
-            model.addAttribute("payment", processedPayment);
-            model.addAttribute("queueNumber", queueNumber);
+            model.addAttribute("payment", payment);
             model.addAttribute("enrollmentRef", enrollmentRef);
             
             return "features/payment-confirmation";
         } catch (Exception e) {
-            model.addAttribute("error", "Failed to process payment: " + e.getMessage());
+            model.addAttribute("error", "Error preparing payment: " + e.getMessage());
             model.addAttribute("fullName", fullName);
             model.addAttribute("email", email);
             model.addAttribute("contactNumber", contactNumber);
@@ -660,5 +848,26 @@ public class KioskController {
             model.addAttribute("amount", amount);
             return "features/enrollment-payment";
         }
+    }
+
+    @ExceptionHandler(Exception.class)
+    public String handleError(Exception e, Model model) {
+        logger.error("Global error in KioskController: {}", e.getMessage());
+        model.addAttribute("error", "An unexpected error occurred. Please try again later.");
+        return "features/error";
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public String handleEntityNotFound(EntityNotFoundException e, Model model) {
+        logger.error("Entity not found: {}", e.getMessage());
+        model.addAttribute("error", e.getMessage());
+        return "features/error";
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public String handleIllegalArgument(IllegalArgumentException e, Model model) {
+        logger.error("Invalid argument: {}", e.getMessage());
+        model.addAttribute("error", e.getMessage());
+        return "features/error";
     }
 } 

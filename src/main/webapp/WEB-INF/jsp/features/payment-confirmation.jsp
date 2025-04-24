@@ -81,7 +81,23 @@
             background-color: #600000;
         }
 
-        .back-button {
+        .cancel-button {
+            background-color: #dc3545;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .cancel-button:hover {
+            background-color: #c82333;
+        }
+
+        .home-button {
             background-color: #666;
             color: white;
             padding: 12px 24px;
@@ -93,8 +109,24 @@
             transition: background-color 0.3s;
         }
 
-        .back-button:hover {
+        .home-button:hover {
             background-color: #555;
+        }
+
+        .back-button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .back-button:hover {
+            background-color: #0056b3;
         }
 
         .queue-number {
@@ -112,6 +144,30 @@
                 display: none;
             }
         }
+
+        .confirm-button {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .confirm-button:hover {
+            background-color: #218838;
+        }
+
+        .status-processed {
+            color: #28a745;
+        }
+        
+        .status-pending {
+            color: #ffc107;
+        }
     </style>
 </head>
 <body>
@@ -128,6 +184,28 @@
                 <span class="detail-label">Description:</span>
                 <span class="detail-value">${payment.description}</span>
             </div>
+            
+            <c:if test="${not empty payment.copies}">
+                <div class="detail-row">
+                    <span class="detail-label">Number of Copies:</span>
+                    <span class="detail-value">${payment.copies}</span>
+                </div>
+            </c:if>
+            
+            <c:if test="${not empty payment.purpose}">
+                <div class="detail-row">
+                    <span class="detail-label">Purpose:</span>
+                    <span class="detail-value">${payment.purpose}</span>
+                </div>
+            </c:if>
+            
+            <c:if test="${not empty payment.basePrice}">
+                <div class="detail-row">
+                    <span class="detail-label">Base Price:</span>
+                    <span class="detail-value">₱ ${payment.basePrice}</span>
+                </div>
+            </c:if>
+
             <div class="detail-row">
                 <span class="detail-label">Date:</span>
                 <span class="detail-value">
@@ -140,7 +218,9 @@
             </div>
             <div class="detail-row">
                 <span class="detail-label">Status:</span>
-                <span class="detail-value" style="color: #28a745;">PROCESSED</span>
+                <span class="detail-value" data-field="status" class="${payment.paymentStatus == 'PROCESSED' ? 'status-processed' : 'status-pending'}">
+                    ${payment.paymentStatus}
+                </span>
             </div>
         </div>
 
@@ -153,21 +233,101 @@
         </c:if>
 
         <div class="button-container">
-            <a href="${pageContext.request.contextPath}/kiosk/payment/${payment.id}/download-receipt" 
-               class="download-button" download>
-                Download Receipt
+            <c:if test="${payment.paymentStatus == 'PENDING'}">
+                <button onclick="confirmPayment('${payment.id}')" class="confirm-button">
+                    Confirm Payment
+                </button>
+                <button onclick="cancelPayment('${payment.id}')" class="cancel-button">
+                    Cancel Payment
+                </button>
+            </c:if>
+            <a href="javascript:history.back()" class="back-button">
+                Back
             </a>
-            <a href="${pageContext.request.contextPath}/kiosk" class="back-button">
+            <a href="${pageContext.request.contextPath}/kiosk" class="home-button">
                 Back to Kiosk
             </a>
         </div>
     </div>
 
     <script>
-        // Automatically trigger receipt download
-        window.onload = function() {
-            document.querySelector('.download-button').click();
-        };
+        function confirmPayment(paymentId) {
+            if (confirm('Are you sure you want to confirm this payment?')) {
+                fetch('${pageContext.request.contextPath}/kiosk/payment/confirm/' + paymentId, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update status to PROCESSED
+                        document.querySelector('.detail-value[data-field="status"]').textContent = 'PROCESSED';
+                        document.querySelector('.detail-value[data-field="status"]').classList.add('status-processed');
+                        
+                        // Add queue number if provided
+                        if (data.queueNumber) {
+                            const queueDiv = document.createElement('div');
+                            queueDiv.innerHTML = `
+                                <div>
+                                    <h2>Your Queue Number</h2>
+                                    <div class="queue-number">${data.queueNumber}</div>
+                                    <p>Please wait for your number to be called</p>
+                                </div>
+                            `;
+                            document.querySelector('.payment-details').after(queueDiv);
+                        }
+                        
+                        // Hide confirm button
+                        document.querySelector('.confirm-button').style.display = 'none';
+                        document.querySelector('.cancel-button').style.display = 'none';
+                        
+                        alert('Payment confirmed successfully');
+                    } else {
+                        alert(data.error || 'Failed to confirm payment');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to confirm payment');
+                });
+            }
+        }
+
+        function cancelPayment(paymentId) {
+            if (confirm('Are you sure you want to cancel this payment?')) {
+                fetch('${pageContext.request.contextPath}/kiosk/payment/cancel/' + paymentId, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Payment cancelled successfully');
+                        window.location.href = '${pageContext.request.contextPath}/kiosk';
+                    } else {
+                        alert(data.error || 'Failed to cancel payment');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to cancel payment');
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if payment is processed
+            const paymentStatus = '${payment.paymentStatus}';
+            const paymentId = '${payment.id}';
+            
+            if (paymentStatus === 'PROCESSED') {
+                // Trigger receipt download
+                window.location.href = '${pageContext.request.contextPath}/kiosk/payment/' + paymentId + '/download-receipt';
+                
+                // Show success message
+                setTimeout(function() {
+                    alert('Your receipt has been downloaded. Please keep it for your records.');
+                }, 1000);
+            }
+        });
     </script>
 </body>
 </html> 

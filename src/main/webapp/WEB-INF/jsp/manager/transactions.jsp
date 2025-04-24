@@ -64,76 +64,76 @@
                                     <option value="COMPLETED" ${param.status == 'COMPLETED' ? 'selected' : ''}>Completed</option>
                                     <option value="FAILED" ${param.status == 'FAILED' ? 'selected' : ''}>Failed</option>
                                 </select>
-                            </div>
+                    </div>
                             <div class="btn-group">
                                 <button class="btn btn-warning" type="button" onclick="resetQueue()">
                                     <i class="bi bi-arrow-repeat"></i> Reset Queue
                                 </button>
-                            </div>
-                        </div>
-                    </div>
+                </div>
+            </div>
+        </div>
 
-                    <!-- Filters -->
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <form id="filterForm" class="row g-3">
-                                <div class="col-md-3">
-                                    <label class="form-label">Start Date</label>
-                                    <input type="date" class="form-control" id="startDate" name="startDate">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">End Date</label>
-                                    <input type="date" class="form-control" id="endDate" name="endDate">
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label">Amount Range</label>
-                                    <select class="form-select" id="amountRange" name="amountRange">
-                                        <option value="">All</option>
+        <!-- Filters -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form id="filterForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="startDate" name="startDate">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="endDate" name="endDate">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">Amount Range</label>
+                        <select class="form-select" id="amountRange" name="amountRange">
+                            <option value="">All</option>
                                         <option value="0-1000">₱0 - ₱1,000</option>
                                         <option value="1000-5000">₱1,000 - ₱5,000</option>
                                         <option value="5000+">₱5,000+</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-2 d-flex align-items-end">
-                                    <button type="submit" class="btn btn-primary me-2">Filter</button>
-                                    <button type="button" class="btn btn-secondary" onclick="resetFilters()">Reset</button>
-                                </div>
-                            </form>
-                        </div>
+                        </select>
                     </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">Filter</button>
+                        <button type="button" class="btn btn-secondary" onclick="resetFilters()">Reset</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-                    <!-- Bulk Actions -->
-                    <div class="row mb-3">
-                        <div class="col">
+        <!-- Bulk Actions -->
+        <div class="row mb-3">
+            <div class="col">
                             <button class="btn btn-success me-2" onclick="bulkApprove()">
                                 <i class="bi bi-check-circle"></i> Approve Selected
                             </button>
                             <button class="btn btn-danger me-2" onclick="bulkReject()">
                                 <i class="bi bi-x-circle"></i> Reject Selected
-                            </button>
-                        </div>
-                    </div>
+                    </button>
+            </div>
+        </div>
 
-                    <!-- Transactions Table -->
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="table-responsive">
+        <!-- Transactions Table -->
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
                                 <table class="table table-striped" id="transactionTable">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
                                             <th>Transaction #</th>
-                                            <th>Date</th>
-                                            <th>Amount</th>
+                                <th>Date</th>
+                                <th>Amount</th>
                                             <th>Type</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <c:forEach items="${transactions}" var="transaction">
-                                            <tr>
-                                                <td>${transaction.id}</td>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <c:forEach items="${transactions}" var="transaction">
+                                <tr>
+                                    <td>${transaction.id}</td>
                                                 <td>${transaction.transactionNumber}</td>
                                                 <td>
                                                     <fmt:parseDate value="${transaction.createdAt}" pattern="yyyy-MM-dd'T'HH:mm" var="parsedDate" type="both" />
@@ -153,20 +153,20 @@
                                                             <span class="badge status-badge status-failed">FAILED</span>
                                                         </c:otherwise>
                                                     </c:choose>
-                                                </td>
-                                                <td>
+                                    </td>
+                                    <td>
                                                     <button class="btn btn-sm btn-primary" onclick="viewTransaction('${transaction.id}')">View</button>
-                                                    <c:if test="${transaction.status == 'PENDING'}">
+                                        <c:if test="${transaction.status == 'PENDING'}">
                                                         <button class="btn btn-sm btn-success" onclick="approveTransaction('${transaction.id}')">Approve</button>
                                                         <button class="btn btn-sm btn-danger" onclick="rejectTransaction('${transaction.id}')">Reject</button>
-                                                    </c:if>
-                                                </td>
-                                            </tr>
-                                        </c:forEach>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                                        </c:if>
+                                    </td>
+                                </tr>
+                            </c:forEach>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
                     </div>
                 </div>
             </main>
@@ -261,14 +261,14 @@
                         [document.querySelector("meta[name='_csrf_header']").content]: document.querySelector("meta[name='_csrf']").content
                     }
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
                         window.location.reload();
                     } else {
                         alert(data.message || 'Failed to approve transaction');
-                    }
-                });
+                        }
+                    });
             }
         }
 
@@ -281,14 +281,14 @@
                         [document.querySelector("meta[name='_csrf_header']").content]: document.querySelector("meta[name='_csrf']").content
                     }
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
                         window.location.reload();
                     } else {
                         alert(data.message || 'Failed to reject transaction');
-                    }
-                });
+                        }
+                    });
             }
         }
 

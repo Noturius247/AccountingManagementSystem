@@ -1,68 +1,117 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<c:set var="title" value="Transcript Request Payment"/>
-<c:set var="actionUrl" value="/kiosk/payment/transcript/process"/>
-<c:set var="amount" value="200.00"/>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
-<c:set var="additionalFields">
-    <div class="mb-3">
-        <label for="copies" class="form-label">Number of Copies</label>
-        <input type="number" class="form-control" id="copies" name="copies" 
-               min="1" max="10" value="1" required>
-        <div class="form-text">Each copy costs ₱200.00</div>
-    </div>
-    
-    <div class="mb-3">
-        <label for="purpose" class="form-label">Purpose</label>
-        <select class="form-control" id="purpose" name="purpose" required>
-            <option value="">Select Purpose</option>
-            <option value="SCHOLARSHIP">Scholarship Application</option>
-            <option value="TRANSFER">School Transfer</option>
-            <option value="EMPLOYMENT">Employment</option>
-            <option value="GRADUATE_SCHOOL">Graduate School Application</option>
-            <option value="OTHER">Other</option>
-        </select>
-    </div>
-    
-    <div class="mb-3">
-        <label for="deliveryMethod" class="form-label">Delivery Method</label>
-        <select class="form-control" id="deliveryMethod" name="deliveryMethod" required>
-            <option value="">Select Delivery Method</option>
-            <option value="PICKUP">Pick Up</option>
-            <option value="COURIER">Courier Delivery (Additional ₱100.00)</option>
-        </select>
-    </div>
-</c:set>
-
-<%@ include file="base-payment.jsp" %>
-
-<script>
-    document.getElementById('copies').addEventListener('change', function() {
-        const copies = parseInt(this.value);
-        const deliveryMethod = document.getElementById('deliveryMethod').value;
-        const amountInput = document.getElementById('amount');
-        const basePrice = 200.00;
-        const courierFee = 100.00;
-        
-        let totalAmount = copies * basePrice;
-        if (deliveryMethod === 'COURIER') {
-            totalAmount += courierFee;
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Transcript Payment</title>
+    <jsp:include page="../includes/header.jsp" />
+    <style>
+        .payment-form {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
-        
-        amountInput.value = totalAmount.toFixed(2);
-    });
-    
-    document.getElementById('deliveryMethod').addEventListener('change', function() {
-        const copies = parseInt(document.getElementById('copies').value);
-        const amountInput = document.getElementById('amount');
-        const basePrice = 200.00;
-        const courierFee = 100.00;
-        
-        let totalAmount = copies * basePrice;
-        if (this.value === 'COURIER') {
-            totalAmount += courierFee;
+        .form-group {
+            margin-bottom: 20px;
         }
-        
-        amountInput.value = totalAmount.toFixed(2);
-    });
-</script> 
+        .error-message {
+            color: #dc3545;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f8d7da;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="payment-form">
+            <h2 class="text-center mb-4">Transcript Request Payment</h2>
+            
+            <c:if test="${not empty error}">
+                <div class="error-message">
+                    ${error}
+                </div>
+            </c:if>
+
+            <form action="${pageContext.request.contextPath}/payment/transcript/process" method="post">
+                <div class="form-group">
+                    <label for="studentId">Student ID:</label>
+                    <input type="text" class="form-control" id="studentId" name="studentId" 
+                           value="${studentId}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="copies">Number of Copies:</label>
+                    <select class="form-control" id="copies" name="copies" required>
+                        <option value="">Select number of copies</option>
+                        <c:forEach begin="1" end="10" var="i">
+                            <option value="${i}" ${copies == i ? 'selected' : ''}>${i}</option>
+                        </c:forEach>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="purpose">Purpose:</label>
+                    <select class="form-control" id="purpose" name="purpose" required>
+                        <option value="">Select purpose</option>
+                        <option value="EMPLOYMENT" ${purpose == 'EMPLOYMENT' ? 'selected' : ''}>Employment</option>
+                        <option value="FURTHER_STUDIES" ${purpose == 'FURTHER_STUDIES' ? 'selected' : ''}>Further Studies</option>
+                        <option value="BOARD_EXAM" ${purpose == 'BOARD_EXAM' ? 'selected' : ''}>Board Examination</option>
+                        <option value="PERSONAL" ${purpose == 'PERSONAL' ? 'selected' : ''}>Personal Use</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Base Price per Copy:</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">₱</span>
+                        </div>
+                        <input type="text" class="form-control" value="200.00" readonly>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Total Amount:</label>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">₱</span>
+                        </div>
+                        <input type="text" class="form-control" name="amount" id="totalAmount" readonly>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary">Proceed to Payment</button>
+                    <a href="${pageContext.request.contextPath}/dashboard" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('copies').addEventListener('change', function() {
+            calculateTotal();
+        });
+
+        function calculateTotal() {
+            const copies = document.getElementById('copies').value || 0;
+            const basePrice = 200.00;
+            const total = copies * basePrice;
+            document.getElementById('totalAmount').value = total.toFixed(2);
+        }
+
+        // Calculate initial total
+        calculateTotal();
+    </script>
+
+    <jsp:include page="../includes/footer.jsp" />
+</body>
+</html> 
