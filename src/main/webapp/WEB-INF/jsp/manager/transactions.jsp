@@ -117,9 +117,8 @@
                                                 <th>Student ID</th>
                                                 <th>Payment #</th>
                                                 <th>Account Name</th>
-                                                <th>Transaction Type</th>
                                                 <th>Amount</th>
-                                                <th>Processing Time</th>
+                                                //<th>Processing Time</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
@@ -131,7 +130,6 @@
                                                         <td>${queue.studentId}</td>
                                                         <td>${queue.paymentNumber}</td>
                                                         <td>${queue.user.username}</td>
-                                                        <td>${queue.type}</td>
                                                         <td>
                                                             <fmt:formatNumber value="${queue.amount}" type="currency" currencySymbol="₱"/>
                                                         </td>
