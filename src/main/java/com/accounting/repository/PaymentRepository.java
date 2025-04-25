@@ -97,6 +97,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     Optional<Payment> findByTransactionId(String transactionId);
     Optional<Payment> findByScheduleId(String scheduleId);
+    Optional<Payment> findByTransactionReference(String transactionReference);
     List<Payment> findByUserAndPaymentStatus(User user, PaymentStatus status);
     List<Payment> findByUserAndCreatedAtBetween(User user, LocalDateTime start, LocalDateTime end);
     List<Payment> findByPaymentStatusAndProcessedAtBefore(PaymentStatus status, LocalDateTime date);

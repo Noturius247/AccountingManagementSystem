@@ -32,6 +32,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ContentDisposition;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import com.accounting.service.UserService;
 
 @Controller
 @RequestMapping("/manager")
@@ -54,6 +55,9 @@ public class ManagerController {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private UserService userService;
 
     @GetMapping("/dashboard")
     @Transactional(readOnly = true)
@@ -112,10 +116,13 @@ public class ManagerController {
 
                 // Add current queue data
                 Queue currentQueue = queueService.getCurrentQueue();
-                if (currentQueue != null && currentQueue.getUser() != null) {
-                    User user = currentQueue.getUser();
-                    // Load essential user data only
-                    Hibernate.initialize(user.getNotificationSettings());
+                if (currentQueue != null && currentQueue.getUserUsername() != null) {
+                    // Get user by username instead of direct access
+                    userService.findByUsername(currentQueue.getUserUsername())
+                        .ifPresent(user -> {
+                            // Load essential user data only
+                            Hibernate.initialize(user.getNotificationSettings());
+                        });
                 }
                 model.addAttribute("currentQueue", currentQueue);
 

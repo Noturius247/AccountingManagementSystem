@@ -260,4 +260,10 @@ public class PaymentServiceImpl implements PaymentService {
     public long getPendingPaymentsCount() {
         return paymentRepository.countByStatus(PaymentStatus.PENDING);
     }
+
+    @Override
+    public Payment getPaymentByTransactionReference(String transactionReference) {
+        return paymentRepository.findByTransactionReference(transactionReference)
+            .orElseThrow(() -> new RuntimeException("Payment not found with transaction reference: " + transactionReference));
+    }
 }

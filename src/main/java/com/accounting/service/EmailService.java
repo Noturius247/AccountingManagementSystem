@@ -6,4 +6,5 @@ public interface EmailService {
     void sendRegistrationRejectedEmail(String to, String studentName, String studentId, String reason);
     void sendEmail(String to, String subject, String content);
     void sendReceipt(String emailAddress, String receiptContent);
+    void sendQueueNotification(String email, String subject, String message);
 } 

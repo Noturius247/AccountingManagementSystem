@@ -52,7 +52,7 @@ public class UserDashboardServiceImpl implements UserDashboardService {
             stats.put("totalDocuments", documentRepository.count());
             
             logger.debug("Fetching active queues count");
-            stats.put("activeQueues", queueRepository.countByStatus(QueueStatus.WAITING));
+            stats.put("activeQueues", queueRepository.countByStatus(QueueStatus.PENDING));
             
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
@@ -141,7 +141,7 @@ public class UserDashboardServiceImpl implements UserDashboardService {
     @Transactional(readOnly = true)
     public int getEstimatedWaitTime(String username) {
         try {
-            return (int) queueRepository.countByStatusAndCreatedAtBefore(QueueStatus.WAITING, LocalDateTime.now());
+            return (int) queueRepository.countByStatusAndCreatedAtBefore(QueueStatus.PENDING, LocalDateTime.now());
         } catch (Exception e) {
             logger.error("Error fetching estimated wait time for user: " + username, e);
             return -1;

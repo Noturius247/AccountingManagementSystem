@@ -8,6 +8,9 @@ import java.util.Map;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import com.accounting.model.User;
+import com.accounting.model.Payment;
+import com.accounting.model.Student;
+import com.accounting.model.enums.QueueStatus;
 
 public interface QueueService {
     void addToQueue(User user);
@@ -27,10 +30,9 @@ public interface QueueService {
     double getAverageWaitTime();
     double getAverageWaitTimeByStatus(String status);
     long getQueueCountByStatus(String status);
-    List<QueuePosition> getActiveQueues();
+    List<Queue> getActiveQueues();
     long getQueueCount();
     double getAverageWaitTimeByType(String type);
-    double getAverageWaitTimeByPriority(String priority);
     QueuePosition getNextInQueue();
     void processNextInQueue();
     Map<String, Object> getQueueStatistics();
@@ -42,13 +44,10 @@ public interface QueueService {
     Map<String, Object> getQueueInfo(String queueNumber);
     long getEstimatedWaitTime(String queueNumber);
     List<QueuePosition> getQueuesByType(String type);
-    List<QueuePosition> getQueuesByPriority(String priority);
     List<QueuePosition> getQueuesByDescription(String description);
     List<QueuePosition> getQueuesByEstimatedWaitTime(Integer minWaitTime, Integer maxWaitTime);
     List<QueuePosition> getQueuesByProcessedAt(LocalDateTime startDate, LocalDateTime endDate);
     long getQueueCountByType(String type);
-    long getQueueCountByPriority(String priority);
-    Map<String, Long> getQueueCountByPriorityMap();
     QueuePosition getCurrentQueuePosition();
     long getAverageProcessingTime();
     List<QueuePosition> getRecentQueues(int limit);
@@ -58,7 +57,7 @@ public interface QueueService {
     void transferQueue(Long queueId, String newUsername);
     int getQueuePosition(String queueNumber);
     Queue getCurrentQueue();
-    int calculateEstimatedWaitTime(String queueNumber);
+    int calculateWaitTime(String queueNumber);
     Optional<QueuePosition> findByQueueNumber(String queueNumber);
     void notifyQueueStatus(Long queueId, String status);
     void notifyQueuePosition(Long queueId, int position);
@@ -108,4 +107,9 @@ public interface QueueService {
     boolean isValidPublicQueue(String publicIdentifier, String kioskSessionId);
     void setReceiptPreference(String queueNumber, ReceiptPreference preference);
     void generateAndSendReceipt(String queueNumber);
+    Queue createQueue(Payment payment, Student student);
+    Queue updateQueueStatus(Long queueId, QueueStatus status);
+    Queue createQueue(Student student, Long serviceId);
+    Queue createQueue(Student student);
+    Queue createQueueForKiosk(String studentId, String kioskSessionId, String kioskTerminalId, ReceiptPreference receiptPreference);
 } 

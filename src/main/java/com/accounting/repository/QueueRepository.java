@@ -3,6 +3,7 @@ package com.accounting.repository;
 import com.accounting.model.Queue;
 import com.accounting.model.enums.QueueStatus;
 import com.accounting.model.enums.QueueType;
+import com.accounting.model.enums.PaymentType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -66,17 +67,11 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
     @Query("SELECT q.type, COUNT(q) FROM Queue q GROUP BY q.type")
     List<Object[]> countByType();
 
-    @Query("SELECT q.priority, COUNT(q) FROM Queue q GROUP BY q.priority")
-    List<Object[]> countByPriority();
-
     @Query("SELECT q.status, AVG(q.estimatedWaitTime) FROM Queue q GROUP BY q.status")
     List<Object[]> avgWaitTimeByStatus();
 
     @Query("SELECT q.type, AVG(q.estimatedWaitTime) FROM Queue q GROUP BY q.type")
     List<Object[]> avgWaitTimeByType();
-
-    @Query("SELECT q.priority, AVG(q.estimatedWaitTime) FROM Queue q GROUP BY q.priority")
-    List<Object[]> avgWaitTimeByPriority();
 
     @Query("SELECT q FROM Queue q WHERE q.user.username = :username AND q.createdAt BETWEEN :startDate AND :endDate ORDER BY q.createdAt DESC")
     List<Queue> findByUserUsernameAndCreatedAtBetweenOrderByCreatedAtDesc(
@@ -87,7 +82,7 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
     
     @Query("SELECT q FROM Queue q WHERE q.userUsername = :username AND " +
            "(LOWER(q.description) LIKE LOWER(CONCAT('%', :keyword, '%')) OR " +
-           "CAST(q.serviceId AS string) LIKE CONCAT('%', :keyword, '%')) " +
+           "CAST(q.scheduleId AS string) LIKE CONCAT('%', :keyword, '%')) " +
            "ORDER BY q.createdAt DESC")
     List<Queue> searchByUserAndKeyword(@Param("username") String username, @Param("keyword") String keyword);
     
@@ -135,9 +130,7 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
     @Query("SELECT MAX(q.position) FROM Queue q")
     Optional<Integer> findMaxPosition();
 
-    List<Queue> findByTypeOrderByCreatedAtDesc(String type);
-
-    List<Queue> findByPriorityOrderByCreatedAtDesc(String priority);
+    List<Queue> findByTypeOrderByCreatedAtDesc(PaymentType type);
 
     List<Queue> findByDescriptionContainingIgnoreCaseOrderByCreatedAtDesc(String description);
 
@@ -146,7 +139,7 @@ public interface QueueRepository extends JpaRepository<Queue, Long> {
     List<Queue> findByProcessedAtBetweenOrderByCreatedAtDesc(LocalDateTime startDate, LocalDateTime endDate);
 
     @Query("SELECT COUNT(q) FROM Queue q WHERE q.type = :type")
-    long countByType(@Param("type") String type);
+    long countByType(@Param("type") PaymentType type);
 
     @Query("SELECT COUNT(q) FROM Queue q WHERE q.user.username = :username AND q.createdAt < (SELECT q2.createdAt FROM Queue q2 WHERE q2.user.username = :username AND q2.status = 'ACTIVE')")
     int getPositionByUsername(@Param("username") String username);

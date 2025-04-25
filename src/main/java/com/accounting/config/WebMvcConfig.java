@@ -31,24 +31,14 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         registry.addResourceHandler("/static/**")
-                .addResourceLocations("file:src/main/webapp/static/")
+                .addResourceLocations("classpath:/static/", "/WEB-INF/static/", "file:src/main/webapp/static/")
                 .setCachePeriod(3600)
                 .resourceChain(true);
-                
-        registry.addResourceHandler("/resources/**")
-                .addResourceLocations("file:src/main/webapp/resources/")
-                .setCachePeriod(3600)
-                .resourceChain(true);
-                
-        registry.addResourceHandler("/css/**")
-                .addResourceLocations("file:src/main/webapp/static/css/")
-                .setCachePeriod(3600)
-                .resourceChain(true);
-                
-        registry.addResourceHandler("/js/**")
-                .addResourceLocations("file:src/main/webapp/static/js/")
-                .setCachePeriod(3600)
-                .resourceChain(true);
+    }
+
+    @Override
+    public void configureDefaultServletHandling(DefaultServletHandlerConfigurer configurer) {
+        // Disable default servlet handling
     }
 
     @Bean
@@ -65,15 +55,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
         );
     }
 
-    @Bean
-    public InternalResourceViewResolver viewResolver() {
+    @Override
+    public void configureViewResolvers(ViewResolverRegistry registry) {
         InternalResourceViewResolver resolver = new InternalResourceViewResolver();
         resolver.setPrefix("/WEB-INF/jsp/");
         resolver.setSuffix(".jsp");
         resolver.setViewClass(JstlView.class);
-        resolver.setOrder(1);
-        resolver.setViewNames("*");
-        return resolver;
+        registry.viewResolver(resolver);
     }
 
     @Bean
@@ -112,12 +100,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
         resolver.setStatusCodes(statusCodes);
         
         return resolver;
-    }
-
-    @Override
-    public void configureDefaultServletHandling(DefaultServletHandlerConfigurer configurer) {
-        // We're handling static resources through our resource handlers
-        // No need for default servlet handling
     }
 
     @Override

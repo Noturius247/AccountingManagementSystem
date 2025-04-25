@@ -49,6 +49,9 @@ public class Student {
     @Column(nullable = false)
     private Integer yearLevel;
 
+    @Column(length = 50)
+    private String section;
+
     @NotBlank(message = "Academic year is required")
     @Column(nullable = false)
     private String academicYear;
@@ -132,6 +135,14 @@ public class Student {
         return semester;
     }
 
+    public String getSection() {
+        return section;
+    }
+
+    public void setSection(String section) {
+        this.section = section;
+    }
+
     public Long getId() {
         return id;
     }
@@ -145,6 +156,7 @@ public class Student {
                 ", studentId='" + studentId + '\'' +
                 ", program='" + program + '\'' +
                 ", yearLevel=" + yearLevel +
+                ", section='" + section + '\'' +
                 '}';
     }
 } 

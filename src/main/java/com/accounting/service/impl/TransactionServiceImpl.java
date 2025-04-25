@@ -50,7 +50,6 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
         existing.setAmount(updated.getAmount() != null ? updated.getAmount().toString() : null);
         existing.setStatus(updated.getStatus());
         existing.setType(updated.getType());
-        existing.setPriority(updated.getPriority());
         existing.setCategory(updated.getCategory());
         existing.setSubCategory(updated.getSubCategory());
         existing.setCurrency(updated.getCurrency());
@@ -150,12 +149,6 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
     @Transactional(readOnly = true)
     public int getPendingApprovalCount() {
         return Math.toIntExact(transactionRepository.countByStatus(TransactionStatus.PENDING));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public int getHighPriorityCount() {
-        return Math.toIntExact(transactionRepository.countByPriority("HIGH"));
     }
 
     @Override
@@ -314,16 +307,6 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
 
     @Override
     @Transactional(readOnly = true)
-    public List<Transaction> getTransactionsByPriority(String priority) {
-        logger.debug("Getting transactions by priority: {}", priority);
-        if (!StringUtils.hasText(priority)) {
-            throw new IllegalArgumentException("Priority cannot be empty");
-        }
-        return transactionRepository.findByPriorityOrderByCreatedAtDesc(priority);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public List<Transaction> getTransactionsByNotes(String notes) {
         logger.debug("Getting transactions by notes containing: {}", notes);
         if (!StringUtils.hasText(notes)) {
@@ -422,29 +405,6 @@ public class TransactionServiceImpl extends BaseServiceImpl<Transaction> impleme
     public double getTransactionAmountByStatus(String status) {
         Optional<BigDecimal> amount = transactionRepository.sumAmountByStatus(TransactionStatus.valueOf(status));
         return amount.map(BigDecimal::doubleValue).orElse(0.0);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Map<String, Long> getTransactionCountByPriority() {
-        Map<String, Long> countByPriority = new HashMap<>();
-        for (TransactionStatus priority : TransactionStatus.values()) {
-            countByPriority.put(priority.name(), transactionRepository.countByStatus(priority));
-        }
-        return countByPriority;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public long getTransactionCountByPriority(String priority) {
-        return transactionRepository.countByStatus(TransactionStatus.valueOf(priority));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public double getTransactionAmountByPriority(String priority) {
-        Optional<Double> amount = transactionRepository.sumAmountByPriority(priority);
-        return amount.orElse(0.0);
     }
 
     @Override

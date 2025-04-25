@@ -4,7 +4,6 @@ import com.accounting.model.Document;
 import com.accounting.model.DocumentHistory;
 import com.accounting.model.enums.DocumentStatus;
 import com.accounting.model.enums.DocumentType;
-import com.accounting.model.enums.Priority;
 import com.accounting.repository.DocumentHistoryRepository;
 import com.accounting.repository.DocumentRepository;
 import com.accounting.service.DocumentService;
@@ -113,12 +112,6 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<Document> getDocumentsByPriority(Priority priority) {
-        return documentRepository.findByPriorityOrderByUploadedAtDesc(priority);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public long countDocumentsByUser(String username) {
         return documentRepository.countByUserUsername(username);
     }
@@ -133,12 +126,6 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional(readOnly = true)
     public long countDocumentsByStatus(DocumentStatus status) {
         return documentRepository.countByStatus(status);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public long countDocumentsByPriority(Priority priority) {
-        return documentRepository.countByPriority(priority);
     }
 
     @Override
@@ -228,16 +215,6 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public long getDocumentCountByPriority(Priority priority) {
-        logger.debug("Getting document count by priority: {}", priority);
-        if (priority == null) {
-            throw new IllegalArgumentException("Priority cannot be null");
-        }
-        return documentRepository.countByPriority(priority);
-    }
-
-    @Override
     public List<Document> getDocumentsByReferenceId(Long referenceId) {
         return documentRepository.findByReferenceId(referenceId);
     }
@@ -245,11 +222,6 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public Optional<Document> getDocument(Long id) {
         return documentRepository.findById(id);
-    }
-
-    @Override
-    public long countDocumentsByPriority(String priority) {
-        return documentRepository.countByPriority(Priority.valueOf(priority));
     }
 
     @Override

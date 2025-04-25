@@ -126,23 +126,29 @@
                 <p>Laboratory and equipment fees</p>
             </a>
 
+            <a href="${pageContext.request.contextPath}/kiosk/payment/chemistry" class="payment-option">
+                <div class="payment-icon">⚗️</div>
+                <h3>Chemistry Lab</h3>
+                <p>Chemistry laboratory fees and equipment</p>
+            </a>
+
             <a href="${pageContext.request.contextPath}/kiosk/payment/id" class="payment-option">
                 <div class="payment-icon">🪪</div>
                 <h3>ID Card</h3>
                 <p>ID replacement and validation</p>
-                </a>
+            </a>
 
             <a href="${pageContext.request.contextPath}/kiosk/payment/graduation" class="payment-option">
                 <div class="payment-icon">🎓</div>
                 <h3>Graduation</h3>
                 <p>Graduation fees and requirements</p>
-                </a>
+            </a>
 
             <a href="${pageContext.request.contextPath}/kiosk/payment/transcript" class="payment-option">
                 <div class="payment-icon">📄</div>
                 <h3>Transcript</h3>
                 <p>Request official transcript</p>
-                </a>
+            </a>
         </div>
 
         <a href="${pageContext.request.contextPath}/kiosk/queue/status" class="queue-status-link">View Queue Status</a>

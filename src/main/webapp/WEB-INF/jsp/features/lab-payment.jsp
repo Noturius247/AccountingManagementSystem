@@ -1,46 +1,162 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="context-path" content="${pageContext.request.contextPath}">
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
+    <title>Laboratory Payment</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/main.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/payment-forms.css">
+    <script src="${pageContext.request.contextPath}/static/js/payment-autofill.js"></script>
+</head>
+<body>
+    <div class="payment-form-container">
+        <div class="payment-form-header">
+            <h1 class="payment-form-title">Laboratory Payment</h1>
+        </div>
 
-<c:set var="title" value="Laboratory Fee Payment" />
-<c:set var="actionUrl" value="${pageContext.request.contextPath}/kiosk/payment/lab/process" />
+        <c:if test="${not empty error}">
+            <div class="error-message">${error}</div>
+        </c:if>
 
-<c:set var="additionalFields">
-    <div class="form-group">
-        <label for="labType">Laboratory Type<span class="required">*</span></label>
-        <select class="form-control" id="labType" name="labType" required>
-            <option value="">Select Laboratory</option>
-            <option value="Computer">Computer Laboratory</option>
-            <option value="Science">Science Laboratory</option>
-            <option value="Chemistry">Chemistry Laboratory</option>
-            <option value="Physics">Physics Laboratory</option>
-        </select>
+        <form class="payment-form" action="${pageContext.request.contextPath}/kiosk/payment/lab/process" method="post">
+            <div class="form-group">
+                <label for="studentId">Student ID</label>
+                <input type="text" id="studentId" name="studentId" value="${studentId}" required>
+            </div>
+
+            <div id="studentInfo" style="display: none;">
+                <div class="form-group">
+                    <label for="program">Program</label>
+                    <input type="text" id="program" name="program" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="section">Section</label>
+                    <input type="text" id="section" name="section" readonly>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="academicYear">Academic Year</label>
+                <select id="academicYear" name="academicYear" required>
+                    <option value="">Select Academic Year</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="semester">Semester</label>
+                <select id="semester" name="semester" required>
+                    <option value="">Select Semester</option>
+                    <option value="FIRST">First Semester</option>
+                    <option value="SECOND">Second Semester</option>
+                    <option value="SUMMER">Summer</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="labType">Laboratory Type</label>
+                <select id="labType" name="labType" required>
+                    <option value="">Select Laboratory Type</option>
+                    <option value="PHYSICS">Physics Laboratory</option>
+                    <option value="BIOLOGY">Biology Laboratory</option>
+                    <option value="COMPUTER">Computer Laboratory</option>
+                    <option value="ENGINEERING">Engineering Laboratory</option>
+                    <option value="ELECTRONICS">Electronics Laboratory</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="equipment">Equipment Package</label>
+                <select id="equipment" name="equipment" required>
+                    <option value="">Select Equipment Package</option>
+                    <option value="BASIC">Basic Equipment Set</option>
+                    <option value="ADVANCED">Advanced Equipment Set</option>
+                    <option value="SPECIALIZED">Specialized Equipment Set</option>
+                    <option value="NONE">No Equipment Needed</option>
+                </select>
+            </div>
+
+            <div class="form-group amount-group">
+                <label for="amount">Amount</label>
+                <div class="amount-input">
+                    <span class="peso-sign">₱</span>
+                    <input type="number" id="amount" name="amount" value="${amount}" step="0.01" min="0" required readonly>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">Proceed to Payment</button>
+        </form>
+
+        <a href="${pageContext.request.contextPath}/kiosk" class="back-link">← Back to Kiosk</a>
     </div>
-</c:set>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('labType').addEventListener('change', function() {
-            const labType = this.value;
-            let amount = 1500.00;
-            
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize student verification with autofill
+            initStudentVerification({
+                academicYear: true,
+                semester: true,
+                program: true,
+                section: true,
+                onVerificationSuccess: function(data) {
+                    calculateLabFee();
+                }
+            });
+
+            // Calculate fee when lab type or equipment changes
+            document.getElementById('labType').addEventListener('change', calculateLabFee);
+            document.getElementById('equipment').addEventListener('change', calculateLabFee);
+        });
+
+        function calculateLabFee() {
+            const labType = document.getElementById('labType').value;
+            const equipment = document.getElementById('equipment').value;
+            let baseFee = 0;
+            let equipmentFee = 0;
+
+            // Lab type fees
             switch(labType) {
-                case 'Computer':
-                    amount = 2000.00;
+                case 'PHYSICS':
+                    baseFee = 2000;
                     break;
-                case 'Science':
-                    amount = 1500.00;
+                case 'BIOLOGY':
+                    baseFee = 2500;
                     break;
-                case 'Chemistry':
-                    amount = 1800.00;
+                case 'COMPUTER':
+                    baseFee = 1500;
                     break;
-                case 'Physics':
-                    amount = 1700.00;
+                case 'ENGINEERING':
+                    baseFee = 3000;
+                    break;
+                case 'ELECTRONICS':
+                    baseFee = 2500;
                     break;
             }
-            
-            document.getElementById('amount').value = amount.toFixed(2);
-        });
-    });
-</script>
 
-<jsp:include page="base-payment.jsp" /> 
+            // Equipment fees
+            switch(equipment) {
+                case 'BASIC':
+                    equipmentFee = 500;
+                    break;
+                case 'ADVANCED':
+                    equipmentFee = 1000;
+                    break;
+                case 'SPECIALIZED':
+                    equipmentFee = 1500;
+                    break;
+                case 'NONE':
+                    equipmentFee = 0;
+                    break;
+            }
+
+            const totalFee = baseFee + equipmentFee;
+            document.getElementById('amount').value = totalFee;
+        }
+    </script>
+</body>
+</html> 

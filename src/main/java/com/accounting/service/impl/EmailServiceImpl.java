@@ -92,4 +92,9 @@ public class EmailServiceImpl implements EmailService {
             throw new RuntimeException("Failed to send email", e);
         }
     }
+
+    @Override
+    public void sendQueueNotification(String email, String subject, String message) {
+        sendEmail(email, subject, message);
+    }
 } 

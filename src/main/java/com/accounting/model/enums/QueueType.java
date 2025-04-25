@@ -1,8 +1,11 @@
 package com.accounting.model.enums;
 
+/**
+ * Enum representing different types of payment queues in the system
+ */
 public enum QueueType {
-    REGULAR,
-    PRIORITY,
-    VIP,
-    EMERGENCY
+    BANK,
+    CASH,
+    CARD,
+    ONLINE;
 } 

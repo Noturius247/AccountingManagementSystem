@@ -5,34 +5,61 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
     <title>Payment Confirmation</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/main.css">
     <style>
         .confirmation-container {
             max-width: 600px;
+            min-height: 800px;
             margin: 40px auto;
             padding: 30px;
             background-color: white;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             text-align: center;
+            position: relative;
+        }
+
+        .back-button-corner {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+
+        .kiosk-button-corner {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+        }
+
+        .action-buttons {
+            margin-top: 30px;
+            margin-bottom: 100px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
         }
 
         .success-icon {
             font-size: 64px;
-            color: #28a745;
+            color: #800000;
             margin-bottom: 20px;
+            margin-top: 40px;
         }
 
         .confirmation-title {
-            color: #28a745;
+            color: #800000;
             font-size: 24px;
             margin-bottom: 20px;
         }
 
         .payment-details {
-            margin: 30px 0;
+            margin: 30px auto;
             text-align: left;
+            max-width: 500px;
+            margin-bottom: 180px;
         }
 
         .detail-row {
@@ -168,18 +195,91 @@
         .status-pending {
             color: #ffc107;
         }
+
+        .confirm-payment-bottom {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #800000;
+            color: white;
+            padding: 24px 48px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            height: auto;
+            line-height: 1;
+        }
+
+        .confirm-payment-bottom:hover {
+            background-color: #600000;
+        }
+
+        .student-info-section {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+        }
+
+        .student-info-title {
+            color: #800000;
+            font-size: 18px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div class="confirmation-container">
-        <div class="success-icon">✓</div>
-        <h1 class="confirmation-title">Payment Successful!</h1>
+        <a href="javascript:history.back()" class="back-button back-button-corner">
+            Back
+        </a>
+
+        <div class="success-icon">📋</div>
+        <h1 class="confirmation-title">Review Payment</h1>
         
         <div class="payment-details">
-            <div class="detail-row">
-                <span class="detail-label">Payment Number:</span>
-                <span class="detail-value">${payment.paymentNumber}</span>
-            </div>
+            <c:if test="${not empty payment.paymentNumber && payment.paymentStatus != 'PENDING'}">
+                <div class="detail-row">
+                    <span class="detail-label">Payment Number:</span>
+                    <span class="detail-value">${payment.paymentNumber}</span>
+                </div>
+            </c:if>
+
+            <!-- Student Information Section -->
+            <c:if test="${not empty student}">
+                <div class="student-info-section">
+                    <div class="student-info-title">Student Information</div>
+                    <div class="detail-row">
+                        <span class="detail-label">School ID:</span>
+                        <span class="detail-value">${student.studentId}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Student Name:</span>
+                        <span class="detail-value">${student.fullName}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Program:</span>
+                        <span class="detail-value">${student.program}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Year Level:</span>
+                        <span class="detail-value">${student.yearLevel}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="detail-label">Section:</span>
+                        <span class="detail-value">${student.section}</span>
+                    </div>
+                </div>
+            </c:if>
+
             <div class="detail-row">
                 <span class="detail-label">Description:</span>
                 <span class="detail-value">${payment.description}</span>
@@ -199,6 +299,25 @@
                 </div>
             </c:if>
             
+            <c:if test="${payment.type.name() == 'ENROLLMENT'}">
+                <div class="detail-row">
+                    <span class="detail-label">Academic Year:</span>
+                    <span class="detail-value">${payment.academicYear}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Semester:</span>
+                    <span class="detail-value">${payment.semester}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">${payment.email}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Contact Number:</span>
+                    <span class="detail-value">${payment.contactNumber}</span>
+                </div>
+            </c:if>
+            
             <c:if test="${not empty payment.basePrice}">
                 <div class="detail-row">
                     <span class="detail-label">Base Price:</span>
@@ -207,21 +326,27 @@
             </c:if>
 
             <div class="detail-row">
-                <span class="detail-label">Date:</span>
-                <span class="detail-value">
-                    <fmt:formatDate value="${payment.processedAt}" pattern="MMM dd, yyyy HH:mm:ss"/>
-                </span>
-            </div>
-            <div class="detail-row">
                 <span class="detail-label">Amount:</span>
-                <span class="detail-value amount">₱ ${payment.formattedAmount}</span>
+                <span class="detail-value amount">₱<fmt:formatNumber value="${payment.amount}" pattern="#,##0.00"/></span>
             </div>
-            <div class="detail-row">
-                <span class="detail-label">Status:</span>
-                <span class="detail-value" data-field="status" class="${payment.paymentStatus == 'PROCESSED' ? 'status-processed' : 'status-pending'}">
-                    ${payment.paymentStatus}
-                </span>
-            </div>
+            
+            <c:if test="${not empty payment.createdAt && payment.paymentStatus != 'PENDING'}">
+                <div class="detail-row">
+                    <span class="detail-label">Date:</span>
+                    <span class="detail-value">
+                        <fmt:formatDate value="${payment.createdAt}" pattern="MMMM dd, yyyy hh:mm a"/>
+                    </span>
+                </div>
+            </c:if>
+            
+            <c:if test="${payment.paymentStatus != 'PENDING'}">
+                <div class="detail-row">
+                    <span class="detail-label">Status:</span>
+                    <span class="detail-value ${payment.paymentStatus == 'PROCESSED' ? 'status-processed' : 'status-pending'}">
+                        ${payment.paymentStatus}
+                    </span>
+                </div>
+            </c:if>
         </div>
 
         <c:if test="${not empty queueNumber}">
@@ -232,69 +357,164 @@
             </div>
         </c:if>
 
-        <div class="button-container">
-            <c:if test="${payment.paymentStatus == 'PENDING'}">
-                <button onclick="confirmPayment('${payment.id}')" class="confirm-button">
-                    Confirm Payment
-                </button>
-                <button onclick="cancelPayment('${payment.id}')" class="cancel-button">
-                    Cancel Payment
-                </button>
-            </c:if>
-            <a href="javascript:history.back()" class="back-button">
-                Back
-            </a>
-            <a href="${pageContext.request.contextPath}/kiosk" class="home-button">
-                Back to Kiosk
-            </a>
-        </div>
+        <a href="${pageContext.request.contextPath}/kiosk" class="home-button kiosk-button-corner">
+            Back to Kiosk
+        </a>
+
+        <%-- Debug payment status --%>
+        <%-- <div>Debug - Payment Status: ${payment.paymentStatus}</div> --%>
+
+        <button onclick="confirmPayment('${payment.transactionReference}')" class="confirm-payment-bottom">
+            CONFIRM PAYMENT
+        </button>
     </div>
 
     <script>
-        function confirmPayment(paymentId) {
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if payment is processed
+            const paymentStatus = '${payment.paymentStatus}';
+            const transactionRef = '${payment.transactionReference}';
+            console.log('Payment Status:', paymentStatus); // Debug log
+            console.log('Transaction Reference:', transactionRef); // Debug log
+            
+            if (paymentStatus === 'PROCESSED') {
+                // Hide confirm button if payment is processed
+                const confirmButton = document.querySelector('.confirm-payment-bottom');
+                if (confirmButton) {
+                    confirmButton.style.display = 'none';
+                }
+                
+                // Trigger receipt download
+                window.location.href = '${pageContext.request.contextPath}/kiosk/payment/' + transactionRef + '/download-receipt';
+                
+                // Show success message
+                setTimeout(function() {
+                    alert('Your receipt has been downloaded. Please keep it for your records.');
+                }, 1000);
+            }
+        });
+
+        function confirmPayment(transactionRef) {
+            if (!transactionRef) {
+                console.error('Transaction Reference is missing');
+                alert('Error: Transaction Reference is missing');
+                return;
+            }
+
+            // Show loading indicator
+            const confirmButton = document.querySelector('.confirm-payment-bottom');
+            if (confirmButton) {
+                confirmButton.disabled = true;
+                confirmButton.textContent = 'Processing...';
+            }
+
             if (confirm('Are you sure you want to confirm this payment?')) {
-                fetch('${pageContext.request.contextPath}/kiosk/payment/confirm/' + paymentId, {
-                    method: 'POST'
+                const token = "${_csrf.token}";
+                const header = "${_csrf.headerName}";
+                
+                fetch('${pageContext.request.contextPath}/kiosk/payment/confirm/' + transactionRef, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [header]: token
+                    },
+                    credentials: 'same-origin'
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('Payment confirmation response:', data); // Debug log
+                    
                     if (data.success) {
-                        // Update status to PROCESSED
-                        document.querySelector('.detail-value[data-field="status"]').textContent = 'PROCESSED';
-                        document.querySelector('.detail-value[data-field="status"]').classList.add('status-processed');
+                        // Create notification
+                        const amount = document.querySelector('.amount').textContent.replace('₱', '').trim();
+                        fetch('${pageContext.request.contextPath}/notifications', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                [header]: token
+                            },
+                            body: JSON.stringify({
+                                transactionRef: transactionRef,
+                                amount: parseFloat(amount.replace(/,/g, '')),
+                                status: 'PENDING'
+                            })
+                        });
+
+                        // Update payment status section
+                        const statusContainer = document.createElement('div');
+                        statusContainer.className = 'detail-row';
+                        statusContainer.innerHTML = `
+                            <span class="detail-label">Status:</span>
+                            <span class="detail-value status-pending">PENDING</span>
+                        `;
+                        
+                        // Find the amount row to insert the status after it
+                        const amountRow = document.querySelector('.detail-row:has(.amount)');
+                        if (amountRow) {
+                            amountRow.after(statusContainer);
+                        }
                         
                         // Add queue number if provided
                         if (data.queueNumber) {
                             const queueDiv = document.createElement('div');
+                            queueDiv.className = 'queue-info';
                             queueDiv.innerHTML = `
-                                <div>
-                                    <h2>Your Queue Number</h2>
-                                    <div class="queue-number">${data.queueNumber}</div>
-                                    <p>Please wait for your number to be called</p>
-                                </div>
+                                <h2>Your Queue Number</h2>
+                                <div class="queue-number">${data.queueNumber}</div>
+                                <p>Please wait for your number to be called</p>
+                                <p class="estimated-time">Estimated wait time: ${data.estimatedWaitTime} minutes</p>
                             `;
                             document.querySelector('.payment-details').after(queueDiv);
                         }
                         
                         // Hide confirm button
-                        document.querySelector('.confirm-button').style.display = 'none';
-                        document.querySelector('.cancel-button').style.display = 'none';
+                        if (confirmButton) {
+                            confirmButton.style.display = 'none';
+                        }
                         
-                        alert('Payment confirmed successfully');
+                        // Show success message with queue information
+                        const message = `Payment confirmed and pending manager approval.\n\nYour queue number is: ${data.queueNumber}\nEstimated wait time: ${data.estimatedWaitTime} minutes\n\nYour receipt will be available after approval.`;
+                        alert(message);
+                        
+                        // Refresh the page after a short delay to show updated status
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
                     } else {
+                        // Re-enable button on error
+                        if (confirmButton) {
+                            confirmButton.disabled = false;
+                            confirmButton.textContent = 'CONFIRM PAYMENT';
+                        }
                         alert(data.error || 'Failed to confirm payment');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Failed to confirm payment');
+                    // Re-enable button on error
+                    if (confirmButton) {
+                        confirmButton.disabled = false;
+                        confirmButton.textContent = 'CONFIRM PAYMENT';
+                    }
+                    alert('Failed to confirm payment. Please try again.');
                 });
+            } else {
+                // Re-enable button if confirmation was cancelled
+                if (confirmButton) {
+                    confirmButton.disabled = false;
+                    confirmButton.textContent = 'CONFIRM PAYMENT';
+                }
             }
         }
 
-        function cancelPayment(paymentId) {
+        function cancelPayment(transactionRef) {
             if (confirm('Are you sure you want to cancel this payment?')) {
-                fetch('${pageContext.request.contextPath}/kiosk/payment/cancel/' + paymentId, {
+                fetch('${pageContext.request.contextPath}/kiosk/payment/cancel/' + transactionRef, {
                     method: 'POST'
                 })
                 .then(response => response.json())
@@ -312,22 +532,6 @@
                 });
             }
         }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if payment is processed
-            const paymentStatus = '${payment.paymentStatus}';
-            const paymentId = '${payment.id}';
-            
-            if (paymentStatus === 'PROCESSED') {
-                // Trigger receipt download
-                window.location.href = '${pageContext.request.contextPath}/kiosk/payment/' + paymentId + '/download-receipt';
-                
-                // Show success message
-                setTimeout(function() {
-                    alert('Your receipt has been downloaded. Please keep it for your records.');
-                }, 1000);
-            }
-        });
     </script>
 </body>
 </html> 

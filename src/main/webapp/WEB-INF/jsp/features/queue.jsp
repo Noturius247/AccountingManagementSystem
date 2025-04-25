@@ -175,12 +175,12 @@
     <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        let lastCurrentNumber = ${currentQueue};
+        let lastCurrentNumber = '<c:out value="${currentQueue}"/>';
         
         // Function to update queue status
         async function updateQueueStatus() {
             try {
-                const response = await fetch('${pageContext.request.contextPath}/kiosk/queue/status/' + ${queueNumber});
+                const response = await fetch('<c:url value="/kiosk/queue/status/"/>' + '<c:out value="${queueNumber}"/>');
                 const data = await response.json();
                 
                 // Update current number with animation if changed
@@ -200,7 +200,7 @@
                 document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
                 
                 // Check if it's your turn
-                if (data.currentNumber === ${queueNumber}) {
+                if (data.currentNumber === '<c:out value="${queueNumber}"/>') {
                     notifyUser();
                 }
                 

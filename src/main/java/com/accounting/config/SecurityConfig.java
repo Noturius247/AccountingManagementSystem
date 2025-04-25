@@ -19,6 +19,8 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.web.firewall.HttpFirewall;
 import org.springframework.security.web.firewall.StrictHttpFirewall;
+import org.springframework.security.web.servlet.util.matcher.MvcRequestMatcher;
+import org.springframework.web.servlet.handler.HandlerMappingIntrospector;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,7 +35,9 @@ public class SecurityConfig {
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http, HandlerMappingIntrospector introspector) throws Exception {
+        MvcRequestMatcher.Builder mvcMatcherBuilder = new MvcRequestMatcher.Builder(introspector);
+        
         http
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
@@ -43,23 +47,40 @@ public class SecurityConfig {
                 .expiredUrl("/login?expired")
             )
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**", "/static/**", "/resources/**")
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .ignoringRequestMatchers(
+                    mvcMatcherBuilder.pattern("/static/**"),
+                    mvcMatcherBuilder.pattern("/css/**"),
+                    mvcMatcherBuilder.pattern("/js/**"),
+                    mvcMatcherBuilder.pattern("/images/**"),
+                    mvcMatcherBuilder.pattern("/fonts/**"),
+                    mvcMatcherBuilder.pattern("/resources/**"),
+                    mvcMatcherBuilder.pattern("/kiosk/verify-student"),
+                    mvcMatcherBuilder.pattern("/kiosk/payment/*/process")
+                )
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/css/**", "/js/**", "/images/**", "/fonts/**", "/static/**", "/resources/**").permitAll()
-                .requestMatchers("/login", "/register", "/forgot-password").permitAll()
-                .requestMatchers("/WEB-INF/jsp/**").permitAll()
-                .requestMatchers("/kiosk/**", "/accounting/kiosk/**", "/kiosk", "/accounting/kiosk").permitAll()
-                .requestMatchers("/kiosk/payment/**", "/accounting/kiosk/payment/**").permitAll()
-                .requestMatchers("/kiosk/queue/**", "/accounting/kiosk/queue/**").permitAll()
-                .requestMatchers("/kiosk/help/**", "/accounting/kiosk/help/**").permitAll()
-                .requestMatchers("/kiosk/search/**", "/accounting/kiosk/search/**").permitAll()
-                .requestMatchers("/kiosk/verify-student/**", "/accounting/kiosk/verify-student/**").permitAll()
-                .requestMatchers("/kiosk/payment/*/process", "/accounting/kiosk/payment/*/process").permitAll()
-                .requestMatchers("/admin/**", "/admin/**").hasRole("ADMIN")
-                .requestMatchers("/manager/**", "/manager/**").hasRole("MANAGER")
-                .requestMatchers("/user/**", "/user/**").hasRole("USER")
+                .requestMatchers(
+                    mvcMatcherBuilder.pattern("/static/**"),
+                    mvcMatcherBuilder.pattern("/css/**"),
+                    mvcMatcherBuilder.pattern("/js/**"),
+                    mvcMatcherBuilder.pattern("/images/**"),
+                    mvcMatcherBuilder.pattern("/fonts/**"),
+                    mvcMatcherBuilder.pattern("/resources/**")
+                ).permitAll()
+                .requestMatchers(
+                    mvcMatcherBuilder.pattern("/login"),
+                    mvcMatcherBuilder.pattern("/register"),
+                    mvcMatcherBuilder.pattern("/forgot-password")
+                ).permitAll()
+                .requestMatchers(mvcMatcherBuilder.pattern("/WEB-INF/jsp/**")).permitAll()
+                .requestMatchers(
+                    mvcMatcherBuilder.pattern("/kiosk/**"),
+                    mvcMatcherBuilder.pattern("/accounting/kiosk/**")
+                ).permitAll()
+                .requestMatchers(mvcMatcherBuilder.pattern("/admin/**")).hasRole("ADMIN")
+                .requestMatchers(mvcMatcherBuilder.pattern("/manager/**")).hasRole("MANAGER")
+                .requestMatchers(mvcMatcherBuilder.pattern("/user/**")).hasRole("USER")
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form

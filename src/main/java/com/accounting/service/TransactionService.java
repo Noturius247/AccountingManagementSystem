@@ -32,8 +32,6 @@ public interface TransactionService {
 
     int getPendingApprovalCount();
 
-    int getHighPriorityCount();
-
     int getActiveUserCount();
 
     int getOnlineUserCount();
@@ -83,7 +81,6 @@ public interface TransactionService {
     List<Transaction> getTransactionsByUser(String username);
     List<Transaction> getTransactionsByStatus(String status);
     List<Transaction> getTransactionsByType(String type);
-    List<Transaction> getTransactionsByPriority(String priority);
     List<Transaction> getTransactionsByDescription(String description);
     List<Transaction> getTransactionsByAmount(Double minAmount, Double maxAmount);
     List<Transaction> getTransactionsByDateRange(LocalDateTime start, LocalDateTime end);
@@ -91,15 +88,12 @@ public interface TransactionService {
     long getTransactionCountByUser(String username);
     long getTransactionCountByStatus(String status);
     long getTransactionCountByType(String type);
-    long getTransactionCountByPriority(String priority);
     double getTransactionAmount();
     double getTransactionAmountByUser(String username);
     double getTransactionAmountByStatus(String status);
     double getTransactionAmountByType(String type);
-    double getTransactionAmountByPriority(String priority);
     Map<String, Long> getTransactionCountByType();
     Map<String, Long> getTransactionCountByStatus();
-    Map<String, Long> getTransactionCountByPriority();
     List<Object[]> getTransactionCountByTypeAndDateRange(LocalDateTime start, LocalDateTime end);
     List<Transaction> getTransactionsByNotes(String notes);
 

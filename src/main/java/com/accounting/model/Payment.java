@@ -62,6 +62,9 @@ public class Payment {
     @JsonIgnore
     private User user;
 
+    @Column(name = "user_username", nullable = false)
+    private String userUsername;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -139,6 +142,9 @@ public class Payment {
         if (taxAmount == null) {
             taxAmount = BigDecimal.ZERO;
         }
+        if (userUsername == null && user != null) {
+            userUsername = user.getUsername();
+        }
     }
 
     @PreUpdate
@@ -194,7 +200,7 @@ public class Payment {
         return String.format("%,.2f", getTotalAmount());
     }
 
-    public String getFormattedPaymentMethod() {
+    public String getPaymentMethod() {
         return paymentMethod != null ? paymentMethod.toLowerCase().replace("_", " ") : null;
     }
 
@@ -248,6 +254,17 @@ public class Payment {
 
     public void setUser(User user) {
         this.user = user;
+        if (user != null) {
+            this.userUsername = user.getUsername();
+        }
+    }
+
+    public String getUserUsername() {
+        return userUsername;
+    }
+
+    public void setUserUsername(String userUsername) {
+        this.userUsername = userUsername;
     }
 
     public PaymentType getType() {
@@ -272,5 +289,13 @@ public class Payment {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getTransactionReference() {
+        return transactionReference;
+    }
+
+    public void setTransactionReference(String transactionReference) {
+        this.transactionReference = transactionReference;
     }
 } 

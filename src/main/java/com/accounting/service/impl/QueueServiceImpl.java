@@ -4,7 +4,6 @@ import com.accounting.model.Queue;
 import com.accounting.model.QueuePosition;
 import com.accounting.model.User;
 import com.accounting.model.enums.QueueStatus;
-import com.accounting.model.enums.Priority;
 import com.accounting.model.enums.ReceiptPreference;
 import com.accounting.model.enums.DocumentType;
 import com.accounting.model.enums.DocumentStatus;
@@ -16,6 +15,12 @@ import com.accounting.service.PdfService;
 import com.accounting.service.PrinterService;
 import com.accounting.model.Document;
 import com.accounting.repository.DocumentRepository;
+import com.accounting.repository.StudentRepository;
+import com.accounting.model.Student;
+import com.accounting.service.StudentService;
+import com.accounting.exception.ResourceNotFoundException;
+import java.util.Arrays;
+import lombok.RequiredArgsConstructor;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -44,6 +49,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.util.UUID;
+import com.accounting.model.Payment;
+import com.accounting.repository.PaymentRepository;
+import lombok.RequiredArgsConstructor;
+import com.accounting.repository.UserRepository;
+import com.accounting.model.enums.PaymentType;
 
 @Service
 @Transactional
@@ -52,20 +62,38 @@ public class QueueServiceImpl implements QueueService {
 
     private static final Logger logger = LoggerFactory.getLogger(QueueServiceImpl.class);
     private final QueueRepository queueRepository;
-    private final NotificationService notificationService;
+    private final UserRepository userRepository;
+    private final StudentRepository studentRepository;
+    private final PaymentRepository paymentRepository;
     private final EmailService emailService;
     private final PdfService pdfService;
+    private final NotificationService notificationService;
     private final PrinterService printerService;
     private final DocumentRepository documentRepository;
+    private final StudentService studentService;
     private final Random random = new Random();
 
-    public QueueServiceImpl(QueueRepository queueRepository, NotificationService notificationService, EmailService emailService, PdfService pdfService, PrinterService printerService, DocumentRepository documentRepository) {
+    @Autowired
+    public QueueServiceImpl(QueueRepository queueRepository,
+                          UserRepository userRepository,
+                          StudentRepository studentRepository,
+                          PaymentRepository paymentRepository,
+                          EmailService emailService,
+                          PdfService pdfService,
+                          NotificationService notificationService,
+                          PrinterService printerService,
+                          DocumentRepository documentRepository,
+                          StudentService studentService) {
         this.queueRepository = queueRepository;
-        this.notificationService = notificationService;
+        this.userRepository = userRepository;
+        this.studentRepository = studentRepository;
+        this.paymentRepository = paymentRepository;
         this.emailService = emailService;
         this.pdfService = pdfService;
+        this.notificationService = notificationService;
         this.printerService = printerService;
         this.documentRepository = documentRepository;
+        this.studentService = studentService;
     }
 
     private String generateKioskSessionId() {
@@ -89,7 +117,7 @@ public class QueueServiceImpl implements QueueService {
         queue.setKioskTerminalId(kioskTerminalId);
         queue.setQueueNumber(getNextQueueNumber());
         queue.setCreatedAt(LocalDateTime.now());
-        queue.setStatus(QueueStatus.WAITING);
+        queue.setStatus(QueueStatus.PENDING);
         queue.setPosition(getNextPosition());
         queue.setReceiptPreference(ReceiptPreference.DIGITAL);
         Queue savedQueue = queueRepository.save(queue);
@@ -143,7 +171,7 @@ public class QueueServiceImpl implements QueueService {
     public void cancelPublicQueue(String publicIdentifier, String kioskSessionId) {
         queueRepository.findByPublicIdentifierAndKioskSessionId(publicIdentifier, kioskSessionId)
                 .ifPresent(queue -> {
-                    queue.setStatus(QueueStatus.CANCELLED);
+                    queue.setStatus(QueueStatus.FAILED);
                     queueRepository.save(queue);
                     notifyQueueCancellation(queue.getId());
                 });
@@ -162,7 +190,7 @@ public class QueueServiceImpl implements QueueService {
         queue.setUserUsername(user.getUsername());
         queue.setQueueNumber(getNextQueueNumber());
         queue.setCreatedAt(LocalDateTime.now());
-        queue.setStatus(QueueStatus.WAITING);
+        queue.setStatus(QueueStatus.PENDING);
         queue.setPosition(getNextPosition());
         queueRepository.save(queue);
     }
@@ -178,7 +206,7 @@ public class QueueServiceImpl implements QueueService {
     @Transactional(readOnly = true)
     public QueuePosition getQueueStatus(User user) {
         return queueRepository.findByUserUsername(user.getUsername())
-            .map(queue -> new QueuePosition(queue.getPosition(), calculateEstimatedWaitTime(queue.getQueueNumber())))
+            .map(queue -> new QueuePosition(queue.getPosition(), calculateWaitTime(queue.getQueueNumber())))
             .orElse(null);
     }
 
@@ -191,30 +219,46 @@ public class QueueServiceImpl implements QueueService {
     @Override
     @Transactional(readOnly = true)
     public int getQueueSize() {
-        Long count = queueRepository.countByStatus(QueueStatus.WAITING);
+        Long count = queueRepository.countByStatus(QueueStatus.PENDING);
         return count != null ? count.intValue() : 0;
     }
 
     @Override
     @Transactional(readOnly = true)
     public QueuePosition getCurrentQueuePosition() {
-        return queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.WAITING)
-            .map(queue -> new QueuePosition(queue.getPosition(), calculateEstimatedWaitTime(queue.getQueueNumber())))
+        return queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PENDING)
+            .map(queue -> new QueuePosition(queue.getPosition(), calculateWaitTime(queue.getQueueNumber())))
             .orElse(null);
     }
 
     @Override
     @Transactional
-    public QueuePosition createQueue(String username) {
+    public Queue createQueue(Student student) {
         Queue queue = new Queue();
-        queue.setUserUsername(username);
-        queue.setQueueNumber(getNextQueueNumber());
+        queue.setStudentId(student.getStudentId());
+        queue.setUser(student.getUser());
+        queue.setUserUsername(student.getUser().getUsername());
+        queue.setStatus(QueueStatus.PENDING);
         queue.setCreatedAt(LocalDateTime.now());
-        queue.setStatus(QueueStatus.WAITING);
-        int position = getNextPosition();
-        queue.setPosition(position);
+        queue.setUpdatedAt(LocalDateTime.now());
+        
+        // Generate queue number and session ID
+        queue.setQueueNumber(generateQueueNumber());
+        queue.setKioskSessionId(generateKioskSessionId());
+        queue.setPublicIdentifier(generatePublicIdentifier());
+        
+        // Set position and estimated wait time
+        queue.setPosition(calculatePosition());
+        queue.setEstimatedWaitTime(calculateWaitTime(null));
+        
         Queue savedQueue = queueRepository.save(queue);
-        return new QueuePosition(position, calculateEstimatedWaitTime(savedQueue.getQueueNumber()));
+        
+        // Generate and send receipt if needed
+        if (savedQueue.getReceiptPreference() != null) {
+            generateAndSendReceipt(savedQueue.getQueueNumber());
+        }
+        
+        return savedQueue;
     }
 
     @Override
@@ -222,11 +266,11 @@ public class QueueServiceImpl implements QueueService {
     public QueuePosition updateQueueStatus(Long queueId, String status) {
         Queue queue = getQueueEntityById(queueId);
         queue.setStatus(QueueStatus.valueOf(status));
-        if (queue.getStatus() == QueueStatus.COMPLETED) {
+        if (queue.getStatus() == QueueStatus.PENDING) {
             queue.setProcessedAt(LocalDateTime.now());
         }
         Queue savedQueue = queueRepository.save(queue);
-        return new QueuePosition(savedQueue.getPosition(), calculateEstimatedWaitTime(savedQueue.getQueueNumber()));
+        return new QueuePosition(savedQueue.getPosition(), calculateWaitTime(savedQueue.getQueueNumber()));
     }
 
     @Override
@@ -234,14 +278,14 @@ public class QueueServiceImpl implements QueueService {
     public QueuePosition getQueueById(Long id) {
         Queue queue = queueRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Queue not found with id: " + id));
-        return new QueuePosition(queue.getPosition(), calculateEstimatedWaitTime(queue.getQueueNumber()));
+        return new QueuePosition(queue.getPosition(), calculateWaitTime(queue.getQueueNumber()));
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<QueuePosition> getQueuesByUser(String username) {
         return queueRepository.findByUserUsernameOrderByCreatedAtDesc(username).stream()
-                .map(queue -> new QueuePosition(queue.getPosition(), calculateEstimatedWaitTime(queue.getQueueNumber())))
+                .map(queue -> new QueuePosition(queue.getPosition(), calculateWaitTime(queue.getQueueNumber())))
                 .toList();
     }
 
@@ -249,15 +293,15 @@ public class QueueServiceImpl implements QueueService {
     @Transactional(readOnly = true)
     public List<QueuePosition> getQueuesByStatus(String status) {
         return queueRepository.findByStatusOrderByCreatedAtDesc(QueueStatus.valueOf(status)).stream()
-                .map(queue -> new QueuePosition(queue.getPosition(), calculateEstimatedWaitTime(queue.getQueueNumber())))
+                .map(queue -> new QueuePosition(queue.getPosition(), calculateWaitTime(queue.getQueueNumber())))
                 .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public QueuePosition getNextQueue() {
-        return queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.WAITING)
-                .map(queue -> new QueuePosition(queue.getPosition(), calculateEstimatedWaitTime(queue.getQueueNumber())))
+        return queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PENDING)
+                .map(queue -> new QueuePosition(queue.getPosition(), calculateWaitTime(queue.getQueueNumber())))
                 .orElse(null);
     }
 
@@ -270,85 +314,44 @@ public class QueueServiceImpl implements QueueService {
 
     @Override
     @Transactional(readOnly = true)
-    public double getAverageWaitTimeByStatus(String status) {
-        Double avgWait = queueRepository.avgWaitTimeByStatus(QueueStatus.valueOf(status));
-        return avgWait != null ? avgWait : 0.0;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public long getQueueCountByStatus(String status) {
-        return queueRepository.countByStatus(QueueStatus.valueOf(status));
-    }
-
-    private int getNextPosition() {
-        return queueRepository.findMaxPosition().orElse(0) + 1;
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<QueuePosition> getActiveQueues() {
-        return queueRepository.findByStatus(QueueStatus.WAITING).stream()
-                .map(queue -> new QueuePosition(queue.getPosition(), calculateEstimatedWaitTime(queue.getQueueNumber())))
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public long getQueueCount() {
-        return queueRepository.count();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public double getAverageWaitTimeByType(String type) {
         List<Object[]> results = queueRepository.avgWaitTimeByType();
-        return results.isEmpty() ? 0.0 : ((Number) results.get(0)[0]).doubleValue();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public double getAverageWaitTimeByPriority(String priority) {
-        List<Object[]> results = queueRepository.avgWaitTimeByPriority();
-        return results.isEmpty() ? 0.0 : ((Number) results.get(0)[0]).doubleValue();
+        return results.stream()
+            .filter(arr -> type.equals(arr[0]))
+            .findFirst()
+            .map(arr -> (Double) arr[1])
+            .orElse(0.0);
     }
 
     @Override
     @Transactional(readOnly = true)
     public QueuePosition getQueueByUsername(String username) {
         return queueRepository.findByUserUsername(username)
-                .map(this::convertToQueuePosition)
-                .orElse(null);
+            .map(this::convertToQueuePosition)
+            .orElse(null);
     }
 
     @Override
     @Transactional(readOnly = true)
     public String getNextQueueNumber() {
-        return String.format("Q%06d", queueRepository.count() + 1);
+        long count = queueRepository.count();
+        return String.format("Q%04d", count + 1);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<QueuePosition> getQueuesByType(String type) {
-        return queueRepository.findByTypeOrderByCreatedAtDesc(type).stream()
-                .map(this::convertToQueuePosition)
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<QueuePosition> getQueuesByPriority(String priority) {
-        return queueRepository.findByPriorityOrderByCreatedAtDesc(priority).stream()
-                .map(this::convertToQueuePosition)
-                .toList();
+        return queueRepository.findByTypeOrderByCreatedAtDesc(PaymentType.valueOf(type)).stream()
+            .map(this::convertToQueuePosition)
+            .collect(Collectors.toList());
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<QueuePosition> getQueuesByDescription(String description) {
         return queueRepository.findByDescriptionContainingIgnoreCaseOrderByCreatedAtDesc(description).stream()
-                .map(this::convertToQueuePosition)
-                .toList();
+            .map(this::convertToQueuePosition)
+            .collect(Collectors.toList());
     }
 
     @Override
@@ -374,43 +377,18 @@ public class QueueServiceImpl implements QueueService {
         if (!StringUtils.hasText(type)) {
             throw new IllegalArgumentException("Type cannot be empty");
         }
-        return queueRepository.countByType(type);
+        return queueRepository.countByType(PaymentType.valueOf(type));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public long getQueueCountByPriority(String priority) {
-        logger.debug("Getting queue count by priority: {}", priority);
-        if (!StringUtils.hasText(priority)) {
-            throw new IllegalArgumentException("Priority cannot be empty");
-        }
-        List<Object[]> counts = queueRepository.countByPriority();
-        return counts.stream()
-                .filter(arr -> Priority.valueOf(priority).equals(arr[0]))
-                .mapToLong(arr -> ((Number) arr[1]).longValue())
-                .findFirst()
-                .orElse(0L);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Map<String, Long> getQueueCountByPriorityMap() {
-        logger.debug("Getting queue count by priority");
-        List<Object[]> counts = queueRepository.countByPriority();
-        Map<String, Long> result = new HashMap<>();
-        for (Priority priority : Priority.values()) {
-            result.put(priority.toString(), counts.stream()
-                    .filter(arr -> priority.equals(arr[0]))
-                    .mapToLong(arr -> ((Number) arr[1]).longValue())
-                    .findFirst()
-                    .orElse(0L));
-        }
-        return result;
+    public long getQueueCountByStatus(String status) {
+        return queueRepository.countByStatus(QueueStatus.valueOf(status));
     }
 
     @Override
     public int getQueuePosition(String queueNumber) {
-        List<Queue> waitingList = queueRepository.findByStatusOrderByCreatedAtAsc(QueueStatus.WAITING);
+        List<Queue> waitingList = queueRepository.findByStatusOrderByCreatedAtAsc(QueueStatus.PENDING);
         for (int i = 0; i < waitingList.size(); i++) {
             if (waitingList.get(i).getQueueNumber().equals(queueNumber)) {
                 return i + 1; // Return 1-based position
@@ -420,15 +398,23 @@ public class QueueServiceImpl implements QueueService {
     }
 
     @Override
-    public int calculateEstimatedWaitTime(String queueNumber) {
-        int position = getQueuePosition(queueNumber);
-        if (position == -1) {
-            return -1;
+    public int calculateWaitTime(String queueNumber) {
+        if (queueNumber == null || queueNumber.isEmpty()) {
+            int queueSize = getQueueSize();
+            // Assuming average processing time of 5 minutes per queue
+            return queueSize * 5;
         }
         
-        // Average processing time per queue (in minutes)
-        final int AVERAGE_PROCESSING_TIME = 5;
-        return position * AVERAGE_PROCESSING_TIME;
+        Optional<Queue> queueOpt = queueRepository.findByQueueNumber(queueNumber);
+        if (!queueOpt.isPresent()) {
+            int queueSize = getQueueSize();
+            return queueSize * 5;
+        }
+        
+        Queue queue = queueOpt.get();
+        int position = queue.getPosition();
+        // Assuming average processing time of 5 minutes per queue
+        return position * 5;
     }
 
     @Override
@@ -436,12 +422,16 @@ public class QueueServiceImpl implements QueueService {
         Queue queue = queueRepository.findByQueueNumber(queueNumber)
             .orElseThrow(() -> new EntityNotFoundException("Queue not found: " + queueNumber));
             
-        if (queue.getStatus() != QueueStatus.WAITING) {
-            throw new IllegalStateException("Cannot cancel a queue that is not in waiting status");
+        if (queue.getStatus() != QueueStatus.PENDING) {
+            throw new IllegalStateException("Cannot cancel a queue that is not in pending status");
         }
         
-        queue.setStatus(QueueStatus.CANCELLED);
+        queue.setStatus(QueueStatus.FAILED);
+        queue.setUpdatedAt(LocalDateTime.now());
         queueRepository.save(queue);
+        
+        // Reorder remaining queue positions
+        reorderQueuePositions();
     }
 
     @Override
@@ -456,7 +446,7 @@ public class QueueServiceImpl implements QueueService {
     @Override
     @Transactional(readOnly = true)
     public QueuePosition getNextInQueue() {
-        return queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.WAITING)
+        return queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PENDING)
                 .map(this::convertToQueuePosition)
                 .orElse(null);
     }
@@ -464,13 +454,13 @@ public class QueueServiceImpl implements QueueService {
     @Override
     @Transactional
     public void processNextInQueue() {
-        Queue nextQueue = queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.WAITING)
+        Queue nextQueue = queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PENDING)
                 .orElse(null);
         if (nextQueue != null) {
-            nextQueue.setStatus(QueueStatus.PROCESSING);
+            nextQueue.setStatus(QueueStatus.PROCESSED);
             nextQueue.setProcessedAt(LocalDateTime.now());
             queueRepository.save(nextQueue);
-            notifyQueueStatus(nextQueue.getId(), QueueStatus.PROCESSING.name());
+            notifyQueueStatus(nextQueue.getId(), QueueStatus.PROCESSED.name());
         }
     }
 
@@ -480,9 +470,9 @@ public class QueueServiceImpl implements QueueService {
         try {
             Map<String, Object> stats = new HashMap<>();
             stats.put("totalQueues", queueRepository.count());
-            stats.put("pendingQueues", queueRepository.countByStatus(QueueStatus.WAITING));
-            stats.put("processingQueues", queueRepository.countByStatus(QueueStatus.PROCESSING));
-            stats.put("completedQueues", queueRepository.countByStatus(QueueStatus.COMPLETED));
+            stats.put("pendingQueues", queueRepository.countByStatus(QueueStatus.PENDING));
+            stats.put("processingQueues", queueRepository.countByStatus(QueueStatus.PROCESSED));
+            stats.put("completedQueues", queueRepository.countByStatus(QueueStatus.PROCESSED));
             return stats;
         } catch (Exception e) {
             logger.error("Error getting queue statistics", e);
@@ -493,14 +483,14 @@ public class QueueServiceImpl implements QueueService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getCurrentQueueDetails() {
-        Queue currentQueue = queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.WAITING)
+        Queue currentQueue = queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PENDING)
                 .orElse(null);
         Map<String, Object> details = new HashMap<>();
         if (currentQueue != null) {
             details.put("queueNumber", currentQueue.getQueueNumber());
             details.put("position", currentQueue.getPosition());
             details.put("status", currentQueue.getStatus());
-            details.put("estimatedWaitTime", calculateEstimatedWaitTime(currentQueue.getQueueNumber()));
+            details.put("estimatedWaitTime", calculateWaitTime(currentQueue.getQueueNumber()));
         }
         return details;
     }
@@ -515,58 +505,64 @@ public class QueueServiceImpl implements QueueService {
             info.put("queueNumber", queue.getQueueNumber());
             info.put("position", queue.getPosition());
             info.put("status", queue.getStatus());
-            info.put("estimatedWaitTime", calculateEstimatedWaitTime(queue.getQueueNumber()));
+            info.put("estimatedWaitTime", calculateWaitTime(queue.getQueueNumber()));
         }
         return info;
     }
 
     @Override
-    @Transactional(readOnly = true)
-    public String generateQueueNumber() {
-        try {
-            return String.format("Q%04d", random.nextInt(10000));
-        } catch (Exception e) {
-            logger.error("Error generating queue number", e);
-            throw new RuntimeException("Failed to generate queue number", e);
-        }
+    @Transactional
+    public QueuePosition createQueueEntry(String username, Long paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+            .orElseThrow(() -> new EntityNotFoundException("Payment not found"));
+            
+        Student student = studentRepository.findByUsername(username)
+            .orElseThrow(() -> new EntityNotFoundException("Student not found"));
+
+        String queueNumber = generateQueueNumber();
+        String publicIdentifier = generatePublicIdentifier();
+
+        Queue queue = new Queue();
+        queue.setQueueNumber(queueNumber);
+        queue.setStudentId(student.getStudentId());
+        queue.setUserUsername(username);
+        queue.setUser(student.getUser());
+        queue.setPublicIdentifier(publicIdentifier);
+        queue.setKioskSessionId(generateKioskSessionId());
+        queue.setStatus(QueueStatus.PENDING);
+        queue.setPosition(calculatePosition());
+        queue.setEstimatedWaitTime(calculateWaitTime(null));
+        queue.setDescription("Payment processing for " + payment.getDescription());
+        queue.setCreatedAt(LocalDateTime.now());
+        queue.setUpdatedAt(LocalDateTime.now());
+        
+        // Set payment related information
+        queue.setPaymentId(payment.getId());
+        queue.setAmount(payment.getAmount());
+        queue.setPaymentNumber(payment.getTransactionReference());
+        queue.setStatus(QueueStatus.PENDING);
+        queue.setScheduleId(payment.getId().toString());
+        
+        Queue savedQueue = queueRepository.save(queue);
+        
+        return new QueuePosition(savedQueue.getPosition(), calculateWaitTime(savedQueue.getQueueNumber()));
     }
 
     @Override
     @Transactional
-    public QueuePosition createQueueEntry(String username, Long serviceId) {
-        Queue queue = new Queue();
-        queue.setUserUsername(username);
-        queue.setServiceId(serviceId);
-        queue.setQueueNumber(generateQueueNumber());
-        queue.setCreatedAt(LocalDateTime.now());
-        queue.setStatus(QueueStatus.WAITING);
-        queue.setPosition(getNextPosition());
-        Queue savedQueue = queueRepository.save(queue);
-        return convertToQueuePosition(savedQueue);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Map<String, Object> getQueueInfo(String queueNumber) {
-        try {
-            if (!StringUtils.hasText(queueNumber)) {
-                throw new IllegalArgumentException("Queue number cannot be empty");
-            }
-            
-            Queue queue = queueRepository.findByQueueNumber(queueNumber)
-                    .orElseThrow(() -> new RuntimeException("Queue not found: " + queueNumber));
-                    
-            Map<String, Object> info = new HashMap<>();
-            info.put("queueNumber", queue.getQueueNumber());
-            info.put("position", queue.getPosition());
-            info.put("status", queue.getStatus());
-            info.put("estimatedWaitTime", getEstimatedWaitTime(queueNumber));
-            
-            return info;
-        } catch (Exception e) {
-            logger.error("Error getting queue info", e);
-            throw new RuntimeException("Failed to get queue info", e);
-        }
+        Queue queue = queueRepository.findByQueueNumber(queueNumber)
+            .orElseThrow(() -> new EntityNotFoundException("Queue not found"));
+
+        Map<String, Object> queueInfo = new HashMap<>();
+        queueInfo.put("queueNumber", queue.getQueueNumber());
+        queueInfo.put("status", queue.getStatus());
+        queueInfo.put("position", queue.getPosition());
+        queueInfo.put("estimatedWaitTime", queue.getEstimatedWaitTime());
+        queueInfo.put("createdAt", queue.getCreatedAt());
+        queueInfo.put("processedAt", queue.getProcessedAt());
+        
+        return queueInfo;
     }
 
     @Override
@@ -593,15 +589,15 @@ public class QueueServiceImpl implements QueueService {
     @Override
     @Transactional(readOnly = true)
     public Queue getCurrentQueue() {
-        return queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.WAITING)
-                .orElse(null);
+        return queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PENDING)
+                .orElseThrow(() -> new ResourceNotFoundException("No pending queues found"));
     }
 
     @Override
     @Transactional(readOnly = true)
     public long getAverageProcessingTime() {
         try {
-            List<Queue> completedQueues = queueRepository.findByStatus(QueueStatus.COMPLETED);
+            List<Queue> completedQueues = queueRepository.findByStatus(QueueStatus.PROCESSED);
             if (completedQueues.isEmpty()) {
                 return 300; // Default 5 minutes
             }
@@ -625,7 +621,7 @@ public class QueueServiceImpl implements QueueService {
             }
             
             Queue queue = getQueueEntityById(queueId);
-            queue.setStatus(QueueStatus.COMPLETED);
+            queue.setStatus(QueueStatus.PROCESSED);
             queueRepository.save(queue);
             notifyQueueCompletion(queueId);
         } catch (Exception e) {
@@ -1070,14 +1066,114 @@ public class QueueServiceImpl implements QueueService {
 
     @Override
     @Transactional
-    public QueuePosition createQueue(QueuePosition queuePosition) {
+    public Queue createQueue(Payment payment, Student student) {
         Queue queue = new Queue();
-        queue.setPosition(queuePosition.getPosition());
-        queue.setQueueNumber(getNextQueueNumber());
-        queue.setCreatedAt(LocalDateTime.now());
-        queue.setStatus(QueueStatus.WAITING);
+        queue.setQueueNumber(generateQueueNumber());
+        queue.setStudentId(student.getStudentId());
+        queue.setStatus(QueueStatus.PENDING);
+        
+        // Set payment related information
+        queue.setPaymentId(payment.getId());
+        queue.setAmount(payment.getAmount());
+        queue.setPaymentNumber(payment.getTransactionReference());
+        queue.setStatus(QueueStatus.PENDING);
+        queue.setScheduleId(payment.getId().toString());
+        
+        // Set receipt preference
+        queue.setReceiptPreference(ReceiptPreference.DIGITAL);
+        
         Queue savedQueue = queueRepository.save(queue);
-        return new QueuePosition(savedQueue.getPosition(), calculateEstimatedWaitTime(savedQueue.getQueueNumber()));
+        
+        // Send notifications
+        notifyQueueCreation(savedQueue.getId());
+        
+        // If digital receipt is preferred, generate and send it
+        if (ReceiptPreference.DIGITAL.equals(queue.getReceiptPreference())) {
+            generateAndSendReceipt(savedQueue.getQueueNumber());
+        }
+        
+        return savedQueue;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public double getAverageWaitTimeByStatus(String status) {
+        Double avgWait = queueRepository.avgWaitTimeByStatus(QueueStatus.valueOf(status));
+        return avgWait != null ? avgWait : 0.0;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Queue> getActiveQueues() {
+        return queueRepository.findByStatus(QueueStatus.PENDING);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getQueueCount() {
+        return queueRepository.count();
+    }
+
+    @Override
+    @Transactional
+    public QueuePosition createQueue(QueuePosition position) {
+        Queue queue = new Queue();
+        queue.setPosition(getNextPosition());
+        queue.setStatus(QueueStatus.PENDING);
+        Queue savedQueue = queueRepository.save(queue);
+        return new QueuePosition(savedQueue.getPosition(), calculateWaitTime(savedQueue.getQueueNumber()));
+    }
+
+    private Integer getNextPosition() {
+        return queueRepository.findMaxPosition().orElse(0) + 1;
+    }
+
+    @Override
+    public Queue createQueueForKiosk(String studentId, String kioskSessionId, String kioskTerminalId, ReceiptPreference receiptPreference) {
+        Student student = studentRepository.findByStudentId(studentId)
+            .orElseThrow(() -> new EntityNotFoundException("Student not found"));
+
+        Queue queue = new Queue();
+        queue.setStudentId(studentId);
+        queue.setUser(student.getUser());
+        queue.setKioskSessionId(kioskSessionId);
+        queue.setKioskTerminalId(kioskTerminalId);
+        queue.setReceiptPreference(receiptPreference);
+        queue.setStatus(QueueStatus.PENDING);
+        queue.setPosition(calculatePosition());
+        queue.setCreatedAt(LocalDateTime.now());
+        queue.setQueueNumber(generateQueueNumber());
+        return queueRepository.save(queue);
+    }
+
+    @Override
+    public QueuePosition createQueue(String username) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        Queue queue = new Queue();
+        queue.setUserUsername(username);
+        queue.setUser(user);
+        queue.setQueueNumber(generateQueueNumber());
+        queue.setStatus(QueueStatus.PENDING);
+        queue.setPosition(calculatePosition());
+        queue.setCreatedAt(LocalDateTime.now());
+        Queue savedQueue = queueRepository.save(queue);
+        return new QueuePosition(savedQueue.getPosition(), calculateWaitTime(savedQueue.getQueueNumber()));
+    }
+
+    @Override
+    @Transactional
+    public Queue createQueue(Student student, Long serviceId) {
+        Queue queue = new Queue();
+        queue.setStudentId(student.getStudentId());
+        queue.setUser(student.getUser());
+        queue.setUserUsername(student.getUser().getUsername());
+        queue.setScheduleId(serviceId.toString());
+        queue.setStatus(QueueStatus.PENDING);
+        queue.setReceiptPreference(ReceiptPreference.EMAIL);
+        queue.setPosition(calculatePosition());
+        return queueRepository.save(queue);
     }
 
     @Override
@@ -1085,6 +1181,7 @@ public class QueueServiceImpl implements QueueService {
         Queue queue = queueRepository.findByQueueNumber(queueNumber)
                 .orElseThrow(() -> new EntityNotFoundException("Queue not found: " + queueNumber));
         queue.setReceiptPreference(preference);
+        queue.setUpdatedAt(LocalDateTime.now());
         queueRepository.save(queue);
     }
 
@@ -1092,24 +1189,18 @@ public class QueueServiceImpl implements QueueService {
     public void generateAndSendReceipt(String queueNumber) {
         Queue queue = queueRepository.findByQueueNumber(queueNumber)
                 .orElseThrow(() -> new EntityNotFoundException("Queue not found: " + queueNumber));
-                
+
         // Generate receipt content
         String receiptContent = generateReceiptContent(queue);
-        
-        switch (queue.getReceiptPreference()) {
-            case PRINT:
-                printReceipt(receiptContent, queue.getKioskTerminalId());
-                break;
-            case EMAIL:
-                if (queue.getEmailAddress() != null) {
-                    emailService.sendReceipt(queue.getEmailAddress(), receiptContent);
-                }
-                break;
-            case DIGITAL:
-            default:
-                String receiptUrl = generateDigitalReceipt(receiptContent, queue.getQueueNumber());
-                notificationService.createNotification("Digital receipt available at: " + receiptUrl);
-                break;
+        byte[] pdfContent = pdfService.generatePdf(receiptContent);
+
+        // Send receipt based on preference
+        if (queue.getReceiptPreference() == ReceiptPreference.EMAIL && queue.getUserUsername() != null) {
+            emailService.sendEmail(
+                queue.getUserUsername(),
+                "Queue Receipt - " + queue.getQueueNumber(),
+                "Please find your queue receipt attached."
+            );
         }
     }
 
@@ -1120,46 +1211,11 @@ public class QueueServiceImpl implements QueueService {
         receipt.append("Queue Number: ").append(queue.getQueueNumber()).append("\n");
         receipt.append("Date: ").append(queue.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))).append("\n");
         receipt.append("Position: ").append(queue.getPosition()).append("\n");
-        receipt.append("Estimated Wait Time: ").append(calculateEstimatedWaitTime(queue.getQueueNumber())).append(" minutes\n");
+        receipt.append("Estimated Wait Time: ").append(calculateWaitTime(queue.getQueueNumber())).append(" minutes\n");
         receipt.append("Terminal ID: ").append(queue.getKioskTerminalId()).append("\n");
         receipt.append("\nThank you for using our service!\n");
         
         return receipt.toString();
-    }
-
-    private void printReceipt(String receiptContent, String terminalId) {
-        try {
-            // Implementation depends on your printer service
-            // This is a placeholder for the actual implementation
-            printerService.print(receiptContent, terminalId);
-        } catch (Exception e) {
-            logger.error("Error printing receipt for terminal: " + terminalId, e);
-            throw new RuntimeException("Failed to print receipt", e);
-        }
-    }
-
-    private String generateDigitalReceipt(String receiptContent, String queueNumber) {
-        try {
-            // Generate PDF
-            byte[] pdfContent = pdfService.generatePdf(receiptContent);
-            
-            // Save to document storage
-            Document document = new Document();
-            document.setFileName("receipt_" + queueNumber + ".pdf");
-            document.setContentType("application/pdf");
-            document.setContent(pdfContent);
-            document.setType(DocumentType.RECEIPT);
-            document.setStatus(DocumentStatus.APPROVED);
-            document.setUploadedAt(LocalDateTime.now());
-            
-            Document savedDocument = documentRepository.save(document);
-            
-            // Return URL for accessing the receipt
-            return "/documents/receipts/" + savedDocument.getId();
-        } catch (Exception e) {
-            logger.error("Error generating digital receipt for queue: " + queueNumber, e);
-            throw new RuntimeException("Failed to generate digital receipt", e);
-        }
     }
 
     private Queue getQueueEntityById(Long id) {
@@ -1173,7 +1229,70 @@ public class QueueServiceImpl implements QueueService {
         }
         return new QueuePosition(
             queue.getPosition(),
-            calculateEstimatedWaitTime(queue.getQueueNumber())
+            calculateWaitTime(queue.getQueueNumber())
         );
+    }
+
+    private int calculatePosition() {
+        return queueRepository.findMaxPosition().orElse(0) + 1;
+    }
+
+    @Override
+    public String generateQueueNumber() {
+        LocalDateTime now = LocalDateTime.now();
+        String datePart = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        Random random = new Random();
+        String randomPart = String.format("%04d", random.nextInt(10000));
+        return "Q" + datePart + randomPart;
+    }
+
+    @Override
+    public Queue updateQueueStatus(Long queueId, QueueStatus newStatus) {
+        Queue queue = queueRepository.findById(queueId)
+            .orElseThrow(() -> new ResourceNotFoundException("Queue not found with id: " + queueId));
+        
+        queue.setStatus(newStatus);
+        if (newStatus == QueueStatus.PENDING) {
+            queue.setProcessedAt(LocalDateTime.now());
+        }
+        
+        return queueRepository.save(queue);
+    }
+
+    private void reorderQueuePositions() {
+        List<Queue> waitingQueues = queueRepository.findByStatusOrderByPositionAsc(QueueStatus.PENDING);
+        int position = 1;
+        for (Queue queue : waitingQueues) {
+            queue.setPosition(position++);
+            queue.setEstimatedWaitTime(calculateWaitTime(null));
+            queueRepository.save(queue);
+        }
+    }
+
+    private void notifyQueueCreation(Long queueId) {
+        try {
+            Queue queue = queueRepository.findById(queueId)
+                .orElseThrow(() -> new EntityNotFoundException("Queue not found"));
+                
+            String message = String.format(
+                "New queue created: %s for payment processing. Position: %d, Estimated wait time: %d minutes",
+                queue.getQueueNumber(),
+                queue.getPosition(),
+                queue.getEstimatedWaitTime()
+            );
+            
+            notificationService.createNotification(message);
+            
+            // Send email notification if email is available
+            if (queue.getUserUsername() != null) {
+                emailService.sendQueueNotification(
+                    queue.getUserUsername(),
+                    "Queue Creation Confirmation",
+                    message
+                );
+            }
+        } catch (Exception e) {
+            logger.error("Failed to send queue creation notification", e);
+        }
     }
 } 

@@ -36,4 +36,5 @@ public interface PaymentService {
     Payment approvePayment(Long id);
     Payment rejectPayment(Long id);
     long getPendingPaymentsCount();
+    Payment getPaymentByTransactionReference(String transactionReference);
 } 

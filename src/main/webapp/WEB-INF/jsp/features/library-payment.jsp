@@ -1,52 +1,126 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<c:set var="title" value="Library Fee Payment"/>
-<c:set var="actionUrl" value="/kiosk/payment/library/process"/>
-<c:set var="amount" value="500.00"/>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="context-path" content="${pageContext.request.contextPath}">
+    <meta name="_csrf" content="${_csrf.token}"/>
+    <meta name="_csrf_header" content="${_csrf.headerName}"/>
+    <title>Library Payment</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/main.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/payment-forms.css">
+    <script src="${pageContext.request.contextPath}/static/js/payment-autofill.js"></script>
+</head>
+<body>
+    <div class="payment-form-container">
+        <div class="payment-form-header">
+            <h1 class="payment-form-title">Library Payment</h1>
+        </div>
 
-<!-- Custom CSS -->
-<link href="${pageContext.request.contextPath}/static/css/main.css" rel="stylesheet" type="text/css">
+        <c:if test="${not empty error}">
+            <div class="error-message">${error}</div>
+        </c:if>
 
-<c:set var="additionalFields">
-    <div class="mb-3">
-        <label for="feeType" class="form-label">Fee Type</label>
-        <select class="form-control" id="feeType" name="feeType" required>
-            <option value="">Select Fee Type</option>
-            <option value="MEMBERSHIP">Library Membership</option>
-            <option value="LATE_FEE">Late Return Fee</option>
-            <option value="DAMAGE_FEE">Damage Fee</option>
-            <option value="LOST_BOOK">Lost Book Replacement</option>
-        </select>
+        <form class="payment-form" action="${pageContext.request.contextPath}/kiosk/payment/library/process" method="post">
+            <div class="form-group">
+                <label for="studentId">Student ID</label>
+                <input type="text" id="studentId" name="studentId" value="${studentId}" required>
+            </div>
+
+            <div id="studentInfo" style="display: none;">
+                <div class="form-group">
+                    <label for="program">Program</label>
+                    <input type="text" id="program" name="program" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="yearLevel">Year Level</label>
+                    <input type="text" id="yearLevel" name="yearLevel" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="section">Section</label>
+                    <input type="text" id="section" name="section" readonly>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="feeType">Fee Type</label>
+                <select id="feeType" name="feeType" required>
+                    <option value="">Select Fee Type</option>
+                    <option value="OVERDUE">Overdue Book</option>
+                    <option value="LOST">Lost Book</option>
+                    <option value="DAMAGED">Damaged Book</option>
+                    <option value="MEMBERSHIP">Library Membership</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" name="description" rows="3">${description}</textarea>
+                <small class="help-text">Please provide details about the fee (e.g., book title, days overdue)</small>
+            </div>
+
+            <div class="form-group amount-group">
+                <label for="amount">Amount</label>
+                <div class="amount-input">
+                    <span class="peso-sign">₱</span>
+                    <input type="number" id="amount" name="amount" value="${amount}" step="0.01" min="0" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">Proceed to Payment</button>
+        </form>
+
+        <a href="${pageContext.request.contextPath}/kiosk" class="back-link">← Back to Kiosk</a>
     </div>
-    
-    <div class="mb-3">
-        <label for="description" class="form-label">Description</label>
-        <textarea class="form-control" id="description" name="description" rows="2" placeholder="Enter additional details about the fee"></textarea>
-    </div>
-</c:set>
 
-<%@ include file="base-payment.jsp" %>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize student verification with autofill
+            initStudentVerification({
+                academicYear: false,
+                semester: false,
+                program: true,
+                section: true,
+                yearLevel: true,
+                onVerificationSuccess: function(data) {
+                    // Set initial amount based on fee type if selected
+                    const feeType = document.getElementById('feeType').value;
+                    if (feeType) {
+                        setDefaultAmount(feeType);
+                    }
+                }
+            });
 
-<script>
-    document.getElementById('feeType').addEventListener('change', function() {
-        const feeType = this.value;
-        const amountInput = document.getElementById('amount');
-        
-        switch(feeType) {
-            case 'MEMBERSHIP':
-                amountInput.value = '500.00';
-                break;
-            case 'LATE_FEE':
-                amountInput.value = '50.00';
-                break;
-            case 'DAMAGE_FEE':
-                amountInput.value = '100.00';
-                break;
-            case 'LOST_BOOK':
-                amountInput.value = '1000.00';
-                break;
-            default:
-                amountInput.value = '500.00';
+            // Set default amount based on fee type
+            document.getElementById('feeType').addEventListener('change', function() {
+                setDefaultAmount(this.value);
+            });
+        });
+
+        function setDefaultAmount(feeType) {
+            let defaultAmount = 0;
+
+            switch(feeType) {
+                case 'OVERDUE':
+                    defaultAmount = 50; // Per day
+                    break;
+                case 'LOST':
+                    defaultAmount = 1000; // Base fee for lost book
+                    break;
+                case 'DAMAGED':
+                    defaultAmount = 500; // Base fee for damaged book
+                    break;
+                case 'MEMBERSHIP':
+                    defaultAmount = 200; // Annual membership fee
+                    break;
+            }
+
+            document.getElementById('amount').value = defaultAmount;
         }
-    });
-</script> 
+    </script>
+</body>
+</html> 

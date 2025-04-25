@@ -122,18 +122,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     List<Transaction> findByUserUsernameAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(String username, String notes);
     List<Transaction> findByStatusAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(String status, String notes);
     List<Transaction> findByTypeAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(String type, String notes);
-    List<Transaction> findByPriorityAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(String priority, String notes);
     List<Transaction> findByUserUsernameAndStatusAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(String username, String status, String notes);
     List<Transaction> findByUserUsernameAndTypeAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(String username, String type, String notes);
-    List<Transaction> findByUserUsernameAndPriorityAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(String username, String priority, String notes);
     List<Transaction> findByStatusAndTypeAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(String status, String type, String notes);
-    List<Transaction> findByStatusAndPriorityAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(String status, String priority, String notes);
-    List<Transaction> findByTypeAndPriorityAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(String type, String priority, String notes);
     List<Transaction> findByUserUsernameAndStatusAndTypeAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(String username, String status, String type, String notes);
-    List<Transaction> findByUserUsernameAndStatusAndPriorityAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(String username, String status, String priority, String notes);
-    List<Transaction> findByUserUsernameAndTypeAndPriorityAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(String username, String type, String priority, String notes);
-    List<Transaction> findByStatusAndTypeAndPriorityAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(String status, String type, String priority, String notes);
-    List<Transaction> findByUserUsernameAndStatusAndTypeAndPriorityAndNotesContainingIgnoreCaseAndAmountBetweenOrderByCreatedAtDesc(String username, String status, String type, String priority, String notes, BigDecimal minAmount, BigDecimal maxAmount);
 
     @Query("SELECT t FROM Transaction t WHERE t.user.username = :username AND " +
            "LOWER(t.notes) LIKE LOWER(CONCAT('%', :keyword, '%')) " +
@@ -142,7 +134,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     List<Transaction> findByStatusOrderByCreatedAtDesc(TransactionStatus status);
     List<Transaction> findByTypeOrderByCreatedAtDesc(TransactionType type);
-    List<Transaction> findByPriorityOrderByCreatedAtDesc(String priority);
     
     @Query("SELECT COUNT(t) FROM Transaction t WHERE t.type = :type")
     long countByType(@Param("type") TransactionType type);
@@ -155,9 +146,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
     
     @Query("SELECT t.type, COUNT(t) FROM Transaction t WHERE t.createdAt BETWEEN :start AND :end GROUP BY t.type")
     List<Object[]> countByTypeAndDateRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
-    
-    @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.priority = :priority")
-    Optional<Double> sumAmountByPriority(@Param("priority") String priority);
 
     @Query("SELECT COUNT(t) FROM Transaction t WHERE t.user.username = :username AND t.type = :type")
     long countByUserUsernameAndType(@Param("username") String username, @Param("type") TransactionType type);
@@ -202,7 +190,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     List<Transaction> findByUserUsernameAndStatusAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(String username, TransactionStatus status, String notes);
     List<Transaction> findByStatusAndTypeAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(TransactionStatus status, TransactionType type, String notes);
-    List<Transaction> findByStatusAndPriorityAndNotesContainingIgnoreCaseOrderByCreatedAtDesc(TransactionStatus status, String priority, String notes);
 
     @Query("SELECT COUNT(t) FROM Transaction t WHERE t.status = :status")
     long countByStatus(String status);
@@ -244,9 +231,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
         LocalDateTime startDate,
         LocalDateTime endDate
     );
-
-    @Query("SELECT COUNT(t) FROM Transaction t WHERE t.priority = :priority")
-    long countByPriority(@Param("priority") String priority);
 
     @Query("SELECT t FROM Transaction t WHERE " +
            "(:status IS NULL OR t.status = :status) AND " +

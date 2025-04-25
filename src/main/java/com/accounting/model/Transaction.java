@@ -2,7 +2,6 @@ package com.accounting.model;
 
 import com.accounting.model.enums.TransactionStatus;
 import com.accounting.model.enums.TransactionType;
-import com.accounting.model.enums.Priority;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -46,10 +45,6 @@ public class Transaction {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private TransactionType type;
-    
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Priority priority;
     
     @Column
     private String category;
@@ -283,14 +278,6 @@ public class Transaction {
         this.type = type;
     }
 
-    public Priority getPriority() {
-        return priority;
-    }
-
-    public void setPriority(Priority priority) {
-        this.priority = priority;
-    }
-
     public String getCategory() {
         return category;
     }
@@ -360,7 +347,6 @@ public class Transaction {
             ", amount=" + amount +
             ", status=" + status +
             ", type=" + type +
-            ", priority=" + priority +
             ", category='" + category + '\'' +
             ", subCategory='" + subCategory + '\'' +
             ", currency='" + currency + '\'' +

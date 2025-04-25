@@ -2,7 +2,6 @@ package com.accounting.model;
 
 import com.accounting.model.enums.DocumentStatus;
 import com.accounting.model.enums.DocumentType;
-import com.accounting.model.enums.Priority;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -57,10 +56,6 @@ public class Document {
     @Enumerated(EnumType.STRING)
     private DocumentStatus status;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Priority priority;
-
     @Column(length = 1000)
     private String description;
 
@@ -99,9 +94,6 @@ public class Document {
         }
         if (status == null) {
             status = DocumentStatus.DRAFT;
-        }
-        if (priority == null) {
-            priority = Priority.NORMAL;
         }
         if (user != null) {
             userUsername = user.getUsername();
@@ -161,10 +153,6 @@ public class Document {
         return String.format("%.2f GB", size / (1024.0 * 1024 * 1024));
     }
 
-    public String getPriorityLevel() {
-        return priority != null ? priority.toString().toLowerCase() : "medium";
-    }
-
     public String getStatusColor() {
         return status != null ? status.toString().toLowerCase() : "draft";
     }
@@ -207,10 +195,6 @@ public class Document {
 
     public DocumentStatus getStatus() {
         return status;
-    }
-
-    public Priority getPriority() {
-        return priority;
     }
 
     public String getDescription() {
@@ -287,10 +271,6 @@ public class Document {
 
     public void setStatus(DocumentStatus status) {
         this.status = status;
-    }
-
-    public void setPriority(Priority priority) {
-        this.priority = priority;
     }
 
     public void setDescription(String description) {

@@ -72,7 +72,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         stats.put("totalUsers", userRepository.count());
         stats.put("totalTransactions", transactionRepository.count());
         stats.put("totalPayments", paymentRepository.count());
-        stats.put("activeQueues", queueRepository.countByStatus(QueueStatus.WAITING));
+        stats.put("activeQueues", queueRepository.countByStatus(QueueStatus.PENDING));
         return stats;
     }
 
@@ -96,9 +96,9 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
     @Override
     public Map<String, Long> getQueueStats() {
         Map<String, Long> stats = new HashMap<>();
-        stats.put("waiting", queueRepository.countByStatus(QueueStatus.WAITING));
-        stats.put("processing", queueRepository.countByStatus(QueueStatus.PROCESSING));
-        stats.put("completed", queueRepository.countByStatus(QueueStatus.COMPLETED));
+        stats.put("waiting", queueRepository.countByStatus(QueueStatus.PENDING));
+        stats.put("processing", queueRepository.countByStatus(QueueStatus.PROCESSED));
+        stats.put("completed", queueRepository.countByStatus(QueueStatus.PROCESSED));
         return stats;
     }
 
@@ -142,13 +142,13 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
             stats.put("totalRevenue", totalRevenue);
             
             // Queue statistics
-            stats.put("pendingQueues", queueRepository.countByStatus(QueueStatus.WAITING));
+            stats.put("pendingQueues", queueRepository.countByStatus(QueueStatus.PENDING));
             
             // Student registration statistics
             stats.put("pendingStudentRegistrations", studentRepository.countByRegistrationStatus(Student.RegistrationStatus.PENDING));
             
             // Calculate average wait time for completed queues
-            List<Queue> completedQueues = queueRepository.findByStatus(QueueStatus.COMPLETED);
+            List<Queue> completedQueues = queueRepository.findByStatus(QueueStatus.PROCESSED);
             if (!completedQueues.isEmpty()) {
                 long totalWaitTime = completedQueues.stream()
                     .mapToLong(q -> Duration.between(q.getCreatedAt(), q.getProcessedAt()).getSeconds())
@@ -445,7 +445,7 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
 
     @Override
     public List<Queue> getActiveQueues() {
-        return queueRepository.findByStatus(QueueStatus.WAITING);
+        return queueRepository.findByStatus(QueueStatus.PENDING);
     }
 
     @Override
@@ -459,8 +459,8 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         counts.put("pendingTransactions", transactionRepository.countByStatus(TransactionStatus.PENDING));
         counts.put("completedTransactions", transactionRepository.countByStatus(TransactionStatus.COMPLETED));
         counts.put("failedTransactions", transactionRepository.countByStatus(TransactionStatus.FAILED));
-        counts.put("activeQueues", queueRepository.countByStatus(QueueStatus.WAITING));
-        counts.put("waitingQueues", queueRepository.countByStatus(QueueStatus.WAITING));
+        counts.put("activeQueues", queueRepository.countByStatus(QueueStatus.PENDING));
+        counts.put("waitingQueues", queueRepository.countByStatus(QueueStatus.PENDING));
         return counts;
     }
 

@@ -2,7 +2,6 @@ package com.accounting.model;
 
 import com.accounting.model.enums.NotificationStatus;
 import com.accounting.model.enums.NotificationType;
-import com.accounting.model.enums.Priority;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
@@ -54,10 +53,6 @@ public class Notification {
     @Enumerated(EnumType.STRING)
     private NotificationStatus status;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Priority priority;
-
     @Column(name = "is_read", nullable = false)
     private boolean isRead = false;
 
@@ -99,9 +94,6 @@ public class Notification {
         if (status == null) {
             status = NotificationStatus.UNREAD;
         }
-        if (priority == null) {
-            priority = Priority.NORMAL;
-        }
     }
 
     public boolean isUnread() {
@@ -137,10 +129,6 @@ public class Notification {
 
     public void setSettings(Map<String, Object> settings) {
         this.settings = settings != null ? settings : new HashMap<>();
-    }
-
-    public String getPriorityLevel() {
-        return priority != null ? priority.toString().toLowerCase() : "medium";
     }
 
     public String getStatusColor() {

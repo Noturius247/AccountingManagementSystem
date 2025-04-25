@@ -59,20 +59,44 @@ CREATE TABLE user_roles (
 
 -- Create queues table
 CREATE TABLE queues (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    queue_number VARCHAR(20) NOT NULL UNIQUE,
-    status VARCHAR(20) NOT NULL,
-    priority VARCHAR(20) NOT NULL,
-    position INT NOT NULL,
-    estimated_wait_time INT,
-    service_id BIGINT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    processed_at TIMESTAMP,
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    queue_number VARCHAR(255) NOT NULL UNIQUE,
+    student_id VARCHAR(20) NOT NULL,
+    status ENUM('PENDING', 'PROCESSED', 'FAILED', 'REFUNDED') NOT NULL DEFAULT 'PENDING',
+    payment_id BIGINT,
+    payment_number VARCHAR(50),
+    receipt_url VARCHAR(255),
+    amount DECIMAL(38,2),
+    description VARCHAR(255),
+    error_message TEXT,
+    payment_gateway_response TEXT,
+    schedule VARCHAR(50),
+    schedule_id VARCHAR(50),
+    type ENUM('BANK', 'CASH', 'CARD', 'ONLINE'),
+    priority VARCHAR(20) DEFAULT 'NORMAL',
+    currency VARCHAR(3) DEFAULT 'USD',
+    tax_amount DECIMAL(19,2) DEFAULT 0.00,
+    notes TEXT,
+    created_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    processed_at DATETIME(6),
     user_id BIGINT,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
-    CONSTRAINT chk_queue_status CHECK (status IN ('WAITING', 'PROCESSING', 'COMPLETED', 'CANCELLED')),
-    CONSTRAINT chk_queue_priority CHECK (priority IN ('REGULAR', 'PRIORITY', 'VIP', 'EMERGENCY'))
+    payment_method VARCHAR(255),
+    transaction_reference VARCHAR(255),
+    user_username VARCHAR(255),
+    position INT,
+    estimated_wait_time INT,
+    
+    INDEX idx_student_id (student_id),
+    INDEX idx_queue_number (queue_number),
+    INDEX idx_status (status),
+    INDEX idx_payment_id (payment_id),
+    INDEX idx_payment_number (payment_number),
+    INDEX idx_user_id (user_id),
+    
+    FOREIGN KEY (student_id) REFERENCES students(student_id),
+    FOREIGN KEY (payment_id) REFERENCES payments(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 -- Create transactions table
