@@ -1,5 +1,7 @@
-// Get the application context path
-const contextPath = document.querySelector('meta[name="contextPath"]')?.getAttribute('content') || '';
+// Get the application context path if not already defined
+if (typeof contextPath === 'undefined') {
+    const contextPath = document.querySelector('meta[name="contextPath"]')?.getAttribute('content') || '';
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // Handle dynamic content loading for manager dashboard
@@ -394,46 +396,199 @@ function loadTransactions(url) {
     // Fetch transactions content
     fetch(url, {
         headers: {
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'text/html'
+            'X-Requested-With': 'XMLHttpRequest'
         }
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.text();
-    })
+    .then(response => response.text())
     .then(html => {
-        // Create a temporary container
-        const temp = document.createElement('div');
-        temp.innerHTML = html;
-
-        // Find the transaction content in the response
-        const newContent = temp.querySelector('#transaction-content');
-        if (newContent) {
-            mainContent.innerHTML = newContent.innerHTML;
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const transactionContent = doc.getElementById('transaction-content');
+        
+        if (transactionContent) {
+            const currentContent = document.getElementById('transaction-content');
+            if (currentContent) {
+                currentContent.innerHTML = transactionContent.innerHTML;
+            } else {
+                mainContent.innerHTML = transactionContent.outerHTML;
+            }
+            
+            // Initialize components after content update
+            initializeTransactionComponents();
+            
+            // Update transaction statistics
+            updateTransactionStatistics();
         } else {
-            mainContent.innerHTML = html;
+            showAlert('error', 'Failed to load transaction content');
         }
-        
-        // Initialize transaction-specific components
-        initializeTransactionComponents();
-        
-        // Update browser URL without page reload
-        window.history.pushState({}, 'Transactions - Manager Dashboard', url);
-        document.title = 'Transactions - Manager Dashboard';
-
-        // Update transaction statistics
-        updateTransactionStatistics();
     })
     .catch(error => {
         console.error('Error loading transactions:', error);
-        mainContent.innerHTML = `
-            <div class="alert alert-danger mx-3 mt-3">
-                <i class="fas fa-exclamation-circle me-2"></i>
-                Failed to load transactions. Please try again.
-            </div>
-        `;
+        showAlert('error', 'Failed to load transactions. Please try again.');
     });
+}
+
+function filterByStatus(status) {
+    const baseUrl = `${contextPath}/manager/transactions`;
+    const url = status ? `${baseUrl}?status=${status}` : baseUrl;
+    loadTransactions(url);
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    const container = document.querySelector('.container-fluid');
+    if (container) {
+        container.insertBefore(alertDiv, container.firstChild);
+        setTimeout(() => alertDiv.remove(), 5000);
+    }
+}
+
+// Queue Management Functions
+function updateQueueStatus(queueId, status) {
+    if (status === 'PROCESSING') {
+        // Check if there's already a processing queue
+        const processingQueues = document.querySelectorAll('.status-processing');
+        if (processingQueues.length > 0) {
+            showAlert('warning', 'Another queue is already being processed. Please complete or cancel it first.');
+            return;
+        }
+    }
+
+    if (confirm('Are you sure you want to update the queue status to ' + status + '?')) {
+        const csrfHeader = document.querySelector("meta[name='_csrf_header']").content;
+        const csrfToken = document.querySelector("meta[name='_csrf']").content;
+        
+        fetch(`${contextPath}/manager/transactions/queue/${queueId}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                [csrfHeader]: csrfToken
+            },
+            body: JSON.stringify({ status: status })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // If status was changed to PROCESSING, disable all other "Start Processing" buttons
+                if (status === 'PROCESSING') {
+                    document.querySelectorAll('.start-processing').forEach(button => {
+                        button.disabled = true;
+                    });
+                }
+                // If status was changed from PROCESSING, enable all "Start Processing" buttons
+                else if (status === 'COMPLETED' || status === 'CANCELLED') {
+                    document.querySelectorAll('.start-processing').forEach(button => {
+                        button.disabled = false;
+                    });
+                }
+                fetchQueueDetails();
+                showAlert('success', data.message);
+            } else {
+                showAlert('error', data.error || 'Failed to update queue status');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating queue status:', error);
+            showAlert('error', 'Failed to update queue status');
+        });
+    }
+}
+
+function fetchQueueDetails(params = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    fetch(`${contextPath}/manager/transactions/queue?${queryString}`)
+        .then(response => response.json())
+        .then(data => {
+            updateQueueTable(data.queues);
+            if (document.getElementById('currentPosition')) {
+                document.getElementById('currentPosition').textContent = data.currentPosition;
+            }
+            if (document.getElementById('totalQueues')) {
+                document.getElementById('totalQueues').textContent = data.totalQueues;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching queue details:', error);
+            showAlert('error', 'Failed to fetch queue details');
+        });
+}
+
+function updateQueueTable(queues) {
+    const tbody = document.getElementById('queueTable').querySelector('tbody');
+    if (!tbody) return;
+
+    let hasProcessingQueue = queues.some(queue => queue.status === 'PROCESSING');
+    
+    tbody.innerHTML = queues.map(queue => `
+        <tr>
+            <td>${queue.queueNumber}</td>
+            <td>${queue.studentId || 'N/A'}</td>
+            <td>${queue.position}</td>
+            <td>${queue.estimatedWaitTime} mins</td>
+            <td>
+                <span class="badge queue-status status-${queue.status.toLowerCase()}">
+                    ${queue.status}
+                </span>
+            </td>
+            <td>
+                <div class="btn-group">
+                    ${getQueueActions(queue, hasProcessingQueue)}
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function getQueueActions(queue, hasProcessingQueue) {
+    const actions = [];
+    
+    switch (queue.status) {
+        case 'PENDING':
+            actions.push(`
+                <button class="btn btn-sm btn-primary start-processing" 
+                        onclick="startProcessing('${queue.id}')"
+                        ${hasProcessingQueue ? 'disabled' : ''}>
+                    <i class="fas fa-play"></i> Start Processing
+                </button>
+            `);
+            actions.push(`
+                <button class="btn btn-sm btn-danger" onclick="cancelQueue('${queue.id}')">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+            `);
+            break;
+            
+        case 'PROCESSING':
+            actions.push(`
+                <button class="btn btn-sm btn-success" onclick="completeQueue('${queue.id}')">
+                    <i class="fas fa-check"></i> Complete
+                </button>
+            `);
+            break;
+            
+        case 'COMPLETED':
+        case 'CANCELLED':
+            actions.push(`
+                <button class="btn btn-sm btn-secondary" onclick="removeQueue('${queue.id}')">
+                    <i class="fas fa-trash"></i> Remove
+                </button>
+            `);
+            break;
+    }
+    
+    return actions.join('');
+}
+
+function searchQueue() {
+    const queueNumber = document.getElementById('queueSearch').value;
+    fetchQueueDetails({ queueNumber: queueNumber });
+}
+
+function filterByQueueStatus(status) {
+    fetchQueueDetails({ status: status });
 } 

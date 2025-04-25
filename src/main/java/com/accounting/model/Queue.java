@@ -132,15 +132,15 @@ public class Queue {
 
     // Helper methods
     public boolean isActive() {
-        return status == QueueStatus.PENDING || status == QueueStatus.PROCESSED;
+        return status == QueueStatus.PENDING || status == QueueStatus.PROCESSING;
     }
 
     public boolean isProcessed() {
-        return status == QueueStatus.PROCESSED || status == QueueStatus.REFUNDED;
+        return status == QueueStatus.COMPLETED || status == QueueStatus.CANCELLED;
     }
 
     public void markAsProcessed() {
-        this.status = QueueStatus.PROCESSED;
+        this.status = QueueStatus.COMPLETED;
         this.processedAt = LocalDateTime.now();
     }
 

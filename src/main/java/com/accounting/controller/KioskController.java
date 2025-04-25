@@ -45,6 +45,7 @@ import java.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.accounting.service.StudentService;
+import java.util.List;
 
 @Controller
 @RequestMapping("/kiosk")
@@ -118,10 +119,13 @@ public class KioskController {
 
     @GetMapping("/queue/status")
     public String showQueueStatus(Model model) {
-        Queue currentQueue = queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PROCESSED)
-            .orElse(queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PENDING)
-                .orElse(null));
-            
+        // Get the first queue by position and creation time
+        List<Queue> queues = queueRepository.findByStatusOrderByPositionAscCreatedAtAsc(QueueStatus.PROCESSING);
+        if (queues.isEmpty()) {
+            queues = queueRepository.findByStatusOrderByPositionAscCreatedAtAsc(QueueStatus.PENDING);
+        }
+        
+        Queue currentQueue = queues.isEmpty() ? null : queues.get(0);
         if (currentQueue != null) {
             model.addAttribute("currentProcessingNumber", currentQueue.getQueueNumber());
         } else {
@@ -185,10 +189,12 @@ public class KioskController {
     public ResponseEntity<Object> getQueueStatus(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             // For public users, only return current processing number
-            Queue currentQueue = queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PROCESSED)
-                .orElse(queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PENDING)
-                    .orElse(null));
+            List<Queue> queues = queueRepository.findByStatusOrderByPositionAscCreatedAtAsc(QueueStatus.PROCESSING);
+            if (queues.isEmpty()) {
+                queues = queueRepository.findByStatusOrderByPositionAscCreatedAtAsc(QueueStatus.PENDING);
+            }
             
+            Queue currentQueue = queues.isEmpty() ? null : queues.get(0);
             Map<String, Object> response = new HashMap<>();
             response.put("currentProcessingNumber", currentQueue != null ? currentQueue.getQueueNumber() : "No queue being processed");
             return ResponseEntity.ok(response);

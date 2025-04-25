@@ -54,6 +54,7 @@ import com.accounting.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import com.accounting.repository.UserRepository;
 import com.accounting.model.enums.PaymentType;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 @Transactional
@@ -72,6 +73,7 @@ public class QueueServiceImpl implements QueueService {
     private final DocumentRepository documentRepository;
     private final StudentService studentService;
     private final Random random = new Random();
+    private AtomicInteger currentPosition = new AtomicInteger(0);
 
     @Autowired
     public QueueServiceImpl(QueueRepository queueRepository,
@@ -171,7 +173,7 @@ public class QueueServiceImpl implements QueueService {
     public void cancelPublicQueue(String publicIdentifier, String kioskSessionId) {
         queueRepository.findByPublicIdentifierAndKioskSessionId(publicIdentifier, kioskSessionId)
                 .ifPresent(queue -> {
-                    queue.setStatus(QueueStatus.FAILED);
+                    queue.setStatus(QueueStatus.CANCELLED);
                     queueRepository.save(queue);
                     notifyQueueCancellation(queue.getId());
                 });
@@ -226,9 +228,9 @@ public class QueueServiceImpl implements QueueService {
     @Override
     @Transactional(readOnly = true)
     public QueuePosition getCurrentQueuePosition() {
-        return queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PENDING)
-            .map(queue -> new QueuePosition(queue.getPosition(), calculateWaitTime(queue.getQueueNumber())))
-            .orElse(null);
+        PageRequest pageRequest = PageRequest.of(0, 1);
+        List<Queue> queues = queueRepository.findByStatusOrderedAndLimited(QueueStatus.PENDING, pageRequest);
+        return queues.isEmpty() ? null : convertToQueuePosition(queues.get(0));
     }
 
     @Override
@@ -300,9 +302,10 @@ public class QueueServiceImpl implements QueueService {
     @Override
     @Transactional(readOnly = true)
     public QueuePosition getNextQueue() {
-        return queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PENDING)
-                .map(queue -> new QueuePosition(queue.getPosition(), calculateWaitTime(queue.getQueueNumber())))
-                .orElse(null);
+        PageRequest pageRequest = PageRequest.of(0, 1);
+        List<Queue> queues = queueRepository.findByStatusOrderedAndLimited(QueueStatus.PENDING, pageRequest);
+        return queues.isEmpty() ? null : 
+            new QueuePosition(queues.get(0).getPosition(), calculateWaitTime(queues.get(0).getQueueNumber()));
     }
 
     @Override
@@ -388,33 +391,23 @@ public class QueueServiceImpl implements QueueService {
 
     @Override
     public int getQueuePosition(String queueNumber) {
-        List<Queue> waitingList = queueRepository.findByStatusOrderByCreatedAtAsc(QueueStatus.PENDING);
-        for (int i = 0; i < waitingList.size(); i++) {
-            if (waitingList.get(i).getQueueNumber().equals(queueNumber)) {
-                return i + 1; // Return 1-based position
-            }
-        }
-        return -1; // Queue number not found
+        Queue queue = queueRepository.findByQueueNumber(queueNumber)
+                .orElseThrow(() -> new EntityNotFoundException("Queue not found: " + queueNumber));
+        return queue.getPosition();
     }
 
     @Override
     public int calculateWaitTime(String queueNumber) {
         if (queueNumber == null || queueNumber.isEmpty()) {
-            int queueSize = getQueueSize();
-            // Assuming average processing time of 5 minutes per queue
-            return queueSize * 5;
+            // For new queues, calculate based on total pending queues
+            return getQueueSize() * 5;
         }
         
-        Optional<Queue> queueOpt = queueRepository.findByQueueNumber(queueNumber);
-        if (!queueOpt.isPresent()) {
-            int queueSize = getQueueSize();
-            return queueSize * 5;
-        }
+        Queue queue = queueRepository.findByQueueNumber(queueNumber)
+                .orElseThrow(() -> new EntityNotFoundException("Queue not found: " + queueNumber));
         
-        Queue queue = queueOpt.get();
-        int position = queue.getPosition();
-        // Assuming average processing time of 5 minutes per queue
-        return position * 5;
+        // Calculate wait time based on position (5 minutes per queue)
+        return queue.getPosition() * 5;
     }
 
     @Override
@@ -426,7 +419,7 @@ public class QueueServiceImpl implements QueueService {
             throw new IllegalStateException("Cannot cancel a queue that is not in pending status");
         }
         
-        queue.setStatus(QueueStatus.FAILED);
+        queue.setStatus(QueueStatus.CANCELLED);
         queue.setUpdatedAt(LocalDateTime.now());
         queueRepository.save(queue);
         
@@ -446,21 +439,34 @@ public class QueueServiceImpl implements QueueService {
     @Override
     @Transactional(readOnly = true)
     public QueuePosition getNextInQueue() {
-        return queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PENDING)
-                .map(this::convertToQueuePosition)
-                .orElse(null);
+        PageRequest pageRequest = PageRequest.of(0, 1);
+        List<Queue> queues = queueRepository.findByStatusOrderedAndLimited(QueueStatus.PENDING, pageRequest);
+        return queues.isEmpty() ? null : convertToQueuePosition(queues.get(0));
     }
 
     @Override
     @Transactional
     public void processNextInQueue() {
-        Queue nextQueue = queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PENDING)
+        // Get pending queues ordered by position
+        List<Queue> pendingQueues = queueRepository.findByStatusOrderByPositionAsc(QueueStatus.PENDING);
+        
+        // Get the next queue (earliest created if multiple with same position)
+        Queue nextQueue = pendingQueues.stream()
+                .min((q1, q2) -> {
+                    int posCompare = q1.getPosition().compareTo(q2.getPosition());
+                    return posCompare != 0 ? posCompare : 
+                           q1.getCreatedAt().compareTo(q2.getCreatedAt());
+                })
                 .orElse(null);
+                
         if (nextQueue != null) {
-            nextQueue.setStatus(QueueStatus.PROCESSED);
+            nextQueue.setStatus(QueueStatus.COMPLETED);
             nextQueue.setProcessedAt(LocalDateTime.now());
             queueRepository.save(nextQueue);
-            notifyQueueStatus(nextQueue.getId(), QueueStatus.PROCESSED.name());
+            notifyQueueStatus(nextQueue.getId(), QueueStatus.COMPLETED.name());
+            
+            // Reorder remaining queues
+            reorderQueuePositions();
         }
     }
 
@@ -471,8 +477,8 @@ public class QueueServiceImpl implements QueueService {
             Map<String, Object> stats = new HashMap<>();
             stats.put("totalQueues", queueRepository.count());
             stats.put("pendingQueues", queueRepository.countByStatus(QueueStatus.PENDING));
-            stats.put("processingQueues", queueRepository.countByStatus(QueueStatus.PROCESSED));
-            stats.put("completedQueues", queueRepository.countByStatus(QueueStatus.PROCESSED));
+            stats.put("processingQueues", queueRepository.countByStatus(QueueStatus.PROCESSING));
+            stats.put("completedQueues", queueRepository.countByStatus(QueueStatus.COMPLETED));
             return stats;
         } catch (Exception e) {
             logger.error("Error getting queue statistics", e);
@@ -483,14 +489,15 @@ public class QueueServiceImpl implements QueueService {
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getCurrentQueueDetails() {
-        Queue currentQueue = queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PENDING)
-                .orElse(null);
         Map<String, Object> details = new HashMap<>();
+        PageRequest pageRequest = PageRequest.of(0, 1);
+        List<Queue> queues = queueRepository.findByStatusOrderedAndLimited(QueueStatus.PENDING, pageRequest);
+        Queue currentQueue = queues.isEmpty() ? null : queues.get(0);
         if (currentQueue != null) {
             details.put("queueNumber", currentQueue.getQueueNumber());
             details.put("position", currentQueue.getPosition());
+            details.put("estimatedWaitTime", currentQueue.getEstimatedWaitTime());
             details.put("status", currentQueue.getStatus());
-            details.put("estimatedWaitTime", calculateWaitTime(currentQueue.getQueueNumber()));
         }
         return details;
     }
@@ -589,15 +596,16 @@ public class QueueServiceImpl implements QueueService {
     @Override
     @Transactional(readOnly = true)
     public Queue getCurrentQueue() {
-        return queueRepository.findFirstByStatusOrderByPositionAsc(QueueStatus.PENDING)
-                .orElseThrow(() -> new ResourceNotFoundException("No pending queues found"));
+        PageRequest pageRequest = PageRequest.of(0, 1);
+        List<Queue> queues = queueRepository.findByStatusOrderedAndLimited(QueueStatus.PENDING, pageRequest);
+        return queues.isEmpty() ? null : queues.get(0);
     }
 
     @Override
     @Transactional(readOnly = true)
     public long getAverageProcessingTime() {
         try {
-            List<Queue> completedQueues = queueRepository.findByStatus(QueueStatus.PROCESSED);
+            List<Queue> completedQueues = queueRepository.findByStatus(QueueStatus.COMPLETED);
             if (completedQueues.isEmpty()) {
                 return 300; // Default 5 minutes
             }
@@ -621,7 +629,7 @@ public class QueueServiceImpl implements QueueService {
             }
             
             Queue queue = getQueueEntityById(queueId);
-            queue.setStatus(QueueStatus.PROCESSED);
+            queue.setStatus(QueueStatus.COMPLETED);
             queueRepository.save(queue);
             notifyQueueCompletion(queueId);
         } catch (Exception e) {
@@ -1051,9 +1059,8 @@ public class QueueServiceImpl implements QueueService {
 
     @Override
     @Transactional(readOnly = true)
-    public Optional<QueuePosition> findByQueueNumber(String queueNumber) {
-        return queueRepository.findByQueueNumber(queueNumber)
-                .map(this::convertToQueuePosition);
+    public Optional<Queue> findByQueueNumber(String queueNumber) {
+        return queueRepository.findByQueueNumber(queueNumber);
     }
 
     @Override
@@ -1233,17 +1240,26 @@ public class QueueServiceImpl implements QueueService {
         );
     }
 
-    private int calculatePosition() {
-        return queueRepository.findMaxPosition().orElse(0) + 1;
+    private Integer calculatePosition() {
+        // Get all pending queues ordered by position
+        List<Queue> pendingQueues = queueRepository.findByStatusOrderByPositionAsc(QueueStatus.PENDING);
+        
+        // If no pending queues, start with position 1
+        if (pendingQueues.isEmpty()) {
+            return 1;
+        }
+        
+        // Get the highest position and add 1
+        return pendingQueues.stream()
+                .mapToInt(Queue::getPosition)
+                .max()
+                .orElse(0) + 1;
     }
 
     @Override
     public String generateQueueNumber() {
-        LocalDateTime now = LocalDateTime.now();
-        String datePart = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        Random random = new Random();
-        String randomPart = String.format("%04d", random.nextInt(10000));
-        return "Q" + datePart + randomPart;
+        // Use a simple sequential format: Q0001, Q0002, etc.
+        return getNextQueueNumber();
     }
 
     @Override
@@ -1259,14 +1275,23 @@ public class QueueServiceImpl implements QueueService {
         return queueRepository.save(queue);
     }
 
-    private void reorderQueuePositions() {
-        List<Queue> waitingQueues = queueRepository.findByStatusOrderByPositionAsc(QueueStatus.PENDING);
+    @Override
+    @Transactional
+    public void reorderQueuePositions() {
+        // Get all pending queues ordered by creation time
+        List<Queue> waitingQueues = queueRepository.findByStatusOrderByCreatedAtAsc(QueueStatus.PENDING);
+        
+        // Reorder positions starting from 1
         int position = 1;
         for (Queue queue : waitingQueues) {
-            queue.setPosition(position++);
-            queue.setEstimatedWaitTime(calculateWaitTime(null));
+            queue.setPosition(position);
+            queue.setEstimatedWaitTime(calculateWaitTime(queue.getQueueNumber()));
             queueRepository.save(queue);
+            position++;
         }
+        
+        // Force a flush to ensure all updates are persisted
+        queueRepository.flush();
     }
 
     private void notifyQueueCreation(Long queueId) {
@@ -1294,5 +1319,107 @@ public class QueueServiceImpl implements QueueService {
         } catch (Exception e) {
             logger.error("Failed to send queue creation notification", e);
         }
+    }
+
+    @Override
+    public List<Queue> findByStatus(QueueStatus status) {
+        return queueRepository.findByStatusOrderByPositionAsc(status);
+    }
+
+    @Override
+    public List<Queue> findAllOrderedByPosition() {
+        return queueRepository.findByStatusOrderByPositionAsc(QueueStatus.PENDING);
+    }
+
+    @Override
+    public int getCurrentPosition() {
+        return currentPosition.get();
+    }
+
+    @Override
+    @Transactional
+    public Queue moveToNextQueue() {
+        List<Queue> waitingQueues = queueRepository.findByStatusOrderByPositionAsc(QueueStatus.PENDING);
+        if (waitingQueues.isEmpty()) {
+            return null;
+        }
+        
+        int nextPosition = currentPosition.get() + 1;
+        if (nextPosition >= waitingQueues.size()) {
+            return null;
+        }
+        
+        currentPosition.set(nextPosition);
+        return waitingQueues.get(nextPosition);
+    }
+
+    @Override
+    @Transactional
+    public Queue moveToPreviousQueue() {
+        List<Queue> waitingQueues = queueRepository.findByStatusOrderByPositionAsc(QueueStatus.PENDING);
+        if (waitingQueues.isEmpty()) {
+            return null;
+        }
+        
+        int previousPosition = currentPosition.get() - 1;
+        if (previousPosition < 0) {
+            return null;
+        }
+        
+        currentPosition.set(previousPosition);
+        return waitingQueues.get(previousPosition);
+    }
+
+    @Override
+    @Transactional
+    public Queue jumpToQueue(String queueNumber) {
+        Optional<Queue> targetQueue = queueRepository.findByQueueNumber(queueNumber);
+        if (targetQueue.isEmpty()) {
+            return null;
+        }
+        
+        List<Queue> waitingQueues = queueRepository.findByStatusOrderByPositionAsc(QueueStatus.PENDING);
+        int targetPosition = waitingQueues.indexOf(targetQueue.get());
+        
+        if (targetPosition >= 0) {
+            currentPosition.set(targetPosition);
+            return targetQueue.get();
+        }
+        
+        return null;
+    }
+
+    @Override
+    @Transactional
+    public void resetQueue() {
+        currentPosition.set(0);
+        List<Queue> waitingQueues = queueRepository.findByStatusOrderByPositionAsc(QueueStatus.PENDING);
+        int position = 1;
+        
+        for (Queue queue : waitingQueues) {
+            queue.setPosition(position++);
+            queueRepository.save(queue);
+        }
+    }
+
+    @Override
+    public long getEstimatedWaitTime() {
+        Double avgWaitTime = queueRepository.avgWaitTime();
+        return avgWaitTime != null ? Math.round(avgWaitTime / 60.0) : 0;
+    }
+
+    @Override
+    public int getTotalQueueSize() {
+        return (int) queueRepository.countByStatus(QueueStatus.PENDING);
+    }
+
+    @Override
+    public boolean isQueueEmpty() {
+        return queueRepository.count() == 0;
+    }
+
+    @Override
+    public boolean hasProcessingQueue() {
+        return !queueRepository.findByStatus(QueueStatus.PROCESSING).isEmpty();
     }
 } 

@@ -96,7 +96,7 @@ public class UserController {
 
             // Check if user has an active queue
             Optional<Queue> activeQueue = user.getQueues().stream()
-                .filter(q -> q.getStatus() == QueueStatus.PENDING || q.getStatus() == QueueStatus.PROCESSED)
+                .filter(q -> q.getStatus() == QueueStatus.PENDING || q.getStatus() == QueueStatus.PROCESSING)
                 .findFirst();
 
             // Set queue information
@@ -154,7 +154,7 @@ public class UserController {
             
             // Check if user has an active queue
             Optional<Queue> userQueue = user.getQueues().stream()
-                .filter(q -> q.getStatus() == QueueStatus.PENDING || q.getStatus() == QueueStatus.PROCESSED)
+                .filter(q -> q.getStatus() == QueueStatus.PENDING || q.getStatus() == QueueStatus.PROCESSING)
                 .findFirst();
                 
             if (userQueue.isPresent()) {
@@ -211,7 +211,7 @@ public class UserController {
             
             User user = userOpt.get();
             Optional<Queue> activeQueue = user.getQueues().stream()
-                .filter(q -> q.getStatus() == QueueStatus.PENDING || q.getStatus() == QueueStatus.PROCESSED)
+                .filter(q -> q.getStatus() == QueueStatus.PENDING || q.getStatus() == QueueStatus.PROCESSING)
                 .findFirst();
 
             Map<String, Object> response = new HashMap<>();

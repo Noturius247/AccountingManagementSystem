@@ -403,6 +403,38 @@ function initializeReports() {
 
 // Queue Page
 function initializeQueue() {
+    const queueStatusFilter = document.getElementById('queueStatusFilter');
+    if (queueStatusFilter) {
+        queueStatusFilter.innerHTML = `
+            <option value="">All Statuses</option>
+            <option value="PENDING">Pending</option>
+            <option value="PROCESSING">Processing</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+        `;
+    }
+
+    // Update queue status badges
+    const queueStatuses = document.querySelectorAll('.queue-status');
+    queueStatuses.forEach(status => {
+        const statusText = status.textContent.trim();
+        status.classList.remove('status-pending', 'status-processed', 'status-failed', 'status-refunded');
+        switch(statusText) {
+            case 'PENDING':
+                status.classList.add('status-pending');
+                break;
+            case 'PROCESSING':
+                status.classList.add('status-processing');
+                break;
+            case 'COMPLETED':
+                status.classList.add('status-completed');
+                break;
+            case 'CANCELLED':
+                status.classList.add('status-cancelled');
+                break;
+        }
+    });
+
     // Initialize queue actions
     const queueActions = document.querySelectorAll('.queue-action');
     queueActions.forEach(action => {
@@ -539,3 +571,32 @@ window.managerDashboard = {
         });
     }
 };
+
+function updateQueueStatus(queueId, newStatus) {
+    const validStatuses = ['PENDING', 'PROCESSING', 'COMPLETED', 'CANCELLED'];
+    if (!validStatuses.includes(newStatus)) {
+        utils.showError('Invalid queue status');
+        return;
+    }
+
+    fetch(`/manager/queue/${queueId}/status`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
+        },
+        body: JSON.stringify({ status: newStatus })
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Failed to update queue status');
+        return response.json();
+    })
+    .then(data => {
+        utils.showSuccess('Queue status updated successfully');
+        // Refresh queue table or update specific row
+        refreshQueueTable();
+    })
+    .catch(error => {
+        utils.showError('Error updating queue status: ' + error.message);
+    });
+}

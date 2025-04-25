@@ -58,7 +58,6 @@ public interface QueueService {
     int getQueuePosition(String queueNumber);
     Queue getCurrentQueue();
     int calculateWaitTime(String queueNumber);
-    Optional<QueuePosition> findByQueueNumber(String queueNumber);
     void notifyQueueStatus(Long queueId, String status);
     void notifyQueuePosition(Long queueId, int position);
     void notifyQueueCompletion(Long queueId);
@@ -112,4 +111,37 @@ public interface QueueService {
     Queue createQueue(Student student, Long serviceId);
     Queue createQueue(Student student);
     Queue createQueueForKiosk(String studentId, String kioskSessionId, String kioskTerminalId, ReceiptPreference receiptPreference);
+    /**
+     * Reorders the positions of all pending queues based on their creation time.
+     * This ensures that queue positions are sequential and without gaps.
+     */
+    void reorderQueuePositions();
+    
+    Optional<Queue> findByQueueNumber(String queueNumber);
+    
+    List<Queue> findByStatus(QueueStatus status);
+    
+    List<Queue> findAllOrderedByPosition();
+    
+    int getCurrentPosition();
+    
+    Queue moveToNextQueue();
+    
+    Queue moveToPreviousQueue();
+    
+    Queue jumpToQueue(String queueNumber);
+    
+    void resetQueue();
+    
+    long getEstimatedWaitTime();
+    
+    int getTotalQueueSize();
+    
+    boolean isQueueEmpty();
+
+    /**
+     * Check if there is any queue currently in PROCESSING status
+     * @return true if there is a queue in PROCESSING status, false otherwise
+     */
+    boolean hasProcessingQueue();
 } 

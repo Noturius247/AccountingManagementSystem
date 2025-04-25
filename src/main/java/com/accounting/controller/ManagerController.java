@@ -26,6 +26,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.http.ResponseEntity;
 import jakarta.servlet.http.HttpServletRequest;
 import com.accounting.model.enums.TransactionStatus;
+import com.accounting.model.enums.QueueStatus;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -33,6 +34,8 @@ import org.springframework.http.ContentDisposition;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import com.accounting.service.UserService;
+import java.util.Collections;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/manager")
@@ -79,7 +82,6 @@ public class ManagerController {
             Future<List<Map<String, Object>>> systemAlertsFuture = executor.submit(() ->
                 managerDashboardService.getSystemAlerts());
 
-            // Get results with timeout
             try {
                 Map<String, Object> statistics = statisticsFuture.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
                 List<Map<String, Object>> recentTasks = tasksFuture.get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
@@ -114,17 +116,26 @@ public class ManagerController {
                     }
                 });
 
-                // Add current queue data
-                Queue currentQueue = queueService.getCurrentQueue();
-                if (currentQueue != null && currentQueue.getUserUsername() != null) {
-                    // Get user by username instead of direct access
-                    userService.findByUsername(currentQueue.getUserUsername())
-                        .ifPresent(user -> {
-                            // Load essential user data only
-                            Hibernate.initialize(user.getNotificationSettings());
-                        });
+                try {
+                    // Add current queue data
+                    Queue currentQueue = queueService.getCurrentQueue();
+                    if (currentQueue != null && currentQueue.getUserUsername() != null) {
+                        // Get user by username instead of direct access
+                        userService.findByUsername(currentQueue.getUserUsername())
+                            .ifPresent(user -> {
+                                try {
+                                    // Load essential user data only
+                                    Hibernate.initialize(user.getNotificationSettings());
+                                } catch (Exception e) {
+                                    log.warn("Failed to initialize user notification settings", e);
+                                }
+                            });
+                    }
+                    model.addAttribute("currentQueue", currentQueue);
+                } catch (Exception e) {
+                    log.error("Error loading current queue data", e);
+                    model.addAttribute("currentQueue", null);
                 }
-                model.addAttribute("currentQueue", currentQueue);
 
             } catch (TimeoutException e) {
                 log.error("Timeout while loading dashboard data", e);
@@ -145,13 +156,13 @@ public class ManagerController {
     }
 
     @GetMapping("/transactions")
-    public String viewTransactions(
-            Model model, 
-            HttpServletRequest request,
+    public String transactions(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
-            @RequestParam(required = false) String amountRange) {
+            @RequestParam(required = false) String amountRange,
+            Model model,
+            HttpServletRequest request) {
         try {
             List<Transaction> transactions;
             
@@ -170,8 +181,13 @@ public class ManagerController {
             model.addAttribute("completedTransactions", transactionService.getCompletedQueueCount());
             model.addAttribute("failedTransactions", transactionService.getTotalFailedTransactions());
             
+            // Add queue data
+            List<Queue> queues = queueService.findAllOrderedByPosition();
+            model.addAttribute("queues", queues);
+            model.addAttribute("hasProcessingQueue", queueService.hasProcessingQueue());
+            
             if (isAjaxRequest(request)) {
-                return "manager/transactions :: #transaction-content";
+                return "manager/transactions";
             }
             return "manager/transactions";
         } catch (Exception e) {
@@ -426,6 +442,114 @@ public class ManagerController {
             log.error("Error viewing student details", e);
             model.addAttribute("error", "Failed to load student details");
             return "redirect:/manager/student-approvals";
+        }
+    }
+
+    @GetMapping("/transactions/queue")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getQueueDetails(
+            @RequestParam(required = false) String queueNumber,
+            @RequestParam(required = false) String status) {
+        try {
+            Map<String, Object> response = new HashMap<>();
+            List<Queue> queues;
+            
+            if (queueNumber != null && !queueNumber.trim().isEmpty()) {
+                // Search by queue number
+                Optional<Queue> queue = queueService.findByQueueNumber(queueNumber);
+                queues = queue.map(Collections::singletonList).orElse(Collections.emptyList());
+            } else if (status != null) {
+                // Filter by status
+                queues = queueService.findByStatus(QueueStatus.valueOf(status.toUpperCase()));
+            } else {
+                // Get all queues ordered by position
+                queues = queueService.findAllOrderedByPosition();
+            }
+            
+            response.put("queues", queues);
+            response.put("totalQueues", queues.size());
+            response.put("currentPosition", queueService.getCurrentPosition());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error fetching queue details", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Collections.singletonMap("error", "Failed to fetch queue details: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/transactions/queue/next")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> moveToNextQueue() {
+        try {
+            Queue nextQueue = queueService.moveToNextQueue();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("queue", nextQueue);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error moving to next queue", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Collections.singletonMap("error", "Failed to move to next queue: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/transactions/queue/previous")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> moveToPreviousQueue() {
+        try {
+            Queue previousQueue = queueService.moveToPreviousQueue();
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("queue", previousQueue);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error moving to previous queue", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Collections.singletonMap("error", "Failed to move to previous queue: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/transactions/queue/{queueNumber}/jump")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> jumpToQueue(@PathVariable String queueNumber) {
+        try {
+            Queue queue = queueService.jumpToQueue(queueNumber);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("queue", queue);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error jumping to queue", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Collections.singletonMap("error", "Failed to jump to queue: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/transactions/queue/{queueId}/status")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateQueueStatus(
+            @PathVariable Long queueId,
+            @RequestBody Map<String, String> payload) {
+        try {
+            String status = payload.get("status");
+            if (status == null) {
+                return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("error", "Status is required"));
+            }
+
+            Queue updatedQueue = queueService.updateQueueStatus(queueId, QueueStatus.valueOf(status));
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("queue", updatedQueue);
+            response.put("message", "Queue status updated successfully");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Error updating queue status", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Collections.singletonMap("error", "Failed to update queue status: " + e.getMessage()));
         }
     }
 
