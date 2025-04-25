@@ -103,6 +103,62 @@
                             </div>
                         </div>
 
+                        <!-- Processing Table -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Currently Processing</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="processingTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Queue #</th>
+                                                <th>Student ID</th>
+                                                <th>Payment #</th>
+                                                <th>Account Name</th>
+                                                <th>Transaction Type</th>
+                                                <th>Amount</th>
+                                                <th>Processing Time</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <c:forEach items="${queues}" var="queue">
+                                                <c:if test="${queue.status eq 'PROCESSING'}">
+                                                    <tr>
+                                                        <td>${queue.queueNumber}</td>
+                                                        <td>${queue.studentId}</td>
+                                                        <td>${queue.paymentNumber}</td>
+                                                        <td>${queue.user.username}</td>
+                                                        <td>${queue.type}</td>
+                                                        <td>
+                                                            <fmt:formatNumber value="${queue.amount}" type="currency" currencySymbol="₱"/>
+                                                        </td>
+                                                        <td>
+                                                            <span class="processing-time" data-start="${queue.processedAt}">
+                                                                Calculating...
+                                                            </span>
+                                                        </td>
+                                                        <td>
+                                                            <div class="btn-group">
+                                                                <button class="btn btn-sm btn-success" onclick="updateQueueStatus('${queue.id}', 'COMPLETED')">
+                                                                    <i class="bi bi-check-circle"></i> Complete
+                                                                </button>
+                                                                <button class="btn btn-sm btn-danger" onclick="updateQueueStatus('${queue.id}', 'CANCELLED')">
+                                                                    <i class="bi bi-x-circle"></i> Cancel
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </c:if>
+                                            </c:forEach>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Queue Management Section -->
                         <div class="card mb-4">
                             <div class="card-header">
@@ -141,7 +197,7 @@
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody>
+                                        <tbody id="queueTableBody">
                                             <c:set var="hasProcessingQueue" value="false" />
                                             <c:forEach items="${queues}" var="queue">
                                                 <c:if test="${queue.status eq 'PROCESSING'}">
@@ -150,6 +206,7 @@
                                             </c:forEach>
                                             
                                             <c:forEach items="${queues}" var="queue">
+                                                <c:if test="${queue.status ne 'PROCESSING'}">
                                                 <tr>
                                                     <td>${queue.queueNumber}</td>
                                                     <td>${queue.studentId}</td>
@@ -162,23 +219,93 @@
                                                     </td>
                                                     <td>
                                                         <div class="btn-group">
-                                                            <c:choose>
-                                                                <c:when test="${queue.status eq 'PENDING'}">
+                                                                <c:if test="${queue.status eq 'PENDING'}">
                                                                     <button class="btn btn-sm btn-primary start-processing" 
                                                                             onclick="updateQueueStatus('${queue.id}', 'PROCESSING')"
                                                                             ${hasProcessingQueue ? 'disabled' : ''}>
                                                                         <i class="bi bi-play-fill"></i> Start Processing
                                                                     </button>
-                                                                </c:when>
-                                                                <c:when test="${queue.status eq 'PROCESSING'}">
-                                                                    <button class="btn btn-sm btn-success" onclick="updateQueueStatus('${queue.id}', 'COMPLETED')">
-                                                                        <i class="bi bi-check-circle"></i> Complete
+                                                                </c:if>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                </c:if>
+                                            </c:forEach>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Transaction History Section -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">Transaction History</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="transactionSearch" placeholder="Search Transaction Number...">
+                                            <button class="btn btn-primary" type="button" onclick="searchTransaction()">
+                                                <i class="bi bi-search"></i> Search
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <select class="form-select" id="transactionStatusFilter" onchange="filterByTransactionStatus(this.value)">
+                                            <option value="">All Statuses</option>
+                                            <option value="PENDING">Pending</option>
+                                            <option value="COMPLETED">Completed</option>
+                                            <option value="CANCELLED">Cancelled</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="transactionHistoryTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Transaction #</th>
+                                                <th>Student ID</th>
+                                                <th>Date</th>
+                                                <th>Amount</th>
+                                                <th>Type</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="transactionHistoryTableBody">
+                                            <c:forEach items="${transactions}" var="transaction">
+                                                <tr>
+                                                    <td>${transaction.transactionNumber}</td>
+                                                    <td>${transaction.studentId}</td>
+                                                    <td>
+                                                        <fmt:parseDate value="${transaction.createdAt}" pattern="yyyy-MM-dd'T'HH:mm" var="parsedDate" type="both" />
+                                                        <fmt:formatDate value="${parsedDate}" pattern="yyyy-MM-dd HH:mm:ss" />
+                                                    </td>
+                                                    <td>
+                                                        <fmt:formatNumber value="${transaction.amount}" type="currency" currencySymbol="₱"/>
+                                                    </td>
+                                                    <td>${transaction.type}</td>
+                                                    <td>
+                                                        <span class="badge queue-status status-${fn:toLowerCase(transaction.status)}">
+                                                            ${transaction.status}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <div class="btn-group">
+                                                            <button class="btn btn-sm btn-info" onclick="viewTransactionDetails('${transaction.id}')">
+                                                                <i class="bi bi-eye"></i> View
+                                                            </button>
+                                                            <c:if test="${transaction.status eq 'PENDING'}">
+                                                                <button class="btn btn-sm btn-success" onclick="approveTransaction('${transaction.id}')">
+                                                                    <i class="bi bi-check-circle"></i> Approve
                                                                     </button>
-                                                                    <button class="btn btn-sm btn-danger" onclick="updateQueueStatus('${queue.id}', 'CANCELLED')">
-                                                                        <i class="bi bi-x-circle"></i> Cancel
+                                                                <button class="btn btn-sm btn-danger" onclick="rejectTransaction('${transaction.id}')">
+                                                                    <i class="bi bi-x-circle"></i> Reject
                                                                     </button>
-                                                                </c:when>
-                                                            </c:choose>
+                                                            </c:if>
                                                         </div>
                                                     </td>
                                                 </tr>
@@ -447,7 +574,34 @@
             updateTransactionStatistics();
             initializeTransactionComponents();
             fetchQueueDetails();
+            initializeProcessingTimes();
         });
+
+        function initializeProcessingTimes() {
+            // Update processing times every second
+            setInterval(updateProcessingTimes, 1000);
+            updateProcessingTimes();
+        }
+
+        function updateProcessingTimes() {
+            document.querySelectorAll('.processing-time').forEach(timeSpan => {
+                const startTime = new Date(timeSpan.dataset.start);
+                const now = new Date();
+                const diffInSeconds = Math.floor((now - startTime) / 1000);
+                
+                const hours = Math.floor(diffInSeconds / 3600);
+                const minutes = Math.floor((diffInSeconds % 3600) / 60);
+                const seconds = diffInSeconds % 60;
+                
+                const timeString = [
+                    hours.toString().padStart(2, '0'),
+                    minutes.toString().padStart(2, '0'),
+                    seconds.toString().padStart(2, '0')
+                ].join(':');
+                
+                timeSpan.textContent = timeString;
+            });
+        }
 
         function filterByStatus(status) {
             $.ajax({
@@ -639,10 +793,45 @@
         }
 
         function updateQueueTable(queues) {
-            const tbody = document.getElementById('queueTableBody');
-            tbody.innerHTML = '';
-            
+            // Update Processing Table
+            const processingTbody = document.querySelector('#processingTable tbody');
+            if (processingTbody) {
+                processingTbody.innerHTML = '';
+                queues.filter(queue => queue.status === 'PROCESSING').forEach(queue => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>\${queue.queueNumber}</td>
+                        <td>\${queue.studentId}</td>
+                        <td>\${queue.paymentNumber}</td>
+                        <td>\${queue.user.username}</td>
+                        <td>\${queue.type}</td>
+                        <td>\${formatCurrency(queue.amount)}</td>
+                        <td>
+                            <span class="processing-time" data-start="\${queue.processedAt}">
+                                Calculating...
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-success" onclick="updateQueueStatus('\${queue.id}', 'COMPLETED')">
+                                    <i class="bi bi-check-circle"></i> Complete
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="updateQueueStatus('\${queue.id}', 'CANCELLED')">
+                                    <i class="bi bi-x-circle"></i> Cancel
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    processingTbody.appendChild(tr);
+                });
+            }
+
+            // Update Queue Table
+            const queueTbody = document.getElementById('queueTableBody');
+            if (queueTbody) {
+                queueTbody.innerHTML = '';
             queues.forEach(queue => {
+                    if (queue.status !== 'PROCESSING') {  // Don't show processing items in main queue table
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>\${queue.queueNumber}</td>
@@ -660,8 +849,20 @@
                         </div>
                     </td>
                 `;
-                tbody.appendChild(tr);
-            });
+                        queueTbody.appendChild(tr);
+                    }
+                });
+            }
+            
+            // Initialize processing times for new items
+            initializeProcessingTimes();
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-PH', {
+                style: 'currency',
+                currency: 'PHP'
+            }).format(amount || 0);
         }
 
         function getQueueActions(queue) {
@@ -698,11 +899,22 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         [csrfHeader]: csrfToken
                     },
-                    body: JSON.stringify({ status: status })
+                    body: JSON.stringify({ 
+                        status: status,
+                        _csrf: csrfToken 
+                    })
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            throw new Error(text || 'Failed to update queue status');
+                        });
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
                         // If status was changed to PROCESSING, disable all other "Start Processing" buttons
@@ -717,14 +929,15 @@
                                 button.disabled = false;
                             });
                         }
-                        window.location.reload(); // Refresh to show updated status
+                        showAlert('success', 'Queue status updated successfully');
+                        setTimeout(() => window.location.reload(), 1000); // Refresh after 1 second
                     } else {
-                        alert(data.message || 'Failed to update queue status');
+                        showAlert('error', data.message || 'Failed to update queue status');
                     }
                 })
                 .catch(error => {
                     console.error('Error updating queue status:', error);
-                    alert('Failed to update queue status');
+                    showAlert('error', error.message || 'Failed to update queue status');
                 });
             }
         }

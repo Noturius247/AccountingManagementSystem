@@ -107,6 +107,11 @@
                         <button class="btn btn-sm btn-danger remove-item" data-id="${item.id}">
                             <i class="fas fa-trash"></i>
                         </button>
+                        <c:if test="${item.status == 'PENDING'}">
+                            <button class="btn btn-sm btn-success start-processing" onclick="startProcessing(${item.id})" title="Start Processing">
+                                <i class="fas fa-play"></i>
+                            </button>
+                        </c:if>
                     </td>
                 </tr>
             </c:forEach>
@@ -363,6 +368,26 @@
             })
             .catch(error => {
                 showMessage('Error clearing queue', true);
+            });
+        }
+    }
+
+    function startProcessing(itemId) {
+        if (confirm('Are you sure you want to start processing this queue item?')) {
+            $.ajax({
+                url: '${pageContext.request.contextPath}/manager/queue/start/' + itemId,
+                type: 'POST',
+                success: function(response) {
+                    if (response.success) {
+                        showMessage('Processing started successfully');
+                        refreshQueueTable();
+                    } else {
+                        showMessage(response.message || 'Failed to start processing', true);
+                    }
+                },
+                error: function() {
+                    showMessage('An error occurred while starting the process', true);
+                }
             });
         }
     }

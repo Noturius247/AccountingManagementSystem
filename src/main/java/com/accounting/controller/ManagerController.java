@@ -465,6 +465,17 @@ public class ManagerController {
                 // Get all queues ordered by position
                 queues = queueService.findAllOrderedByPosition();
             }
+
+            // Enrich processing queues with transaction details
+            queues.stream()
+                .filter(queue -> queue.getStatus() == QueueStatus.PROCESSING)
+                .forEach(queue -> {
+                    Transaction transaction = transactionService.findById(queue.getPaymentId());
+                    if (transaction != null) {
+                        // Update only the queue status based on transaction status
+                        queue.setStatus(QueueStatus.valueOf(transaction.getStatus().name()));
+                    }
+                });
             
             response.put("queues", queues);
             response.put("totalQueues", queues.size());
@@ -538,8 +549,27 @@ public class ManagerController {
                     .body(Collections.singletonMap("error", "Status is required"));
             }
 
-            Queue updatedQueue = queueService.updateQueueStatus(queueId, QueueStatus.valueOf(status));
-            
+            // Validate the status
+            try {
+                QueueStatus.valueOf(status);
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("error", "Invalid status value: " + status));
+            }
+
+            // Check if there's already a processing queue when trying to set status to PROCESSING
+            if (status.equals("PROCESSING") && queueService.hasProcessingQueue()) {
+                return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("error", "Another queue is already being processed"));
+            }
+
+            // Update the queue status
+            Queue updatedQueue = queueService.handleProcessingQueue(queueId);
+            if (updatedQueue == null) {
+                return ResponseEntity.notFound()
+                    .build();
+            }
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("queue", updatedQueue);
@@ -547,7 +577,7 @@ public class ManagerController {
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("Error updating queue status", e);
+            log.error("Error updating queue status for queue ID: " + queueId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Collections.singletonMap("error", "Failed to update queue status: " + e.getMessage()));
         }

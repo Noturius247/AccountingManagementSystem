@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Confirmation</title>
+    <!-- Add SweetAlert2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.min.css">
+    <!-- Add Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .payment-details {
+            margin-bottom: 30px;
+        }
+        .status-pending {
+            color: #ffc107;
+        }
+        .queue-number {
+            color: #007bff;
+            font-weight: bold;
+        }
+        .payment-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .payment-label {
+            font-weight: bold;
+            color: #666;
+        }
+        .payment-value {
+            color: #333;
+        }
+        .actions {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0 10px;
+            transition: all 0.3s ease;
+        }
+        .btn i {
+            margin-right: 8px;
+        }
+        .btn-confirm {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-confirm:hover {
+            background-color: #218838;
+        }
+        .btn-success {
+            background-color: #198754;
+            color: white;
+            cursor: default;
+        }
+        .btn-success:disabled {
+            opacity: 1;
+        }
+        .btn-back {
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+        }
+        .btn-back:hover {
+            background-color: #5a6268;
+        }
+        /* Add new styles for queue display */
+        .queue-display-container {
+            margin-top: 30px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+        .queue-display-container.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .queue-display-container .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background-color: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        .queue-display-container .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        .queue-number-display {
+            padding: 20px;
+            text-align: center;
+        }
+        .queue-number-display h1 {
+            color: #007bff;
+            font-size: 3rem;
+            margin: 0;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        .queue-details {
+            padding: 20px;
+            background-color: white;
+            border-radius: 0 0 10px 10px;
+        }
+        .queue-details p {
+            margin: 10px 0;
+            color: #495057;
+            font-size: 1.1rem;
+        }
+        .queue-details strong {
+            color: #212529;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="payment-details">
+            <h1>Payment Confirmation</h1>
+            
+            <div class="payment-row">
+                <span class="payment-label">Year Level:</span>
+                <span class="payment-value" th:text="${payment.yearLevel}">1</span>
+            </div>
+            
+            <div class="payment-row">
+                <span class="payment-label">Section:</span>
+                <span class="payment-value" th:text="${payment.section}"></span>
+            </div>
+            
+            <div class="payment-row">
+                <span class="payment-label">Description:</span>
+                <span class="payment-value" th:text="${payment.description}"></span>
+            </div>
+            
+            <div class="payment-row">
+                <span class="payment-label">Number of Copies:</span>
+                <span class="payment-value" th:text="${payment.copies}"></span>
+            </div>
+            
+            <div class="payment-row">
+                <span class="payment-label">Purpose:</span>
+                <span class="payment-value" th:text="${payment.purpose}"></span>
+            </div>
+            
+            <div class="payment-row">
+                <span class="payment-label">Base Price:</span>
+                <span class="payment-value">₱ <span th:text="${payment.basePrice}"></span></span>
+            </div>
+            
+            <div class="payment-row">
+                <span class="payment-label">Amount:</span>
+                <span class="payment-value">₱ <span th:text="${payment.amount}"></span></span>
+            </div>
+            
+            <div class="payment-row">
+                <span class="payment-label">Date:</span>
+                <span class="payment-value" th:text="${#temporals.format(payment.createdAt, 'MMMM dd, yyyy hh:mm a')}"></span>
+            </div>
+            
+            <div class="payment-row">
+                <span class="payment-label">Status:</span>
+                <span class="payment-value status-pending" th:text="${payment.paymentStatus}"></span>
+            </div>
+
+            <div class="payment-row" th:if="${queueNumber != null}">
+                <span class="payment-label">Queue Number:</span>
+                <span class="payment-value queue-number" th:text="${queueNumber}"></span>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button id="confirmPaymentButton" class="btn btn-confirm" 
+                    th:data-transaction-ref="${payment.transactionRef}"
+                    th:data-queue-number="${queueNumber}"
+                    onclick="confirmPayment(this.getAttribute('data-transaction-ref'))">
+                <i class="fas fa-receipt"></i> Review Payment
+            </button>
+            <a href="/kiosk" class="btn btn-back">
+                <i class="fas fa-arrow-left"></i> Back to Kiosk
+            </a>
+        </div>
+    </div>
+
+    <!-- Add SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.0.19/dist/sweetalert2.all.min.js"></script>
+    <!-- Add our payment confirmation JS -->
+    <script src="/js/payment-confirmation.js"></script>
+    
+    <script th:inline="javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            const transactionRef = /*[[${payment.transactionRef}]]*/ '';
+            const wasConfirmed = sessionStorage.getItem('confirmed_' + transactionRef);
+            
+            if (wasConfirmed) {
+                const confirmButton = document.getElementById('confirmPaymentButton');
+                if (confirmButton) {
+                    confirmButton.innerHTML = '<i class="fas fa-check-circle"></i> Payment Successful';
+                    confirmButton.classList.remove('btn-confirm');
+                    confirmButton.classList.add('btn-success');
+                    confirmButton.disabled = true;
+                }
+            }
+        });
+    </script>
+</body>
+</html> 

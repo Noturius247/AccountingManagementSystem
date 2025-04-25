@@ -78,9 +78,26 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public Payment processPayment(Payment payment) {
         logger.debug("Processing payment: {}", payment);
-        payment.setPaymentStatus(PaymentStatus.PENDING);
-        payment.setProcessedAt(LocalDateTime.now());
-        return paymentRepository.save(payment);
+        
+        // Validate payment
+        if (payment == null) {
+            throw new IllegalArgumentException("Payment cannot be null");
+        }
+        if (payment.getId() == null) {
+            throw new IllegalArgumentException("Payment ID cannot be null");
+        }
+        
+        // Get fresh copy from database
+        Payment existingPayment = paymentRepository.findById(payment.getId())
+            .orElseThrow(() -> new RuntimeException("Payment not found with id: " + payment.getId()));
+        
+        // Update payment status and timestamp
+        existingPayment.setPaymentStatus(PaymentStatus.PENDING);
+        existingPayment.setProcessedAt(LocalDateTime.now());
+        existingPayment.setUpdatedAt(LocalDateTime.now());
+        
+        // Save and return the updated payment
+        return paymentRepository.save(existingPayment);
     }
 
     @Override

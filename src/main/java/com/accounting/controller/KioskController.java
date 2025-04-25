@@ -260,7 +260,7 @@ public class KioskController {
     public String showPaymentConfirmation(@PathVariable Long id, Model model) {
         Payment payment = paymentService.getPaymentById(id);
         model.addAttribute("payment", payment);
-        return "kiosk/payment-confirmation";
+        return "features/payment-confirmation";
     }
 
     @GetMapping("/payment/{id}/download-receipt")
@@ -669,7 +669,7 @@ public class KioskController {
     @PostMapping("/payment/id/process")
     public String processIdPayment(
             @RequestParam String studentId,
-            @RequestParam String studentName,
+            @RequestParam(required = false) String studentName,
             @RequestParam String reason,
             @RequestParam(defaultValue = "150.00") String amount,
             Model model) {
@@ -694,8 +694,15 @@ public class KioskController {
             // Save the payment
             payment = paymentService.createPayment(payment);
             
+            // Generate queue number and create queue entry
+            String queueNumber = queueService.generateQueueNumber();
+            QueuePosition queuePosition = queueService.createQueueEntry(student.getUser().getUsername(), payment.getId());
+            
+            // Add necessary attributes to the model
             model.addAttribute("payment", payment);
             model.addAttribute("student", student);
+            model.addAttribute("queueNumber", queueNumber);
+            model.addAttribute("estimatedWaitTime", queuePosition.getEstimatedWaitTime());
             
             return "features/payment-confirmation";
         } catch (Exception e) {
@@ -711,7 +718,6 @@ public class KioskController {
     @PostMapping("/payment/graduation/process")
     public String processGraduationPayment(
             @RequestParam String studentId,
-            @RequestParam String studentName,
             @RequestParam String graduationType,
             @RequestParam(defaultValue = "3000.00") String amount,
             Model model) {
@@ -736,14 +742,20 @@ public class KioskController {
             // Save the payment
             payment = paymentService.createPayment(payment);
             
+            // Generate queue number and create queue entry
+            String queueNumber = queueService.generateQueueNumber();
+            QueuePosition queuePosition = queueService.createQueueEntry(student.getUser().getUsername(), payment.getId());
+            
+            // Add necessary attributes to the model
             model.addAttribute("payment", payment);
             model.addAttribute("student", student);
+            model.addAttribute("queueNumber", queueNumber);
+            model.addAttribute("estimatedWaitTime", queuePosition.getEstimatedWaitTime());
             
             return "features/payment-confirmation";
         } catch (Exception e) {
             model.addAttribute("error", "Error preparing payment: " + e.getMessage());
             model.addAttribute("studentId", studentId);
-            model.addAttribute("studentName", studentName);
             model.addAttribute("graduationType", graduationType);
             model.addAttribute("amount", amount);
             return "features/graduation-payment";
@@ -818,8 +830,15 @@ public class KioskController {
                 // Save the payment
                 payment = paymentService.createPayment(payment);
                 
+                // Generate queue number and create queue entry
+                String queueNumber = queueService.generateQueueNumber();
+                QueuePosition queuePosition = queueService.createQueueEntry(student.getUser().getUsername(), payment.getId());
+                
+                // Add necessary attributes to the model
                 model.addAttribute("payment", payment);
                 model.addAttribute("student", student);
+                model.addAttribute("queueNumber", queueNumber);
+                model.addAttribute("estimatedWaitTime", queuePosition.getEstimatedWaitTime());
                 
                 return "features/payment-confirmation";
             } catch (Exception e) {
@@ -991,18 +1010,25 @@ public class KioskController {
     public Map<String, Object> confirmPayment(@PathVariable String transactionRef) {
         Map<String, Object> response = new HashMap<>();
         try {
-            // Get the payment by transaction reference (read only)
+            // Get the payment by transaction reference
             Payment payment = paymentService.getPaymentByTransactionReference(transactionRef);
+            
+            // Process the payment
+            payment = paymentService.processPayment(payment);
             
             // Create queue entry and get position
             QueuePosition queuePosition = queueService.createQueueEntry(payment.getUser().getUsername(), payment.getId());
+            
+            // Generate queue number if not already set
+            String queueNumber = payment.getPaymentNumber();
 
             // Add queue information to response
             response.put("success", true);
-            response.put("queueNumber", payment.getPaymentNumber());
+            response.put("queueNumber", queueNumber);
             response.put("position", queuePosition.getPosition());
             response.put("estimatedWaitTime", queuePosition.getEstimatedWaitTime());
-            response.put("message", "Payment confirmed and pending manager approval");
+            response.put("message", "Your queue number is " + queueNumber + ". Please wait for your turn.");
+            response.put("reload", true); // Add flag to indicate page should reload
 
             // Set receipt preference but don't generate it yet (will be generated after manager approval)
             queueService.setReceiptPreference(payment.getPaymentNumber(), ReceiptPreference.DIGITAL);
@@ -1010,7 +1036,7 @@ public class KioskController {
         } catch (Exception e) {
             logger.error("Error confirming payment: {}", e.getMessage());
             response.put("success", false);
-            response.put("message", "Payment confirmation in progress");
+            response.put("message", "Error confirming payment: " + e.getMessage());
         }
         return response;
     }

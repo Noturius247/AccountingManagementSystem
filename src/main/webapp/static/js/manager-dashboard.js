@@ -1,7 +1,5 @@
-// Get the application context path if not already defined
-if (typeof contextPath === 'undefined') {
-    const contextPath = document.querySelector('meta[name="contextPath"]')?.getAttribute('content') || '';
-}
+// Get the application context path from meta tag
+const contextPath = document.querySelector('meta[name="contextPath"]')?.getAttribute('content') || '';
 
 document.addEventListener('DOMContentLoaded', function() {
     // Handle dynamic content loading for manager dashboard
@@ -357,6 +355,12 @@ function initializeTransactionComponents() {
             applyFilters();
         });
     }
+
+    // Fetch initial queue data
+    fetchQueueDetails();
+    
+    // Initialize processing times
+    initializeProcessingTimes();
 }
 
 function applyFilters() {
@@ -519,69 +523,84 @@ function fetchQueueDetails(params = {}) {
 }
 
 function updateQueueTable(queues) {
-    const tbody = document.getElementById('queueTable').querySelector('tbody');
-    if (!tbody) return;
+    // Update Processing Table
+    const processingTbody = document.querySelector('#processingTable tbody');
+    if (processingTbody) {
+        processingTbody.innerHTML = '';
+        // Filter only PROCESSING queues
+        queues.filter(queue => queue.status === 'PROCESSING').forEach(queue => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${queue.queueNumber}</td>
+                <td>${queue.studentId || 'N/A'}</td>
+                <td>${queue.user ? queue.user.username : 'N/A'}</td>
+                <td>${queue.type || 'N/A'}</td>
+                <td>${formatCurrency(queue.amount)}</td>
+                <td>
+                    <span class="processing-time" data-start="${queue.processedAt}">
+                        Calculating...
+                    </span>
+                </td>
+                <td>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-success" onclick="updateQueueStatus('${queue.id}', 'COMPLETED')">
+                            <i class="bi bi-check-circle"></i> Complete
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="updateQueueStatus('${queue.id}', 'CANCELLED')">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </button>
+                    </div>
+                </td>
+            `;
+            processingTbody.appendChild(tr);
+        });
+    }
 
-    let hasProcessingQueue = queues.some(queue => queue.status === 'PROCESSING');
-    
-    tbody.innerHTML = queues.map(queue => `
-        <tr>
-            <td>${queue.queueNumber}</td>
-            <td>${queue.studentId || 'N/A'}</td>
-            <td>${queue.position}</td>
-            <td>${queue.estimatedWaitTime} mins</td>
-            <td>
-                <span class="badge queue-status status-${queue.status.toLowerCase()}">
-                    ${queue.status}
-                </span>
-            </td>
-            <td>
-                <div class="btn-group">
-                    ${getQueueActions(queue, hasProcessingQueue)}
-                </div>
-            </td>
-        </tr>
-    `).join('');
-}
-
-function getQueueActions(queue, hasProcessingQueue) {
-    const actions = [];
-    
-    switch (queue.status) {
-        case 'PENDING':
-            actions.push(`
-                <button class="btn btn-sm btn-primary start-processing" 
-                        onclick="startProcessing('${queue.id}')"
-                        ${hasProcessingQueue ? 'disabled' : ''}>
-                    <i class="fas fa-play"></i> Start Processing
-                </button>
-            `);
-            actions.push(`
-                <button class="btn btn-sm btn-danger" onclick="cancelQueue('${queue.id}')">
-                    <i class="fas fa-times"></i> Cancel
-                </button>
-            `);
-            break;
-            
-        case 'PROCESSING':
-            actions.push(`
-                <button class="btn btn-sm btn-success" onclick="completeQueue('${queue.id}')">
-                    <i class="fas fa-check"></i> Complete
-                </button>
-            `);
-            break;
-            
-        case 'COMPLETED':
-        case 'CANCELLED':
-            actions.push(`
-                <button class="btn btn-sm btn-secondary" onclick="removeQueue('${queue.id}')">
-                    <i class="fas fa-trash"></i> Remove
-                </button>
-            `);
-            break;
+    // Update Queue Table (only PENDING items)
+    const queueTbody = document.querySelector('#queueTableBody');
+    if (queueTbody) {
+        queueTbody.innerHTML = '';
+        // Filter only PENDING queues
+        queues.filter(queue => queue.status === 'PENDING').forEach(queue => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${queue.queueNumber}</td>
+                <td>${queue.studentId || 'N/A'}</td>
+                <td>${queue.position}</td>
+                <td>${queue.estimatedWaitTime} mins</td>
+                <td>
+                    <span class="badge queue-status status-pending">
+                        ${queue.status}
+                    </span>
+                </td>
+                <td>
+                    <div class="btn-group">
+                        <button class="btn btn-sm btn-primary start-processing" 
+                                onclick="updateQueueStatus('${queue.id}', 'PROCESSING')"
+                                ${hasProcessingQueue(queues) ? 'disabled' : ''}>
+                            <i class="bi bi-play-fill"></i> Start Processing
+                        </button>
+                    </div>
+                </td>
+            `;
+            queueTbody.appendChild(tr);
+        });
     }
     
-    return actions.join('');
+    // Initialize processing times for new items
+    initializeProcessingTimes();
+}
+
+// Helper function to check if there's any processing queue
+function hasProcessingQueue(queues) {
+    return queues.some(queue => queue.status === 'PROCESSING');
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-PH', {
+        style: 'currency',
+        currency: 'PHP'
+    }).format(amount || 0);
 }
 
 function searchQueue() {
@@ -591,4 +610,26 @@ function searchQueue() {
 
 function filterByQueueStatus(status) {
     fetchQueueDetails({ status: status });
-} 
+}
+
+function initializeProcessingTimes() {
+    const processingTimes = document.querySelectorAll('.processing-time');
+    processingTimes.forEach(timeSpan => {
+        const startTime = new Date(timeSpan.dataset.start);
+        
+        // Update the time every second
+        const updateTime = () => {
+            const now = new Date();
+            const diff = now - startTime;
+            const minutes = Math.floor(diff / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            timeSpan.textContent = `${minutes}m ${seconds}s`;
+        };
+        
+        updateTime(); // Initial update
+        setInterval(updateTime, 1000); // Update every second
+    });
+}
+
+// Add auto-refresh for queue data
+setInterval(fetchQueueDetails, 30000); // Refresh every 30 seconds 

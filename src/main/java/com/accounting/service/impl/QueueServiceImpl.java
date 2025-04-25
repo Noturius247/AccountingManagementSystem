@@ -1327,7 +1327,7 @@ public class QueueServiceImpl implements QueueService {
 
     @Override
     public List<Queue> findAllOrderedByPosition() {
-        return queueRepository.findByStatusOrderByPositionAsc(QueueStatus.PENDING);
+        return queueRepository.findAll(Sort.by(Sort.Direction.ASC, "position"));
     }
 
     @Override
