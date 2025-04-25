@@ -6,5 +6,13 @@ public enum PaymentType {
     DEBIT_CARD,
     BANK_TRANSFER,
     ONLINE_PAYMENT,
-    OTHER
+    OTHER,
+    TUITION,
+    LIBRARY,
+    LAB,
+    ID,
+    GRADUATION,
+    TRANSCRIPT,
+    CHEMISTRY,
+    ENROLLMENT
 } 

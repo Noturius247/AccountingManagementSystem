@@ -144,4 +144,13 @@ public interface QueueService {
      * @return true if there is a queue in PROCESSING status, false otherwise
      */
     boolean hasProcessingQueue();
+
+    /**
+     * Handles the processing queue logic when a queue is set to PROCESSING status.
+     * This includes disabling other processing queues to ensure only one queue is processing at a time.
+     * 
+     * @param queueId The ID of the queue that is being set to PROCESSING
+     * @return The updated Queue object
+     */
+    Queue handleProcessingQueue(Long queueId);
 } 

@@ -114,8 +114,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     List<Transaction> findByNotesContaining(@Param("notes") String notes);
     
-    @Query("SELECT t FROM Transaction t WHERE t.notes LIKE %:query% ORDER BY t.createdAt DESC LIMIT 5")
-    List<Transaction> findTop5ByNotesContaining(@Param("query") String query);
+    List<Transaction> findTop5ByNotesContainingOrderByCreatedAtDesc(String query);
 
     List<Transaction> findByNotesContainingIgnoreCaseOrderByCreatedAtDesc(String notes);
 
@@ -203,7 +202,6 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
            "ORDER BY date")
     List<Object[]> countByCreatedAtBetweenGroupByDate(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
-    @Query("SELECT t FROM Transaction t WHERE t.user.id = :userId ORDER BY t.createdAt DESC LIMIT 1")
     Optional<Transaction> findTopByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId);
 
     @Query("SELECT t FROM Transaction t LEFT JOIN FETCH t.user WHERE t.id = :id")

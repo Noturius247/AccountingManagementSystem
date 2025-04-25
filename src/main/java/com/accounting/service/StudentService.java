@@ -5,6 +5,7 @@ import com.accounting.model.User;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import java.util.Optional;
 
 public interface StudentService {
     Student registerStudent(User user, String program, Integer yearLevel, String academicYear, String semester, String fullName);
@@ -25,4 +26,5 @@ public interface StudentService {
     void approveStudent(Long id);
     void rejectStudent(Long id);
     void revokeApproval(Long id);
+    Optional<Student> findByUserId(Long userId);
 } 

@@ -78,6 +78,12 @@ function initStudentVerification(options = {}) {
                     }
                 }
 
+                // Populate the hidden student name field
+                const studentNameField = document.getElementById('studentName');
+                if (studentNameField) {
+                    studentNameField.value = data.fullName || '';
+                }
+
                 if (fields.yearLevel) {
                     const yearLevelField = document.getElementById('yearLevel');
                     if (yearLevelField) {

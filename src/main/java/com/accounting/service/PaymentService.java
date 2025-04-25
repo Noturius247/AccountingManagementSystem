@@ -1,6 +1,8 @@
 package com.accounting.service;
 
 import com.accounting.model.Payment;
+import com.accounting.model.Student;
+import com.accounting.model.enums.PaymentType;
 import com.accounting.model.enums.PaymentStatus;
 import java.math.BigDecimal;
 import java.util.List;

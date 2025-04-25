@@ -91,7 +91,7 @@ public class PaymentController {
                 .description("Transcript Request - " + copies + " copies (" + purpose + ")")
                 .amount(totalAmount)
                 .paymentStatus(PaymentStatus.PENDING)
-                .type(PaymentType.CASH)
+                .type("TRANSCRIPT")
                 .user(student.getUser())
                 .paymentMethod("KIOSK")
                 .transactionReference("TOR-" + System.currentTimeMillis())

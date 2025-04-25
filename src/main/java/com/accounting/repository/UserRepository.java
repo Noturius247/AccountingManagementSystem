@@ -31,7 +31,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("SELECT COUNT(u) FROM User u WHERE u.lastActivity > :dateTime")
     long countByLastActivityAfter(@Param("dateTime") LocalDateTime dateTime);
     
-    @Query("SELECT u FROM User u ORDER BY u.createdAt DESC")
     List<User> findTop5ByOrderByCreatedAtDesc();
 
     List<User> findByUsernameContainingOrEmailContaining(String username, String email);
@@ -47,8 +46,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     List<User> findByUsernameContaining(String query);
     
-    @Query("SELECT u FROM User u WHERE u.username = ?1 ORDER BY u.createdAt DESC")
-    List<User> findTop5ByUserUsernameOrderByCreatedAtDesc(String username);
+    List<User> findTop5ByUsernameOrderByCreatedAtDesc(String username);
     
     @Query("SELECT COUNT(u) FROM User u WHERE u.username LIKE %?1%")
     long countByUsernameContaining(String query);
@@ -56,10 +54,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("SELECT SUM(u.balance) FROM User u WHERE u.username LIKE %?1%")
     BigDecimal sumBalanceByUsernameContaining(String query);
     
-    @Query("SELECT u FROM User u WHERE u.username LIKE %:query% ORDER BY u.createdAt DESC LIMIT 5")
     List<User> findTop5ByUsernameContaining(@Param("query") String query);
 
-    @Query("SELECT u FROM User u ORDER BY u.createdAt DESC LIMIT 10")
     List<User> findTop10ByOrderByCreatedAtDesc();
 
     @Query("SELECT COUNT(u) FROM User u WHERE DATE(u.createdAt) = CURRENT_DATE")

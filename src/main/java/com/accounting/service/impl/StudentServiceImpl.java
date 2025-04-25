@@ -19,6 +19,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.List;
 import java.util.Set;
+import java.util.Optional;
 
 @Service
 public class StudentServiceImpl implements StudentService {
@@ -226,12 +227,12 @@ public class StudentServiceImpl implements StudentService {
             throw new IllegalStateException("Only approved registrations can be revoked");
         }
         student.setRegistrationStatus(Student.RegistrationStatus.PENDING);
-        
-        // Revert the user's role back to default
-        User user = student.getUser();
-        user.setRole("ROLE_USER");
-        userRepository.save(user);
-        
         studentRepository.save(student);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<Student> findByUserId(Long userId) {
+        return studentRepository.findByUserId(userId);
     }
 } 

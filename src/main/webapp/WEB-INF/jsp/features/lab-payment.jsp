@@ -29,6 +29,10 @@
                 <input type="text" id="studentId" name="studentId" value="${studentId}" required>
             </div>
 
+            <div class="form-group" style="display: none;">
+                <input type="hidden" id="studentName" name="studentName">
+            </div>
+
             <div id="studentInfo" style="display: none;">
                 <div class="form-group">
                     <label for="program">Program</label>
@@ -97,6 +101,18 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Populate academic years
+            const currentYear = new Date().getFullYear();
+            const academicYearSelect = document.getElementById('academicYear');
+            
+            for(let i = 0; i < 5; i++) {
+                const year = currentYear - i;
+                const option = document.createElement('option');
+                option.value = year + '-' + (year + 1);
+                option.textContent = year + '-' + (year + 1);
+                academicYearSelect.appendChild(option);
+            }
+
             // Initialize student verification with autofill
             initStudentVerification({
                 academicYear: true,
@@ -108,8 +124,10 @@
                 }
             });
 
-            // Calculate fee when lab type or equipment changes
+            // Calculate fee when lab type changes
             document.getElementById('labType').addEventListener('change', calculateLabFee);
+            
+            // Calculate fee when equipment package changes
             document.getElementById('equipment').addEventListener('change', calculateLabFee);
         });
 
@@ -119,26 +137,24 @@
             let baseFee = 0;
             let equipmentFee = 0;
 
-            // Lab type fees
+            // Calculate base fee based on lab type
             switch(labType) {
                 case 'PHYSICS':
-                    baseFee = 2000;
-                    break;
                 case 'BIOLOGY':
-                    baseFee = 2500;
-                    break;
-                case 'COMPUTER':
                     baseFee = 1500;
                     break;
-                case 'ENGINEERING':
-                    baseFee = 3000;
+                case 'COMPUTER':
+                    baseFee = 2000;
                     break;
+                case 'ENGINEERING':
                 case 'ELECTRONICS':
                     baseFee = 2500;
                     break;
+                default:
+                    baseFee = 1500;
             }
 
-            // Equipment fees
+            // Calculate equipment fee
             switch(equipment) {
                 case 'BASIC':
                     equipmentFee = 500;
@@ -152,10 +168,12 @@
                 case 'NONE':
                     equipmentFee = 0;
                     break;
+                default:
+                    equipmentFee = 0;
             }
 
-            const totalFee = baseFee + equipmentFee;
-            document.getElementById('amount').value = totalFee;
+            // Set total fee
+            document.getElementById('amount').value = baseFee + equipmentFee;
         }
     </script>
 </body>

@@ -28,6 +28,25 @@
             left: 20px;
         }
 
+        .cancel-button-corner {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #dc3545;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .cancel-button-corner:hover {
+            background-color: #c82333;
+        }
+
         .kiosk-button-corner {
             position: absolute;
             bottom: 20px;
@@ -242,11 +261,15 @@
             Back
         </a>
 
+        <button onclick="cancelPayment('${payment.transactionReference}')" class="cancel-button-corner">
+            Cancel
+        </button>
+
         <div class="success-icon">📋</div>
         <h1 class="confirmation-title">Review Payment</h1>
         
         <div class="payment-details">
-            <c:if test="${not empty payment.paymentNumber && payment.paymentStatus != 'PENDING'}">
+            <c:if test="${not empty payment.paymentNumber}">
                 <div class="detail-row">
                     <span class="detail-label">Payment Number:</span>
                     <span class="detail-value">${payment.paymentNumber}</span>
@@ -299,7 +322,7 @@
                 </div>
             </c:if>
             
-            <c:if test="${payment.type.name() == 'ENROLLMENT'}">
+            <c:if test="${payment.type == 'ENROLLMENT'}">
                 <div class="detail-row">
                     <span class="detail-label">Academic Year:</span>
                     <span class="detail-value">${payment.academicYear}</span>
@@ -327,19 +350,21 @@
 
             <div class="detail-row">
                 <span class="detail-label">Amount:</span>
-                <span class="detail-value amount">₱<fmt:formatNumber value="${payment.amount}" pattern="#,##0.00"/></span>
+                <span class="detail-value amount">₱ <fmt:formatNumber value="${payment.amount}" pattern="#,##0.00"/></span>
             </div>
             
-            <c:if test="${not empty payment.createdAt && payment.paymentStatus != 'PENDING'}">
+            <c:if test="${not empty payment.createdAt}">
                 <div class="detail-row">
                     <span class="detail-label">Date:</span>
                     <span class="detail-value">
-                        <fmt:formatDate value="${payment.createdAt}" pattern="MMMM dd, yyyy hh:mm a"/>
+                        <c:set var="dateString" value="${payment.createdAt.toString()}" />
+                        <fmt:parseDate value="${dateString}" pattern="yyyy-MM-dd'T'HH:mm:ss" var="parsedDate" type="both" />
+                        <fmt:formatDate value="${parsedDate}" pattern="MMMM dd, yyyy hh:mm a"/>
                     </span>
                 </div>
             </c:if>
             
-            <c:if test="${payment.paymentStatus != 'PENDING'}">
+            <c:if test="${not empty payment.paymentStatus}">
                 <div class="detail-row">
                     <span class="detail-label">Status:</span>
                     <span class="detail-value ${payment.paymentStatus == 'PROCESSED' ? 'status-processed' : 'status-pending'}">
@@ -354,6 +379,7 @@
                 <h2>Your Queue Number</h2>
                 <div class="queue-number">${queueNumber}</div>
                 <p>Please wait for your number to be called</p>
+                <p class="estimated-time">Estimated wait time: ${estimatedWaitTime} minutes</p>
             </div>
         </c:if>
 
@@ -364,34 +390,54 @@
         <%-- Debug payment status --%>
         <%-- <div>Debug - Payment Status: ${payment.paymentStatus}</div> --%>
 
-        <button onclick="confirmPayment('${payment.transactionReference}')" class="confirm-payment-bottom">
+        <button onclick="confirmPayment('${payment.transactionReference}')" class="confirm-payment-bottom" id="confirmPaymentButton">
             CONFIRM PAYMENT
         </button>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if payment is processed
             const paymentStatus = '${payment.paymentStatus}';
             const transactionRef = '${payment.transactionReference}';
-            console.log('Payment Status:', paymentStatus); // Debug log
-            console.log('Transaction Reference:', transactionRef); // Debug log
+            console.log('Payment Status:', paymentStatus);
+            console.log('Transaction Reference:', transactionRef);
             
-            if (paymentStatus === 'PROCESSED') {
-                // Hide confirm button if payment is processed
-                const confirmButton = document.querySelector('.confirm-payment-bottom');
-                if (confirmButton) {
+            // Check if this payment was already confirmed
+            const confirmButton = document.getElementById('confirmPaymentButton');
+            const wasConfirmed = sessionStorage.getItem('confirmed_' + transactionRef);
+            const isProcessing = sessionStorage.getItem('processing_' + transactionRef);
+            
+            if (confirmButton) {
+                if (wasConfirmed || isProcessing) {
                     confirmButton.style.display = 'none';
+                    
+                    if (isProcessing) {
+                        // Show processing indicator
+                        const processingDiv = document.createElement('div');
+                        processingDiv.style.cssText = `
+                            position: absolute;
+                            bottom: 100px;
+                            left: 50%;
+                            transform: translateX(-50%);
+                            color: #800000;
+                            font-size: 18px;
+                            font-weight: bold;
+                        `;
+                        processingDiv.textContent = 'Processing Payment...';
+                        confirmButton.parentNode.appendChild(processingDiv);
+                    }
+                } else {
+                    confirmButton.style.display = 'block';
                 }
-                
-                // Trigger receipt download
-                window.location.href = '${pageContext.request.contextPath}/kiosk/payment/' + transactionRef + '/download-receipt';
-                
-                // Show success message
-                setTimeout(function() {
-                    alert('Your receipt has been downloaded. Please keep it for your records.');
-                }, 1000);
             }
+
+            // Clear any old confirmation flags for other transactions
+            Object.keys(sessionStorage).forEach(key => {
+                if ((key.startsWith('confirmed_') || key.startsWith('processing_')) && 
+                    !key.endsWith(transactionRef)) {
+                    sessionStorage.removeItem(key);
+                }
+            });
         });
 
         function confirmPayment(transactionRef) {
@@ -401,16 +447,36 @@
                 return;
             }
 
-            // Show loading indicator
-            const confirmButton = document.querySelector('.confirm-payment-bottom');
+            const confirmButton = document.getElementById('confirmPaymentButton');
             if (confirmButton) {
+                // Immediately hide and disable the button
+                confirmButton.style.display = 'none';
                 confirmButton.disabled = true;
-                confirmButton.textContent = 'Processing...';
+                
+                // Set processing state
+                sessionStorage.setItem('processing_' + transactionRef, 'true');
+                
+                // Create and show a processing indicator
+                const processingDiv = document.createElement('div');
+                processingDiv.style.cssText = `
+                    position: absolute;
+                    bottom: 100px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    color: #800000;
+                    font-size: 18px;
+                    font-weight: bold;
+                `;
+                processingDiv.textContent = 'Processing Payment...';
+                confirmButton.parentNode.appendChild(processingDiv);
             }
 
             if (confirm('Are you sure you want to confirm this payment?')) {
                 const token = "${_csrf.token}";
                 const header = "${_csrf.headerName}";
+                
+                // Mark this payment as confirmed
+                sessionStorage.setItem('confirmed_' + transactionRef, 'true');
                 
                 fetch('${pageContext.request.contextPath}/kiosk/payment/confirm/' + transactionRef, {
                     method: 'POST',
@@ -427,39 +493,9 @@
                     return response.json();
                 })
                 .then(data => {
-                    console.log('Payment confirmation response:', data); // Debug log
+                    console.log('Payment confirmation response:', data);
                     
-                    if (data.success) {
-                        // Create notification
-                        const amount = document.querySelector('.amount').textContent.replace('₱', '').trim();
-                        fetch('${pageContext.request.contextPath}/notifications', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                [header]: token
-                            },
-                            body: JSON.stringify({
-                                transactionRef: transactionRef,
-                                amount: parseFloat(amount.replace(/,/g, '')),
-                                status: 'PENDING'
-                            })
-                        });
-
-                        // Update payment status section
-                        const statusContainer = document.createElement('div');
-                        statusContainer.className = 'detail-row';
-                        statusContainer.innerHTML = `
-                            <span class="detail-label">Status:</span>
-                            <span class="detail-value status-pending">PENDING</span>
-                        `;
-                        
-                        // Find the amount row to insert the status after it
-                        const amountRow = document.querySelector('.detail-row:has(.amount)');
-                        if (amountRow) {
-                            amountRow.after(statusContainer);
-                        }
-                        
-                        // Add queue number if provided
+                    if (data.success || data.message) {
                         if (data.queueNumber) {
                             const queueDiv = document.createElement('div');
                             queueDiv.className = 'queue-info';
@@ -472,52 +508,72 @@
                             document.querySelector('.payment-details').after(queueDiv);
                         }
                         
-                        // Hide confirm button
-                        if (confirmButton) {
-                            confirmButton.style.display = 'none';
-                        }
-                        
-                        // Show success message with queue information
                         const message = `Payment confirmed and pending manager approval.\n\nYour queue number is: ${data.queueNumber}\nEstimated wait time: ${data.estimatedWaitTime} minutes\n\nYour receipt will be available after approval.`;
                         alert(message);
                         
-                        // Refresh the page after a short delay to show updated status
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 2000);
-                    } else {
-                        // Re-enable button on error
-                        if (confirmButton) {
-                            confirmButton.disabled = false;
-                            confirmButton.textContent = 'CONFIRM PAYMENT';
+                        // Keep the button hidden but don't reload the page
+                        const processingDiv = document.querySelector('div:last-child');
+                        if (processingDiv && processingDiv.textContent === 'Processing Payment...') {
+                            processingDiv.remove();
                         }
-                        alert(data.error || 'Failed to confirm payment');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    // Re-enable button on error
+                    // On error, restore the button
                     if (confirmButton) {
+                        confirmButton.style.display = 'block';
                         confirmButton.disabled = false;
-                        confirmButton.textContent = 'CONFIRM PAYMENT';
+                        sessionStorage.removeItem('confirmed_' + transactionRef);
+                        sessionStorage.removeItem('processing_' + transactionRef);
+                        // Remove processing indicator if it exists
+                        const processingDiv = confirmButton.parentNode.querySelector('div:last-child');
+                        if (processingDiv) {
+                            processingDiv.remove();
+                        }
                     }
-                    alert('Failed to confirm payment. Please try again.');
                 });
             } else {
-                // Re-enable button if confirmation was cancelled
+                // If user cancels, restore the button
                 if (confirmButton) {
+                    confirmButton.style.display = 'block';
                     confirmButton.disabled = false;
-                    confirmButton.textContent = 'CONFIRM PAYMENT';
+                    sessionStorage.removeItem('confirmed_' + transactionRef);
+                    sessionStorage.removeItem('processing_' + transactionRef);
+                    // Remove processing indicator if it exists
+                    const processingDiv = confirmButton.parentNode.querySelector('div:last-child');
+                    if (processingDiv) {
+                        processingDiv.remove();
+                    }
                 }
             }
         }
 
         function cancelPayment(transactionRef) {
+            if (!transactionRef) {
+                console.error('Transaction Reference is missing');
+                alert('Error: Transaction Reference is missing');
+                return;
+            }
+
             if (confirm('Are you sure you want to cancel this payment?')) {
+                const token = "${_csrf.token}";
+                const header = "${_csrf.headerName}";
+
                 fetch('${pageContext.request.contextPath}/kiosk/payment/cancel/' + transactionRef, {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        [header]: token
+                    },
+                    credentials: 'same-origin'
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     if (data.success) {
                         alert('Payment cancelled successfully');
@@ -528,7 +584,7 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Failed to cancel payment');
+                    alert('Failed to cancel payment. Please try again.');
                 });
             }
         }

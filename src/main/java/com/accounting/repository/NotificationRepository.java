@@ -53,7 +53,12 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     Page<Notification> findByUserUsernameAndNotificationTypeAndCreatedAtBetween(String username, String notificationType, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
     Page<Notification> findByNotificationTypeAndStatusAndCreatedAtBetween(String notificationType, String status, LocalDateTime startDate, LocalDateTime endDate, Pageable pageable);
 
-    @Query("SELECT n FROM Notification n ORDER BY n.createdAt DESC LIMIT 10")
+    @Query("SELECT n FROM Notification n WHERE n.user.username = :username AND n.notificationType = :type ORDER BY n.createdAt DESC")
+    List<Notification> findByUserUsernameAndTypeOrderByCreatedAtDesc(@Param("username") String username, @Param("type") String type);
+
+    @Query("SELECT n FROM Notification n ORDER BY n.createdAt DESC")
+    List<Notification> findTopByOrderByCreatedAtDesc(Pageable pageable);
+
     List<Notification> findTop10ByOrderByCreatedAtDesc();
 
     List<Notification> findTop5ByOrderByCreatedAtDesc();
@@ -66,10 +71,4 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     @Query("SELECT n FROM Notification n WHERE n.user.username = :username ORDER BY n.createdAt DESC")
     List<Notification> findByUsernameOrderByCreatedAtDesc(@Param("username") String username);
-
-    @Query("SELECT n FROM Notification n WHERE n.user.username = :username AND n.notificationType = :type ORDER BY n.createdAt DESC")
-    List<Notification> findByUserUsernameAndTypeOrderByCreatedAtDesc(@Param("username") String username, @Param("type") String type);
-
-    @Query("SELECT n FROM Notification n ORDER BY n.createdAt DESC")
-    List<Notification> findTopByOrderByCreatedAtDesc(int limit);
 } 

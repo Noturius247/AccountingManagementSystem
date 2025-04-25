@@ -546,8 +546,7 @@ public class QueueServiceImpl implements QueueService {
         // Set payment related information
         queue.setPaymentId(payment.getId());
         queue.setAmount(payment.getAmount());
-        queue.setPaymentNumber(payment.getTransactionReference());
-        queue.setStatus(QueueStatus.PENDING);
+        queue.setPaymentNumber(payment.getPaymentNumber());
         queue.setScheduleId(payment.getId().toString());
         
         Queue savedQueue = queueRepository.save(queue);
@@ -1082,7 +1081,7 @@ public class QueueServiceImpl implements QueueService {
         // Set payment related information
         queue.setPaymentId(payment.getId());
         queue.setAmount(payment.getAmount());
-        queue.setPaymentNumber(payment.getTransactionReference());
+        queue.setPaymentNumber(payment.getPaymentNumber());
         queue.setStatus(QueueStatus.PENDING);
         queue.setScheduleId(payment.getId().toString());
         
@@ -1421,5 +1420,25 @@ public class QueueServiceImpl implements QueueService {
     @Override
     public boolean hasProcessingQueue() {
         return !queueRepository.findByStatus(QueueStatus.PROCESSING).isEmpty();
+    }
+
+    @Override
+    public Queue handleProcessingQueue(Long queueId) {
+        // Find all queues that are currently in PROCESSING status
+        List<Queue> processingQueues = queueRepository.findByStatus(QueueStatus.PROCESSING);
+        
+        // Set all other processing queues to PENDING
+        processingQueues.stream()
+            .filter(queue -> !queue.getId().equals(queueId))
+            .forEach(queue -> {
+                queue.setStatus(QueueStatus.PENDING);
+                queueRepository.save(queue);
+            });
+
+        // Get and update the target queue
+        Queue queue = queueRepository.findById(queueId)
+            .orElseThrow(() -> new ResourceNotFoundException("Queue not found with id: " + queueId));
+        queue.setStatus(QueueStatus.PROCESSING);
+        return queueRepository.save(queue);
     }
 } 

@@ -62,8 +62,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("SELECT p FROM Payment p WHERE p.description LIKE %:description%")
     List<Payment> findByDescriptionContaining(@Param("description") String description);
 
-    @Query("SELECT p FROM Payment p WHERE p.description LIKE %:description% ORDER BY p.createdAt DESC LIMIT 5")
-    List<Payment> findTop5ByDescriptionContaining(@Param("description") String description);
+    List<Payment> findTop5ByDescriptionContainingOrderByCreatedAtDesc(@Param("description") String description);
 
     @Query("SELECT p FROM Payment p WHERE p.amount BETWEEN :minAmount AND :maxAmount ORDER BY p.createdAt DESC")
     List<Payment> findByAmountBetweenOrderByCreatedAtDesc(@Param("minAmount") Double minAmount, @Param("maxAmount") Double maxAmount);
@@ -71,7 +70,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("SELECT COUNT(p) FROM Payment p WHERE p.user.username = :username AND p.paymentStatus = 'PENDING'")
     int countPendingByUserUsername(@Param("username") String username);
 
-    @Query("SELECT p FROM Payment p WHERE p.user.username = :username ORDER BY p.createdAt DESC LIMIT 5")
     List<Payment> findTop5ByUserUsernameOrderByCreatedAtDesc(@Param("username") String username);
 
     @Query("SELECT COUNT(p) FROM Payment p WHERE p.description LIKE %:description%")
@@ -83,10 +81,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE p.description LIKE %:query% OR p.paymentStatus LIKE %:query%")
     Optional<BigDecimal> sumAmountByDescriptionContainingOrStatusContaining(@Param("query") String query);
 
-    @Query("SELECT p FROM Payment p ORDER BY p.createdAt DESC LIMIT 10")
     List<Payment> findTop10ByOrderByCreatedAtDesc();
 
-    @Query("SELECT p FROM Payment p ORDER BY p.createdAt DESC LIMIT 5")
     List<Payment> findTop5ByOrderByCreatedAtDesc();
 
     @Query("SELECT COALESCE(SUM(p.amount), 0) FROM Payment p WHERE DATE(p.createdAt) = CURRENT_DATE")

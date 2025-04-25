@@ -3,6 +3,7 @@ package com.accounting.service.impl;
 import com.accounting.model.Payment;
 import com.accounting.model.User;
 import com.accounting.model.enums.PaymentStatus;
+import com.accounting.model.enums.PaymentType;
 import com.accounting.repository.PaymentRepository;
 import com.accounting.repository.UserRepository;
 import com.accounting.service.PaymentService;
@@ -14,11 +15,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.math.BigDecimal;
 import java.sql.Date;
+import java.util.UUID;
 
 @Service
 public class PaymentServiceImpl implements PaymentService {
@@ -40,8 +43,35 @@ public class PaymentServiceImpl implements PaymentService {
         if (payment.getUser() == null) {
             throw new IllegalArgumentException("User is required for payment");
         }
+        
+        // Generate payment number based on type with timestamp to ensure uniqueness
+        String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyMMddHHmmss"));
+        String paymentNumber = String.format("%s-%s-%04d", 
+            getTypePrefix(payment.getType().toString()),
+            timestamp,
+            paymentRepository.countByType(payment.getType().toString()) + 1);
+        
+        payment.setPaymentNumber(paymentNumber);
+        payment.setTransactionReference(paymentNumber + "-" + UUID.randomUUID().toString().substring(0, 8));
+        payment.setTransactionId(paymentNumber);
+        
         payment.setCreatedAt(LocalDateTime.now());
         return paymentRepository.save(payment);
+    }
+
+    private String getTypePrefix(String type) {
+        // Get the prefix based on payment type
+        return switch (type.toUpperCase()) {
+            case "TUITION" -> "TUI";
+            case "LIBRARY" -> "LIB";
+            case "LAB" -> "LAB";
+            case "ID" -> "ID";
+            case "GRADUATION" -> "GRAD";
+            case "TRANSCRIPT" -> "TOR";
+            case "CHEMISTRY" -> "CHEM";
+            case "ENROLLMENT" -> "ENR";
+            default -> type.substring(0, Math.min(type.length(), 3)).toUpperCase();
+        };
     }
 
     @Override

@@ -128,9 +128,9 @@ public class SearchServiceImpl implements SearchService {
     @Override
     public Map<String, Object> getSearchSuggestions(String query) {
         Map<String, Object> suggestions = new HashMap<>();
-        suggestions.put("transactions", transactionRepository.findTop5ByNotesContaining(query));
+        suggestions.put("transactions", transactionRepository.findTop5ByNotesContainingOrderByCreatedAtDesc(query));
         suggestions.put("users", userRepository.findTop5ByUsernameContaining(query));
-        suggestions.put("payments", paymentRepository.findTop5ByDescriptionContaining(query));
+        suggestions.put("payments", paymentRepository.findTop5ByDescriptionContainingOrderByCreatedAtDesc(query));
         return suggestions;
     }
 

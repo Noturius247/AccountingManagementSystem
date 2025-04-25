@@ -35,7 +35,7 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "transaction_id", nullable = false)
     private String transactionId;
 
     @Column(nullable = false)
@@ -82,7 +82,7 @@ public class Payment {
     @Column
     private String receiptUrl;
 
-    @Column(name = "transaction_reference")
+    @Column(name = "transaction_reference", nullable = false, unique = true)
     private String transactionReference;
 
     @Column(name = "payment_number", nullable = false, unique = true)
@@ -94,18 +94,24 @@ public class Payment {
     @Column(name = "queue_number")
     private String queueNumber;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PaymentType type;
+    @Column(nullable = false, length = 10)
+    private String type;
 
     @Column(name = "tax_amount", precision = 19, scale = 2)
     private BigDecimal taxAmount;
+
+    @Column(name = "academic_year")
+    private String academicYear;
+
+    @Column(name = "semester")
+    private String semester;
 
     @ElementCollection
     @CollectionTable(name = "payment_metadata", 
         joinColumns = @JoinColumn(name = "payment_id"))
     @MapKeyColumn(name = "metadata_key")
     @Column(name = "metadata_value")
+    @Builder.Default
     private Map<String, String> metadata = new HashMap<>();
 
     @Column(name = "notes", columnDefinition = "TEXT")
@@ -127,11 +133,6 @@ public class Payment {
         }
         if (updatedAt == null) {
             updatedAt = LocalDateTime.now();
-        }
-        if (paymentNumber == null || paymentNumber.isEmpty()) {
-            String datePart = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-            String randomPart = String.format("%05d", (int) (Math.random() * 100000));
-            paymentNumber = String.format("PAY-%s-%s", datePart, randomPart);
         }
         if (paymentStatus == null) {
             paymentStatus = PaymentStatus.PENDING;
@@ -213,7 +214,7 @@ public class Payment {
     }
 
     public String getTypeIcon() {
-        return type != null ? type.toString().toLowerCase() : "payment";
+        return type != null ? type.toLowerCase() : "payment";
     }
 
     public Long getId() {
@@ -267,11 +268,11 @@ public class Payment {
         this.userUsername = userUsername;
     }
 
-    public PaymentType getType() {
+    public String getType() {
         return type;
     }
 
-    public void setType(PaymentType type) {
+    public void setType(String type) {
         this.type = type;
     }
 
@@ -297,5 +298,101 @@ public class Payment {
 
     public void setTransactionReference(String transactionReference) {
         this.transactionReference = transactionReference;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    public String getPaymentNumber() {
+        return paymentNumber;
+    }
+
+    public void setPaymentNumber(String paymentNumber) {
+        this.paymentNumber = paymentNumber;
+    }
+
+    public String getTransactionId() {
+        return transactionId;
+    }
+
+    public void setTransactionId(String transactionId) {
+        this.transactionId = transactionId;
+    }
+
+    public String getPurpose() {
+        return purpose;
+    }
+
+    public void setPurpose(String purpose) {
+        this.purpose = purpose;
+    }
+
+    public BigDecimal getBasePrice() {
+        return basePrice;
+    }
+
+    public void setBasePrice(BigDecimal basePrice) {
+        this.basePrice = basePrice;
+    }
+
+    public Integer getCopies() {
+        return copies;
+    }
+
+    public void setCopies(Integer copies) {
+        this.copies = copies;
+    }
+
+    public String getQueueNumber() {
+        return queueNumber;
+    }
+
+    public void setQueueNumber(String queueNumber) {
+        this.queueNumber = queueNumber;
+    }
+
+    public String getSchedule() {
+        return schedule;
+    }
+
+    public void setSchedule(String schedule) {
+        this.schedule = schedule;
+    }
+
+    public String getScheduleId() {
+        return scheduleId;
+    }
+
+    public void setScheduleId(String scheduleId) {
+        this.scheduleId = scheduleId;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public String getReceiptUrl() {
+        return receiptUrl;
+    }
+
+    public void setReceiptUrl(String receiptUrl) {
+        this.receiptUrl = receiptUrl;
+    }
+
+    public Map<String, String> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, String> metadata) {
+        this.metadata = metadata;
     }
 } 

@@ -439,16 +439,16 @@ public class KioskController {
                 Payment payment = new Payment();
                 payment.setDescription("Tuition Payment - " + academicYear + " Semester " + convertSemesterFormat(semester));
                 payment.setAmount(paymentAmount);
-                payment.setType(PaymentType.CASH);
+                payment.setType("TUITION");
                 payment.setUser(student.getUser());
                 payment.setPaymentMethod("KIOSK");
-                String transactionRef = "TUI-" + System.currentTimeMillis();
-                payment.setTransactionReference(transactionRef);
-                payment.setTransactionId(transactionRef);
                 payment.setNotes(notes != null ? notes.trim() : null);
                 payment.setPaymentStatus(PaymentStatus.PENDING);
+                payment.setCurrency("PHP");
+                payment.setAcademicYear(academicYear);
+                payment.setSemester(semester);
 
-                // Save the payment
+                // Save the payment only once through createPayment
                 payment = paymentService.createPayment(payment);
                 
                 model.addAttribute("payment", payment);
@@ -542,7 +542,7 @@ public class KioskController {
             BigDecimal paymentAmount;
             try {
                 paymentAmount = new BigDecimal(amount);
-            if (paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                if (paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
                     model.addAttribute("error", "Payment amount must be greater than 0");
                     return "features/library-payment";
                 }
@@ -568,15 +568,12 @@ public class KioskController {
                         "\nDescription: " + description.trim() : "");
 
                 // Create and save payment object
-                String transactionRef = "LIB-" + System.currentTimeMillis();
                 Payment payment = Payment.builder()
                     .description("Library Fee Payment - " + feeType)
                     .amount(paymentAmount)
-                    .type(PaymentType.CASH)
+                    .type("LIBRARY")
                     .user(student.getUser())
                     .paymentMethod("KIOSK")
-                    .transactionReference(transactionRef)
-                    .transactionId(transactionRef)
                     .notes(notes)
                     .build();
 
@@ -609,8 +606,28 @@ public class KioskController {
             @RequestParam String studentName,
             @RequestParam String labType,
             @RequestParam(defaultValue = "1500.00") String amount,
+            @RequestParam String academicYear,
+            @RequestParam String semester,
             Model model) {
         try {
+            // Input validation
+            if (studentId == null || studentId.trim().isEmpty()) {
+                model.addAttribute("error", "Student ID is required");
+                return "features/lab-payment";
+            }
+
+            // Academic Year validation
+            if (!isValidAcademicYear(academicYear)) {
+                model.addAttribute("error", "Invalid Academic Year format. Expected format: YYYY-YYYY");
+                return "features/lab-payment";
+            }
+
+            // Semester validation
+            if (!isValidSemester(semester)) {
+                model.addAttribute("error", "Invalid Semester. Must be FIRST, SECOND, or SUMMER");
+                return "features/lab-payment";
+            }
+
             Student student = studentRepository.findByStudentId(studentId)
                 .orElseThrow(() -> new EntityNotFoundException("Student ID not found. Please register first."));
 
@@ -620,15 +637,14 @@ public class KioskController {
             }
 
             // Create and save payment object
-            String transactionRef = "LAB-" + System.currentTimeMillis();
             Payment payment = Payment.builder()
-                .description("Laboratory Fee Payment - " + labType)
+                .description("Laboratory Fee Payment - " + labType + " (" + academicYear + " " + semester + ")")
                 .amount(paymentAmount)
-                .type(PaymentType.CASH)
+                .type("LAB")
                 .user(student.getUser())
                 .paymentMethod("KIOSK")
-                .transactionReference(transactionRef)
-                .transactionId(transactionRef)
+                .academicYear(academicYear)
+                .semester(semester)
                 .build();
 
             // Save the payment
@@ -644,6 +660,8 @@ public class KioskController {
             model.addAttribute("studentName", studentName);
             model.addAttribute("labType", labType);
             model.addAttribute("amount", amount);
+            model.addAttribute("academicYear", academicYear);
+            model.addAttribute("semester", semester);
             return "features/lab-payment";
         }
     }
@@ -665,15 +683,12 @@ public class KioskController {
             }
 
             // Create and save payment object
-            String transactionRef = "ID-" + System.currentTimeMillis();
             Payment payment = Payment.builder()
                 .description("ID Replacement - " + reason)
                 .amount(paymentAmount)
-                .type(PaymentType.CASH)
+                .type("ID")
                 .user(student.getUser())
                 .paymentMethod("KIOSK")
-                .transactionReference(transactionRef)
-                .transactionId(transactionRef)
                 .build();
 
             // Save the payment
@@ -710,15 +725,12 @@ public class KioskController {
             }
 
             // Create and save payment object
-            String transactionRef = "GRAD-" + System.currentTimeMillis();
             Payment payment = Payment.builder()
                 .description("Graduation Fee - " + graduationType)
                 .amount(paymentAmount)
-                .type(PaymentType.CASH)
+                .type("GRADUATION")
                 .user(student.getUser())
                 .paymentMethod("KIOSK")
-                .transactionReference(transactionRef)
-                .transactionId(transactionRef)
                 .build();
 
             // Save the payment
@@ -791,15 +803,12 @@ public class KioskController {
                 BigDecimal basePrice = new BigDecimal("200.00");
 
                 // Create and save payment object
-                String transactionRef = "TOR-" + System.currentTimeMillis();
                 Payment payment = Payment.builder()
                     .description("Transcript Request - " + copies + " copies (" + purpose + ")")
                     .amount(paymentAmount)
-                    .type(PaymentType.CASH)
+                    .type("TRANSCRIPT")
                     .user(student.getUser())
                     .paymentMethod("KIOSK")
-                    .transactionReference(transactionRef)
-                    .transactionId(transactionRef)
                     .notes("Transcript request details")
                     .copies(copies)
                     .purpose(purpose)
@@ -847,14 +856,11 @@ public class KioskController {
             String enrollmentRef = "ENR-" + System.currentTimeMillis();
 
             // Create and save payment object
-            String transactionRef = "ENR-" + System.currentTimeMillis();
             Payment payment = Payment.builder()
                 .description("New Student Enrollment - " + program + " (" + academicYear + " " + semester + ")")
                 .amount(new BigDecimal(amount))
-                .type(PaymentType.CASH)
+                .type("ENROLLMENT")
                 .paymentMethod("KIOSK")
-                .transactionReference(transactionRef)
-                .transactionId(transactionRef)
                 .metadata(Map.of(
                     "applicantId", applicantId,
                     "fullName", fullName,
@@ -944,15 +950,12 @@ public class KioskController {
                     labType, section, equipment);
 
                 // Create and save payment object
-                String transactionRef = "CHEM-" + System.currentTimeMillis();
                 Payment payment = Payment.builder()
                     .description("Chemistry Laboratory Fee - " + labType)
                     .amount(paymentAmount)
-                    .type(PaymentType.CASH)
+                    .type("CHEMISTRY")
                     .user(student.getUser())
                     .paymentMethod("KIOSK")
-                    .transactionReference(transactionRef)
-                    .transactionId(transactionRef)
                     .notes(notes)
                     .build();
 
@@ -988,34 +991,51 @@ public class KioskController {
     public Map<String, Object> confirmPayment(@PathVariable String transactionRef) {
         Map<String, Object> response = new HashMap<>();
         try {
+            // Get the payment by transaction reference (read only)
+            Payment payment = paymentService.getPaymentByTransactionReference(transactionRef);
+            
+            // Create queue entry and get position
+            QueuePosition queuePosition = queueService.createQueueEntry(payment.getUser().getUsername(), payment.getId());
+
+            // Add queue information to response
+            response.put("success", true);
+            response.put("queueNumber", payment.getPaymentNumber());
+            response.put("position", queuePosition.getPosition());
+            response.put("estimatedWaitTime", queuePosition.getEstimatedWaitTime());
+            response.put("message", "Payment confirmed and pending manager approval");
+
+            // Set receipt preference but don't generate it yet (will be generated after manager approval)
+            queueService.setReceiptPreference(payment.getPaymentNumber(), ReceiptPreference.DIGITAL);
+
+        } catch (Exception e) {
+            logger.error("Error confirming payment: {}", e.getMessage());
+            response.put("success", false);
+            response.put("message", "Payment confirmation in progress");
+        }
+        return response;
+    }
+
+    @PostMapping("/payment/cancel/{transactionRef}")
+    @ResponseBody
+    public Map<String, Object> cancelPayment(@PathVariable String transactionRef) {
+        Map<String, Object> response = new HashMap<>();
+        try {
             // Get the payment by transaction reference
             Payment payment = paymentService.getPaymentByTransactionReference(transactionRef);
             if (payment == null) {
                 throw new EntityNotFoundException("Payment not found");
             }
 
-            // Keep payment status as PENDING for manager approval
-            payment.setPaymentStatus(PaymentStatus.PENDING);
+            // Set payment status to FAILED
+            payment.setPaymentStatus(PaymentStatus.FAILED);
             paymentService.updatePayment(payment);
 
-            // Generate queue number and create queue entry
-            String queueNumber = queueService.generateQueueNumber();
-            QueuePosition queuePosition = queueService.createQueueEntry(payment.getUser().getUsername(), payment.getId());
-
-            // Add queue information to response
             response.put("success", true);
-            response.put("queueNumber", queueNumber);
-            response.put("position", queuePosition.getPosition());
-            response.put("estimatedWaitTime", queuePosition.getEstimatedWaitTime());
-            response.put("message", "Payment confirmed and pending manager approval");
-
-            // Set receipt preference but don't generate it yet (will be generated after manager approval)
-            queueService.setReceiptPreference(queueNumber, ReceiptPreference.DIGITAL);
-
+            response.put("message", "Payment cancelled successfully");
         } catch (Exception e) {
-            logger.error("Error confirming payment: {}", e.getMessage());
+            logger.error("Error cancelling payment: {}", e.getMessage());
             response.put("success", false);
-            response.put("error", "Failed to confirm payment: " + e.getMessage());
+            response.put("error", "Failed to cancel payment: " + e.getMessage());
         }
         return response;
     }

@@ -10,11 +10,11 @@ import com.accounting.service.NotificationService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -134,7 +134,7 @@ public class NotificationServiceImpl implements NotificationService {
         if (!StringUtils.hasText(username)) {
             throw new IllegalArgumentException("Username cannot be empty");
         }
-        List<Notification> notifications = notificationRepository.findTopByOrderByCreatedAtDesc(1);
+        List<Notification> notifications = notificationRepository.findTop5ByOrderByCreatedAtDesc();
         if (notifications.isEmpty()) {
             throw new RuntimeException("No notification settings found for user: " + username);
         }
@@ -152,7 +152,7 @@ public class NotificationServiceImpl implements NotificationService {
         if (settings == null || settings.isEmpty()) {
             throw new IllegalArgumentException("Settings cannot be null or empty");
         }
-        List<Notification> notifications = notificationRepository.findTopByOrderByCreatedAtDesc(1);
+        List<Notification> notifications = notificationRepository.findTopByOrderByCreatedAtDesc(PageRequest.of(0, 1));
         if (notifications.isEmpty()) {
             throw new RuntimeException("No notification settings found for user: " + username);
         }

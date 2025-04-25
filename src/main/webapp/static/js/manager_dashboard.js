@@ -1,5 +1,25 @@
 // Manager Dashboard JavaScript
 
+// Define contextPath globally
+const contextPath = document.querySelector('meta[name="contextPath"]')?.getAttribute('content') || '';
+// Make contextPath available globally
+window.contextPath = contextPath;
+
+// Define and expose viewAllTransactions first, before any other code
+function viewAllTransactions() {
+    const mainContent = document.getElementById('main-content');
+    if (!mainContent) return;
+
+    // ... existing code ...
+}
+
+// Immediately expose viewAllTransactions to global scope
+window.viewAllTransactions = viewAllTransactions;
+
+// ==========================================
+// 1. HEADER/GLOBAL OBJECTS AND UTILITIES
+// ==========================================
+
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize based on current route
     const currentPath = window.location.pathname;
@@ -598,5 +618,31 @@ function updateQueueStatus(queueId, newStatus) {
     })
     .catch(error => {
         utils.showError('Error updating queue status: ' + error.message);
+    });
+}
+
+function updateTransactionStatistics() {
+    fetch(`${window.contextPath}/manager/transaction-statistics`, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        document.getElementById('total-transactions').textContent = data.totalTransactions || 0;
+        document.getElementById('pending-transactions').textContent = data.pendingTransactions || 0;
+        document.getElementById('completed-transactions').textContent = data.completedTransactions || 0;
+        document.getElementById('failed-transactions').textContent = data.failedTransactions || 0;
+    })
+    .catch(error => {
+        console.error('Error updating transaction statistics:', error);
+        showAlert('error', 'Failed to update transaction statistics');
     });
 }
