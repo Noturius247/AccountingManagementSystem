@@ -1089,27 +1089,7 @@
                                                                class="btn btn-sm btn-outline-primary">
                                                                 <i class="bi bi-eye"></i> View
                                                             </a>
-                                                            <c:choose>
-                                                                <c:when test="${student.registrationStatus == 'PENDING'}">
-                                                                    <button type="button" 
-                                                                            class="btn btn-sm btn-outline-success"
-                                                                            onclick="approveStudent('${student.id}')">
-                                                                        <i class="bi bi-check"></i> Approve
-                                                                    </button>
-                                                                    <button type="button" 
-                                                                            class="btn btn-sm btn-outline-danger"
-                                                                            onclick="rejectStudent('${student.id}')">
-                                                                        <i class="bi bi-x"></i> Reject
-                                                                    </button>
-                                                                </c:when>
-                                                                <c:when test="${student.registrationStatus == 'APPROVED'}">
-                                                                    <button type="button" 
-                                                                            class="btn btn-sm btn-outline-warning"
-                                                                            onclick="revokeApproval('${student.id}')">
-                                                                        <i class="bi bi-arrow-counterclockwise"></i> Revoke
-                                                                    </button>
-                                                                </c:when>
-                                                            </c:choose>
+                                                            
                                                         </div>
                                                     </td>
                                                 </tr>

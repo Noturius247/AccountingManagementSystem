@@ -143,8 +143,8 @@
                                             </button>
                                         </c:when>
                                         <c:when test="${student.registrationStatus == 'APPROVED'}">
-                                            <button class="btn btn-warning" onclick="revokeApproval('${student.id}')">
-                                                <i class="bi bi-arrow-counterclockwise"></i> Revoke Approval
+                                            <button class="btn btn-sm btn-warning" onclick="revokeApproval('${student.id}')">
+                                                <i class="bi bi-arrow-counterclockwise"></i> Revoke
                                             </button>
                                         </c:when>
                                     </c:choose>
