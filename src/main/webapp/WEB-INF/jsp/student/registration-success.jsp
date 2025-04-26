@@ -183,7 +183,7 @@
         </div>
 
         <div class="action-buttons">
-            <a href="${pageContext.request.contextPath}/dashboard" class="btn btn-primary">
+            <a href="${pageContext.request.contextPath}/user/dashboard" class="btn btn-primary">
                 <i class="bi bi-speedometer2"></i> Go to Dashboard
             </a>
             <a href="${pageContext.request.contextPath}/kiosk" class="btn btn-secondary">

@@ -183,12 +183,6 @@
 
             <!-- Quick Action Buttons -->
             <div class="action-buttons mb-4">
-                <a href="${pageContext.request.contextPath}/user/payments" class="btn btn-primary me-2">
-                    <i class="bi bi-credit-card me-1"></i> My Payments
-                </a>
-                <a href="${pageContext.request.contextPath}/user/documents" class="btn btn-primary me-2">
-                    <i class="bi bi-file-text me-1"></i> Documents
-                </a>
                 <a href="${pageContext.request.contextPath}/kiosk" class="btn btn-primary">
                     <i class="bi bi-display me-1"></i> Access Kiosk
                 </a>

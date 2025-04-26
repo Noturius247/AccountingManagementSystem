@@ -22,7 +22,7 @@
             <div class="error-message">${error}</div>
         </c:if>
 
-        <form class="payment-form" action="${pageContext.request.contextPath}/kiosk/payment/enrollment/process" method="post">
+        <form class="payment-form" >
             <div class="form-group">
                 <label for="fullName">Full Name</label>
                 <input type="text" id="fullName" name="fullName" value="${fullName}" required 
