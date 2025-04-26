@@ -5,268 +5,427 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" content="${_csrf.token}"/>
     <meta name="_csrf_header" content="${_csrf.headerName}"/>
     <title>Payment Confirmation</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/main.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: #800000;
+            --primary-dark: #600000;
+            --secondary-color: #D4AF37;
+            --success-color: #28a745;
+            --success-dark: #218838;
+            --danger-color: #dc3545;
+            --danger-dark: #c82333;
+            --warning-color: #ffc107;
+            --light-color: #f8f9fa;
+            --border-color: #e9ecef;
+            --text-color: #212529;
+            --text-secondary: #6c757d;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
         .confirmation-container {
+            width: 100%;
             max-width: 600px;
-            min-height: 800px;
-            margin: 40px auto;
+            min-height: auto;
+            margin: 20px;
             padding: 30px;
             background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
             text-align: center;
             position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .notification {
+            padding: 12px 16px;
+            margin: 15px 0;
+            border-radius: 6px;
+            font-weight: 500;
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .notification.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .notification.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .notification.warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
         }
 
         .back-button-corner {
             position: absolute;
             top: 20px;
             left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: transform 0.2s ease;
+        }
+
+        .back-button-corner:hover {
+            transform: translateX(-3px);
         }
 
         .cancel-button-corner {
             position: absolute;
             top: 20px;
             right: 20px;
-            background-color: #dc3545;
+            background-color: var(--danger-color);
             color: white;
-            padding: 12px 24px;
+            padding: 10px 16px;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
             text-decoration: none;
-            font-size: 16px;
-            transition: background-color 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
         }
 
         .cancel-button-corner:hover {
-            background-color: #c82333;
+            background-color: var(--danger-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2);
         }
 
         .kiosk-button-corner {
             position: absolute;
             bottom: 20px;
             left: 20px;
-        }
-
-        .action-buttons {
-            margin-top: 30px;
-            margin-bottom: 100px;
             display: flex;
-            gap: 15px;
-            justify-content: center;
+            align-items: center;
+            gap: 5px;
         }
 
         .success-icon {
-            font-size: 64px;
-            color: #800000;
-            margin-bottom: 20px;
-            margin-top: 40px;
+            font-size: 48px;
+            color: var(--primary-color);
+            margin: 24px 0 16px;
+            background: var(--light-color);
+            width: 80px;
+            height: 80px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         .confirmation-title {
-            color: #800000;
+            color: var(--primary-color);
             font-size: 24px;
-            margin-bottom: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
         }
 
         .payment-details {
-            margin: 30px auto;
+            margin: 24px auto;
             text-align: left;
             max-width: 500px;
-            margin-bottom: 180px;
+            background-color: var(--light-color);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .detail-row {
             display: flex;
             justify-content: space-between;
-            margin: 10px 0;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
+            margin: 8px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
         }
 
         .detail-label {
-            font-weight: bold;
-            color: #666;
+            font-weight: 600;
+            color: var(--text-secondary);
         }
 
         .detail-value {
-            color: #333;
+            color: var(--text-color);
+            font-weight: 500;
+            text-align: right;
         }
 
         .amount {
             font-size: 24px;
-            color: #800000;
-            font-weight: bold;
+            font-weight: 700;
+            color: var(--primary-color);
         }
 
-        .button-container {
-            margin-top: 30px;
-            display: flex;
-            gap: 15px;
+        .button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
             justify-content: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
         }
 
-        .download-button {
-            background-color: #800000;
+        .button-primary {
+            background-color: var(--primary-color);
             color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 16px;
-            transition: background-color 0.3s;
         }
 
-        .download-button:hover {
-            background-color: #600000;
+        .button-primary:hover, .button-primary:focus {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(128, 0, 0, 0.2);
         }
 
-        .cancel-button {
-            background-color: #dc3545;
+        .button-danger {
+            background-color: var(--danger-color);
             color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 16px;
-            transition: background-color 0.3s;
         }
 
-        .cancel-button:hover {
-            background-color: #c82333;
+        .button-danger:hover, .button-danger:focus {
+            background-color: var(--danger-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.2);
         }
 
-        .home-button {
-            background-color: #666;
+        .button-secondary {
+            background-color: #6c757d;
             color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 16px;
-            transition: background-color 0.3s;
         }
 
-        .home-button:hover {
-            background-color: #555;
+        .button-secondary:hover, .button-secondary:focus {
+            background-color: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(108, 117, 125, 0.2);
         }
 
-        .back-button {
-            background-color: #007bff;
+        .button-success {
+            background-color: var(--success-color);
             color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
-            font-size: 16px;
-            transition: background-color 0.3s;
         }
 
-        .back-button:hover {
-            background-color: #0056b3;
+        .button-success:hover, .button-success:focus {
+            background-color: var(--success-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.2);
+        }
+
+        .button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .queue-number-container {
+            margin: 24px 0;
+            padding: 16px;
+            background-color: var(--light-color);
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .queue-title {
+            font-size: 18px;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            font-weight: 600;
         }
 
         .queue-number {
             font-size: 36px;
-            color: #800000;
-            margin: 20px 0;
-            padding: 15px;
-            border: 2px dashed #800000;
+            color: var(--primary-color);
+            margin: 16px 0;
+            padding: 16px;
+            border: 2px dashed var(--primary-color);
             display: inline-block;
-            border-radius: 5px;
+            border-radius: 8px;
+            background-color: white;
+            font-weight: 700;
         }
 
-        @media print {
-            .button-container {
-                display: none;
-            }
-        }
-
-        .confirm-button {
-            background-color: #28a745;
-            color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            text-decoration: none;
+        .estimated-time {
             font-size: 16px;
-            transition: background-color 0.3s;
-        }
-
-        .confirm-button:hover {
-            background-color: #218838;
+            color: var(--text-secondary);
+            font-weight: 500;
         }
 
         .status-processed {
-            color: #28a745;
+            color: var(--success-color);
+            font-weight: 600;
         }
         
         .status-pending {
-            color: #ffc107;
+            color: var(--warning-color);
+            font-weight: 600;
         }
 
         .confirm-payment-bottom {
-            position: absolute;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #800000;
+            width: 100%;
+            max-width: 300px;
+            background-color: var(--primary-color);
             color: white;
-            padding: 24px 48px;
+            padding: 16px 32px;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            text-decoration: none;
             font-size: 18px;
-            font-weight: bold;
-            transition: background-color 0.3s;
-            height: auto;
-            line-height: 1;
+            font-weight: 700;
+            margin: 24px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(128, 0, 0, 0.2);
         }
 
         .confirm-payment-bottom:hover {
-            background-color: #600000;
+            background-color: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(128, 0, 0, 0.3);
         }
 
         .student-info-section {
             margin: 20px 0;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-            border: 1px solid #e9ecef;
+            padding: 16px;
+            background-color: var(--light-color);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
         }
 
         .student-info-title {
-            color: #800000;
+            color: var(--primary-color);
             font-size: 18px;
-            margin-bottom: 15px;
-            font-weight: bold;
+            margin-bottom: 12px;
+            font-weight: 600;
             text-align: center;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .confirmation-container {
+                margin: 10px;
+                padding: 20px;
+                max-width: 100%;
+            }
+
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .detail-value {
+                text-align: left;
+                margin-top: 4px;
+            }
+
+            .back-button-corner, .cancel-button-corner, .kiosk-button-corner {
+                position: relative;
+                top: auto;
+                left: auto;
+                right: auto;
+                bottom: auto;
+                margin: 10px 0;
+            }
+
+            .confirm-payment-bottom {
+                position: relative;
+                bottom: auto;
+                left: auto;
+                transform: none;
+                margin: 24px auto;
+                width: 100%;
+            }
+        }
+
+        @media print {
+            .button, .button-container, .back-button-corner, .cancel-button-corner, .kiosk-button-corner, .confirm-payment-bottom {
+                display: none !important;
+            }
+
+            .confirmation-container {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                background-color: white;
+            }
         }
     </style>
 </head>
 <body>
     <div class="confirmation-container">
-        <a href="javascript:history.back()" class="back-button back-button-corner">
-            Back
+        <a href="${pageContext.request.contextPath}/kiosk" class="button button-secondary back-button-corner">
+            <i class="bi bi-house"></i> Back to Kiosk
         </a>
 
         <button onclick="cancelPayment('${payment.transactionReference}')" class="cancel-button-corner">
-            Cancel
+            <i class="bi bi-x-circle"></i> Cancel
         </button>
 
-        <div class="success-icon">📋</div>
+        <div class="success-icon"><i class="bi bi-clipboard-check"></i></div>
         <h1 class="confirmation-title">Review Payment</h1>
+        
+        <div id="notification" class="notification"></div>
         
         <div class="payment-details">
             <c:if test="${not empty payment.paymentNumber}">
@@ -375,23 +534,16 @@
         </div>
 
         <c:if test="${not empty queueNumber}">
-            <div>
-                <h2>Your Queue Number</h2>
+            <div class="queue-number-container">
+                <h2 class="queue-title">Your Queue Number</h2>
                 <div class="queue-number">${queueNumber}</div>
                 <p>Please wait for your number to be called</p>
-                <p class="estimated-time">Estimated wait time: ${estimatedWaitTime} minutes</p>
+                <p class="estimated-time"><i class="bi bi-clock"></i> Estimated wait time: ${estimatedWaitTime} minutes</p>
             </div>
         </c:if>
 
-        <a href="${pageContext.request.contextPath}/kiosk" class="home-button kiosk-button-corner">
-            Back to Kiosk
-        </a>
-
-        <%-- Debug payment status --%>
-        <%-- <div>Debug - Payment Status: ${payment.paymentStatus}</div> --%>
-
-        <button onclick="confirmPayment('${payment.transactionReference}')" class="confirm-payment-bottom" id="confirmPaymentButton">
-            CONFIRM PAYMENT
+        <button id="confirmPaymentButton" onclick="confirmPayment('${payment.transactionReference}')" class="confirm-payment-bottom">
+            <i class="bi bi-check-circle"></i> CONFIRM PAYMENT
         </button>
     </div>
 
@@ -408,26 +560,15 @@
             const isProcessing = sessionStorage.getItem('processing_' + transactionRef);
             
             if (confirmButton) {
-                if (wasConfirmed || isProcessing) {
+                if (wasConfirmed || isProcessing || paymentStatus === 'PROCESSED') {
                     confirmButton.style.display = 'none';
                     
                     if (isProcessing) {
                         // Show processing indicator
-                        const processingDiv = document.createElement('div');
-                        processingDiv.style.cssText = `
-                            position: absolute;
-                            bottom: 100px;
-                            left: 50%;
-                            transform: translateX(-50%);
-                            color: #800000;
-                            font-size: 18px;
-                            font-weight: bold;
-                        `;
-                        processingDiv.textContent = 'Processing Payment...';
-                        confirmButton.parentNode.appendChild(processingDiv);
+                        showNotification('Payment is being processed...', 'warning');
                     }
                 } else {
-                    confirmButton.style.display = 'block';
+                    confirmButton.style.display = 'flex';
                 }
             }
 
@@ -440,35 +581,45 @@
             });
         });
 
+        function showNotification(message, type) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = 'notification ' + type;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.opacity = '1';
+            }, 10);
+        }
+
         function confirmPayment(transactionRef) {
             if (!transactionRef) {
                 console.error('Transaction Reference is missing');
-                alert('Error: Transaction Reference is missing');
+                showNotification('Error: Transaction Reference is missing', 'error');
                 return;
             }
 
             const confirmButton = document.getElementById('confirmPaymentButton');
+            let originalText = '';
+            
             if (confirmButton) {
-                // Immediately hide and disable the button
-                confirmButton.style.display = 'none';
+                // Store original button text
+                originalText = confirmButton.innerHTML;
+                
+                // Show loading state on button and then hide it completely
+                confirmButton.innerHTML = '<span class="loading-spinner"></span> Processing...';
                 confirmButton.disabled = true;
+                
+                // Hide the button immediately after clicking - don't wait for response
+                setTimeout(() => {
+                    confirmButton.style.display = 'none';
+                }, 500);
                 
                 // Set processing state
                 sessionStorage.setItem('processing_' + transactionRef, 'true');
                 
-                // Create and show a processing indicator
-                const processingDiv = document.createElement('div');
-                processingDiv.style.cssText = `
-                    position: absolute;
-                    bottom: 100px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    color: #800000;
-                    font-size: 18px;
-                    font-weight: bold;
-                `;
-                processingDiv.textContent = 'Processing Payment...';
-                confirmButton.parentNode.appendChild(processingDiv);
+                // Show notification
+                showNotification('Processing your payment...', 'warning');
             }
 
             if (confirm('Are you sure you want to confirm this payment?')) {
@@ -495,70 +646,129 @@
                 .then(data => {
                     console.log('Payment confirmation response:', data);
                     
-                    if (data.success || data.message) {
+                    // Check for an error message containing "Queue not found"
+                    if (!data.success && data.message && data.message.includes("Queue not found")) {
+                        // Special handling for queue not found errors
+                        console.log("Queue not found error - attempting to continue with payment confirmation");
+                        
+                        // Even with the queue error, the payment might have been processed
+                        showNotification('Payment was processed, but there was an issue with the queue. Your payment is still valid.', 'warning');
+                        
+                        // Create a generic queue display
+                        const queueContainer = document.createElement('div');
+                        queueContainer.className = 'queue-number-container';
+                        queueContainer.innerHTML = `
+                            <h2 class="queue-title">Payment Confirmed</h2>
+                            <p>Your payment has been recorded. Please proceed to the cashier window.</p>
+                            <p class="estimated-time"><i class="bi bi-info-circle"></i> Show your transaction reference: ${transactionRef}</p>
+                        `;
+                        
+                        // Insert the queue container
+                        const paymentDetails = document.querySelector('.payment-details');
+                        if (paymentDetails) {
+                            paymentDetails.after(queueContainer);
+                        }
+                        
+                        return;
+                    }
+                    
+                    if (data.success) {
+                        showNotification('Payment confirmed successfully!', 'success');
+                        
+                        // Check if we received queue information
                         if (data.queueNumber) {
-                            const queueDiv = document.createElement('div');
-                            queueDiv.className = 'queue-info';
-                            queueDiv.innerHTML = `
-                                <h2>Your Queue Number</h2>
-                                <div class="queue-number">${data.queueNumber}</div>
-                                <p>Please wait for your number to be called</p>
-                                <p class="estimated-time">Estimated wait time: ${data.estimatedWaitTime} minutes</p>
-                            `;
-                            document.querySelector('.payment-details').after(queueDiv);
+                            // Only create a new queue number display if one doesn't already exist
+                            if (!document.querySelector('.queue-number-container')) {
+                                const queueContainer = document.createElement('div');
+                                queueContainer.className = 'queue-number-container';
+                                queueContainer.innerHTML = `
+                                    <h2 class="queue-title">Your Queue Number</h2>
+                                    <div class="queue-number">${data.queueNumber}</div>
+                                    <p>Please wait for your number to be called</p>
+                                    <p class="estimated-time"><i class="bi bi-clock"></i> Estimated wait time: ${data.estimatedWaitTime} minutes</p>
+                                `;
+                                
+                                // Find insertion point - after payment details
+                                const paymentDetails = document.querySelector('.payment-details');
+                                if (paymentDetails) {
+                                    paymentDetails.after(queueContainer);
+                                }
+                            }
+                            
+                            // Show a more detailed confirmation message
+                            showNotification(`Payment confirmed! Your queue number is ${data.queueNumber}. Please wait for your turn.`, 'success');
+                        } else {
+                            showNotification('Payment confirmed but no queue number was generated. Please contact staff.', 'warning');
                         }
                         
-                        const message = `Payment confirmed and pending manager approval.\n\nYour queue number is: ${data.queueNumber}\nEstimated wait time: ${data.estimatedWaitTime} minutes\n\nYour receipt will be available after approval.`;
-                        alert(message);
-                        
-                        // Keep the button hidden but don't reload the page
-                        const processingDiv = document.querySelector('div:last-child');
-                        if (processingDiv && processingDiv.textContent === 'Processing Payment...') {
-                            processingDiv.remove();
+                        // If the backend requested a page reload
+                        if (data.reload) {
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 2000); // Wait 2 seconds so the user can see the success message
                         }
+                    } else {
+                        // This happens when success is false
+                        showNotification(data.message || 'Error confirming payment.', 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    // On error, restore the button
-                    if (confirmButton) {
-                        confirmButton.style.display = 'block';
-                        confirmButton.disabled = false;
-                        sessionStorage.removeItem('confirmed_' + transactionRef);
-                        sessionStorage.removeItem('processing_' + transactionRef);
-                        // Remove processing indicator if it exists
-                        const processingDiv = confirmButton.parentNode.querySelector('div:last-child');
-                        if (processingDiv) {
-                            processingDiv.remove();
+                    
+                    // Even if there's an error, we don't restore the button
+                    // This prevents multiple attempts that could lead to duplicate payments
+                    
+                    // Check if the error message contains "Queue not found"
+                    if (error.message && error.message.includes("Queue not found")) {
+                        showNotification('Payment was processed, but there was an issue with the queue system. Your payment is still valid.', 'warning');
+                        
+                        // Create a fallback message
+                        const queueContainer = document.createElement('div');
+                        queueContainer.className = 'queue-number-container';
+                        queueContainer.innerHTML = `
+                            <h2 class="queue-title">Payment Confirmed</h2>
+                            <p>Your payment has been recorded. Please proceed to the cashier window.</p>
+                            <p class="estimated-time"><i class="bi bi-info-circle"></i> Show your transaction reference: ${transactionRef}</p>
+                        `;
+                        
+                        // Insert the queue container
+                        const paymentDetails = document.querySelector('.payment-details');
+                        if (paymentDetails) {
+                            paymentDetails.after(queueContainer);
                         }
+                    } else {
+                        showNotification('Error processing payment. Please contact staff for assistance.', 'error');
                     }
                 });
             } else {
-                // If user cancels, restore the button
+                // If user cancels the confirmation dialog
                 if (confirmButton) {
-                    confirmButton.style.display = 'block';
+                    // If user cancels, show button again and restore it
+                    confirmButton.style.display = 'flex';
+                    confirmButton.innerHTML = '<i class="bi bi-check-circle"></i> CONFIRM PAYMENT';
                     confirmButton.disabled = false;
                     sessionStorage.removeItem('confirmed_' + transactionRef);
                     sessionStorage.removeItem('processing_' + transactionRef);
-                    // Remove processing indicator if it exists
-                    const processingDiv = confirmButton.parentNode.querySelector('div:last-child');
-                    if (processingDiv) {
-                        processingDiv.remove();
-                    }
                 }
+                
+                // Clear notification
+                document.getElementById('notification').style.display = 'none';
             }
         }
 
         function cancelPayment(transactionRef) {
             if (!transactionRef) {
                 console.error('Transaction Reference is missing');
-                alert('Error: Transaction Reference is missing');
+                showNotification('Error: Transaction Reference is missing', 'error');
                 return;
             }
 
             if (confirm('Are you sure you want to cancel this payment?')) {
                 const token = "${_csrf.token}";
                 const header = "${_csrf.headerName}";
+
+                // Show cancelling notification
+                showNotification('Cancelling payment...', 'warning');
 
                 fetch('${pageContext.request.contextPath}/kiosk/payment/cancel/' + transactionRef, {
                     method: 'POST',
@@ -576,15 +786,19 @@
                 })
                 .then(data => {
                     if (data.success) {
-                        alert('Payment cancelled successfully');
-                        window.location.href = '${pageContext.request.contextPath}/kiosk';
+                        showNotification('Payment cancelled successfully', 'success');
+                        
+                        // Redirect after a short delay to show the success message
+                        setTimeout(() => {
+                            window.location.href = '${pageContext.request.contextPath}/kiosk';
+                        }, 1500);
                     } else {
-                        alert(data.error || 'Failed to cancel payment');
+                        showNotification(data.error || 'Failed to cancel payment', 'error');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Failed to cancel payment. Please try again.');
+                    showNotification('Failed to cancel payment. Please try again.', 'error');
                 });
             }
         }

@@ -29,16 +29,6 @@
                             </a>
                         </li>
                         <sec:authorize access="hasRole('USER')">
-                            <li class="nav-item">
-                                <a class="nav-link" href="${pageContext.request.contextPath}/user/payments" data-dynamic>
-                                    <i class="bi bi-cash-stack me-1"></i> Payments
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="${pageContext.request.contextPath}/user/documents" data-dynamic>
-                                    <i class="bi bi-file-earmark-text me-1"></i> Documents
-                                </a>
-                            </li>
                         </sec:authorize>
                     </sec:authorize>
                 </ul>

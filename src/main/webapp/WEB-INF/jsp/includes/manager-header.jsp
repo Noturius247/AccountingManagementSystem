@@ -23,24 +23,8 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link ${pageContext.request.servletPath == '/manager/queue' ? 'active' : ''}" 
-                       href="${pageContext.request.contextPath}/manager/queue">
-                        <i class="bi bi-people"></i> Queue Management
-                    </a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link text-light" href="<c:url value='/manager/transactions' />">
                         <i class="bi bi-arrow-left-right me-1"></i> Transactions
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-light" href="<c:url value='/manager/reports' />">
-                        <i class="bi bi-bar-chart me-1"></i> Reports
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link text-light" href="<c:url value='/manager/settings' />">
-                        <i class="bi bi-gear me-1"></i> Settings
                     </a>
                 </li>
                 <li class="nav-item">

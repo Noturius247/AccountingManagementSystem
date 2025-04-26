@@ -465,7 +465,7 @@ public class ManagerController {
                 // Get all queues ordered by position
                 queues = queueService.findAllOrderedByPosition();
             }
-
+            
             // Enrich processing queues with transaction details
             queues.stream()
                 .filter(queue -> queue.getStatus() == QueueStatus.PROCESSING)
@@ -569,7 +569,7 @@ public class ManagerController {
                 return ResponseEntity.notFound()
                     .build();
             }
-
+            
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("queue", updatedQueue);
